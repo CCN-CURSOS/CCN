@@ -1,0 +1,15 @@
+LOGOS DE LAS HERRAMIENTAS (franja "Herramientas · Con las que trabajamos")
+
+Pon aqui los logos OFICIALES de cada marca, con estos nombres exactos
+(formato .svg de preferencia; tambien funciona .png):
+
+  notion.svg
+  supabase.svg
+  claude.svg
+  gemini.svg
+  chatgpt.svg
+  whatsapp.svg
+
+Descargalos desde la pagina oficial de prensa / marca de cada empresa y revisa
+sus reglas de uso. Si un archivo falta, la web muestra solo el nombre de la
+herramienta, sin romperse.
