@@ -77,12 +77,11 @@ const FAQ = [
 /* ---------- Secciones reutilizables (inicio y páginas propias del menú) ---------- */
 export function SeccionComo({ cursos = [], grupos = [] }) {
   // Cifras reales: salen del catálogo y de los grupos del panel, nunca se escriben a mano.
-  const horas = cursos.reduce((t, c) => t + (Number(c.horas) || 0), 0)
   const inscritos = grupos.reduce((t, g) => t + (Number(g.inscritos) || 0), 0)
   const cifras = [
     ['+' + Math.floor(HERRAMIENTAS.length / 10) * 10, 'programas y herramientas'],
     ['+100', 'estudiantes formados por nuestros profesores'],
-    horas > 0 && [String(horas), 'horas de formación en el catálogo'],
+    ['+100', 'horas de formación en el catálogo'],
     inscritos >= 50 && ['+' + Math.floor(inscritos / 10) * 10, 'inscritos en CCN'],
   ].filter(Boolean)
   return (
@@ -151,7 +150,7 @@ function validar(f) {
   if (t(f.apellido_materno).length < 2) e.apellido_materno = 'Ingresa tu apellido materno'
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(t(f.email))) e.email = 'Ingresa un correo válido'
   const doc = t(f.documento)
-  if (f.tipo_doc === 'DNI' ? !/^\d{8}$/.test(doc) : !/^[A-Za-z0-9]{9,12}$/.test(doc)) e.documento = f.tipo_doc === 'DNI' ? 'El DNI tiene 8 dígitos' : 'Ingresa tu carné (9 a 12 caracteres)'
+  if (f.tipo_doc === 'DNI' ? !/^\d{8}$/.test(doc) : !/^[A-Za-z0-9]{9,12}$/.test(doc)) e.documento = f.tipo_doc === 'DNI' ? 'El DNI tiene 8 dígitos' : 'Ingresa tu C.E. (9 a 12 caracteres)'
   if (!/^\+?\d{9,15}$/.test(f.celular.replace(/[\s-]/g, ''))) e.celular = 'Ingresa un celular válido'
   if (!f.modalidad) e.modalidad = 'Selecciona una modalidad'
   if (!f.curso) e.curso = 'Selecciona un curso'
@@ -202,9 +201,9 @@ export function SeccionContacto({ cursos }) {
             <span className="docgrp">
               <select aria-label="Tipo de documento" value={f.tipo_doc} onChange={(e) => setF({ ...f, tipo_doc: e.target.value, documento: '' })}>
                 <option value="DNI">DNI</option>
-                <option value="CE">Carné de extranjería</option>
+                <option value="CE">C.E.</option>
               </select>
-              <input id="f-documento" value={f.documento} onChange={set('documento')} inputMode={f.tipo_doc === 'DNI' ? 'numeric' : 'text'} maxLength={f.tipo_doc === 'DNI' ? 8 : 12} placeholder={f.tipo_doc === 'DNI' ? 'N° de DNI' : 'N° de carné'} aria-invalid={Boolean(err.documento)} />
+              <input id="f-documento" value={f.documento} onChange={set('documento')} inputMode={f.tipo_doc === 'DNI' ? 'numeric' : 'text'} maxLength={f.tipo_doc === 'DNI' ? 8 : 12} placeholder={f.tipo_doc === 'DNI' ? 'N° de DNI' : 'N° de C.E.'} aria-invalid={Boolean(err.documento)} />
             </span>
             {err.documento && <small className="ferr">{err.documento}</small>}
           </label>
