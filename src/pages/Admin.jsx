@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Logo } from '../components/Layout.jsx'
 import {
   hasBackend, supabase, loadAll, save, remove, saveAjuste, esAdmin, fechaCorta, subirImagen, telefono, setNumero, COLORES, MAX_INICIO,
 } from '../lib/data.js'
@@ -520,7 +521,7 @@ function Panel({ email, onSalir }) {
   return (
     <div className="shell">
       <aside className="side">
-        <Link className="logo" to="/">CC<i>N</i></Link>
+        <Link className="logo" to="/" aria-label="CCN"><Logo fijo="oscuro" /></Link>
         <small className="sidetag">Panel de administración</small>
         <div className="snav" role="tablist" aria-label="Secciones">
           {items.map(([k, nombre, n]) => (
@@ -559,7 +560,7 @@ function Panel({ email, onSalir }) {
 function Acceso({ children }) {
   return (
     <div className="gate">
-      <Link className="logo gate-logo" to="/" aria-label="Ir al inicio de CCN">CC<i>N</i></Link>
+      <Link className="logo gate-logo" to="/" aria-label="Ir al inicio de CCN"><Logo completo /></Link>
       <p className="gate-lema">Aprende. Aplica. Crece.</p>
       <div className="gate-card">{children}</div>
       <p className="gate-foot">Powered by <b>Bro Engineering</b></p>

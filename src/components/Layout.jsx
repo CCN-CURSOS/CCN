@@ -14,15 +14,27 @@ export function ScrollToHash() {
   return null
 }
 
+/* Logo CCN: automático según tema. fijo="oscuro" => siempre versión blanca (fondos azul marino) */
+export function Logo({ fijo, completo }) {
+  const base = completo ? 'logo-completo' : 'logo'
+  if (fijo === 'oscuro') return <img className="lg lg-oscuro-fijo" src={`/${base}-blanco.png`} alt="CCN" />
+  return (
+    <>
+      <img className="lg lg-claro" src={`/${base}.png`} alt="CCN" />
+      <img className="lg lg-oscuro" src={`/${base}-blanco.png`} alt="" aria-hidden="true" />
+    </>
+  )
+}
+
 export const hola = () => wa('Hola, quiero información sobre los cursos de CCN')
 
 export function Header() {
   return (
     <header>
       <div className="wrap bar">
-        <Link className="logo" to="/" aria-label="CCN Centro de Capacitaciones y Negocios">CC<i>N</i></Link>
+        <Link className="logo" to="/" aria-label="CCN Centro de Capacitaciones y Negocios"><Logo /></Link>
         <nav aria-label="Principal">
-          <Link to="/cursos">Cursos</Link><Link to="/#como">Cómo aprendes</Link><Link to="/#horarios">Horarios</Link><Link to="/#preguntas">Preguntas</Link><Link to="/#contacto">Escríbenos</Link><Link to="/links">Links</Link>
+          <Link to="/cursos">Cursos</Link><Link to="/como-aprendes">Cómo aprendes</Link><Link to="/horarios">Horarios</Link><Link to="/preguntas">Preguntas</Link><Link to="/contacto">Escríbenos</Link><Link to="/links">Links</Link>
         </nav>
         <div className="bar-r">
           <a className="btn btn-wa" href={hola()} target="_blank" rel="noopener noreferrer">WhatsApp</a>
@@ -40,12 +52,12 @@ export function Footer() {
     <>
       <footer><div className="wrap">
         <div className="frow">
-          <div className="fbrand"><Link className="logo" to="/">CC<i>N</i></Link><span>Aprende. Aplica. Crece.</span></div>
+          <div className="fbrand"><Link className="logo" to="/" aria-label="CCN"><Logo fijo="oscuro" /></Link><span>Aprende. Aplica. Crece.</span></div>
           <div className="fcol"><small>Contacto</small><span>WhatsApp {telefono()}</span></div>
           <div className="fcol"><small>Pagos</small><span>Yape · Plin · Transferencia bancaria</span></div>
           <div className="fcol"><small>Con el respaldo de</small><span className="backers"><b>Fidtail Perú</b><b>Bro Engineering</b></span></div>
         </div>
-        <p className="flinks"><Link to="/cursos">Cursos</Link><Link to="/#preguntas">Preguntas</Link><Link to="/links">Links</Link><span>Términos y condiciones</span><span>Política de compras</span><span>Libro de reclamaciones</span></p>
+        <p className="flinks"><Link to="/cursos">Cursos</Link><Link to="/como-aprendes">Cómo aprendes</Link><Link to="/horarios">Horarios</Link><Link to="/preguntas">Preguntas</Link><Link to="/contacto">Escríbenos</Link><Link to="/links">Links</Link><span>Términos y condiciones</span><span>Política de compras</span><span>Libro de reclamaciones</span></p>
         <p className="powered">Powered by <b>Bro Engineering</b></p>
       </div></footer>
       <a className="wa-float" href={hola()} target="_blank" rel="noopener noreferrer" aria-label="Escribir por WhatsApp">

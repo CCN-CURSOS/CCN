@@ -3,6 +3,7 @@ import Home from './pages/Home.jsx'
 import Cursos from './pages/Cursos.jsx'
 import Links from './pages/Links.jsx'
 import Admin from './pages/Admin.jsx'
+import { PaginaComo, PaginaHorarios, PaginaPreguntas, PaginaContacto } from './pages/Secundarias.jsx'
 import { ScrollToHash } from './components/Layout.jsx'
 
 export default function App() {
@@ -12,6 +13,10 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/cursos" element={<Cursos />} />
+      <Route path="/como-aprendes" element={<PaginaComo />} />
+      <Route path="/horarios" element={<PaginaHorarios />} />
+      <Route path="/preguntas" element={<PaginaPreguntas />} />
+      <Route path="/contacto" element={<PaginaContacto />} />
       <Route path="/links" element={<Links />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="*" element={<Home />} />

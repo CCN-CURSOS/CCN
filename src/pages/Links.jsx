@@ -17,7 +17,7 @@ export default function Links() {
     <div className="lk">
       <main className="lk-in">
         <Link to="/" className="lk-avatar" aria-label="Ir al inicio de CCN">
-          <span className="lk-logo">CC<i>N</i></span>
+          <img className="lk-img" src="/logo.png" alt="CCN" />
         </Link>
         <h1 className="lk-nombre">CCN</h1>
         <p className="lk-tag">Centro de Capacitaciones y Negocios</p>

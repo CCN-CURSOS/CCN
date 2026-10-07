@@ -433,3 +433,22 @@ label.inl{display:flex;align-items:center;gap:10px;flex-direction:row}
 .gate-err{text-align:center;margin:0;background:color-mix(in srgb,#C0392B 9%,transparent);border-radius:10px;padding:10px 12px}
 .gate-foot{margin:26px 0 0;font-size:.76rem;color:var(--muted)}
 .gate-foot b{font-weight:700;color:var(--ink)}
+
+/* v8: menú con páginas propias */
+nav a{white-space:nowrap}
+.subpage{min-height:60vh}
+.subpage>section:first-child{padding-top:56px}
+@media(max-width:1100px){nav{gap:16px;font-size:.88rem}}
+@media(max-width:960px){nav{gap:12px;font-size:.84rem}.bar-r .btn{padding:9px 14px}}
+
+/* v9: logo oficial */
+.logo{display:inline-flex;align-items:center;line-height:0}
+.lg{display:block;height:40px;width:auto}
+.lg-oscuro{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .lg-claro{display:none}:root:not([data-theme="light"]) .lg-oscuro{display:block}}
+:root[data-theme="dark"] .lg-claro{display:none}:root[data-theme="dark"] .lg-oscuro{display:block}
+footer .lg{height:44px}
+.side .lg{height:38px}
+.gate-logo .lg{height:clamp(110px,22vw,150px)}
+.lk-img{width:78%;height:auto}
+@media(max-width:560px){.lg{height:34px}}
