@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { wa, telefono } from '../lib/data.js'
+import { wa } from '../lib/data.js'
 
 export function ScrollToHash() {
   const { pathname, hash } = useLocation()
@@ -62,13 +62,8 @@ export function Footer() {
           </nav>
           <div className="ft-col">
             <h4>Contacto</h4>
-            <a href={hola()} target="_blank" rel="noopener noreferrer">WhatsApp {telefono()}</a>
-            <span>Inscripciones por WhatsApp</span>
+            <a href={hola()} target="_blank" rel="noopener noreferrer">Inscripciones por WhatsApp</a>
             <Link to="/contacto">Solicita información</Link>
-          </div>
-          <div className="ft-col">
-            <h4>Medios de pago</h4>
-            <span>Yape</span><span>Plin</span><span>Transferencia bancaria</span>
           </div>
           <div className="ft-col">
             <h4>Con el respaldo de</h4>
@@ -77,7 +72,7 @@ export function Footer() {
         </div>
         <div className="ft-base">
           <span>© {new Date().getFullYear()} CCN · Centro de Capacitación &amp; Negocios</span>
-          <span className="ft-legal"><span>Términos y condiciones</span><span>Política de compras</span><span>Libro de reclamaciones</span></span>
+          <span className="ft-legal"><Link to="/terminos">Términos y condiciones</Link><span>Política de compras</span></span>
           <span className="powered">Powered by <b>Bro Engineering</b></span>
         </div>
       </div></footer>

@@ -529,7 +529,7 @@ header .logo{flex:none}
 :root[data-theme="dark"] .faq summary{color:#fff}:root[data-theme="dark"] .faq .fq-i::before,:root[data-theme="dark"] .faq .fq-i::after{background:#fff}
 
 footer{padding-block:56px 0}
-.ft{display:grid;grid-template-columns:1.5fr 1fr 1.2fr 1fr 1.1fr;gap:32px 40px;align-items:start;padding-bottom:40px}
+.ft{display:grid;grid-template-columns:1.6fr 1fr 1.2fr 1.1fr;gap:32px 40px;align-items:start;padding-bottom:40px}
 .ft-marca .lg{height:auto;width:200px}
 .ft-marca p{margin:16px 0 0;font-size:.88rem;line-height:1.6;opacity:.75;max-width:30ch}
 .ft-col{display:flex;flex-direction:column;gap:10px;font-size:.92rem}
@@ -546,3 +546,11 @@ footer{padding-block:56px 0}
 @media(max-width:620px){.ft{grid-template-columns:1fr 1fr}.ft-base{flex-direction:column;align-items:flex-start}}
 .faq summary::after,.faq details[open] summary::after{content:none;display:none}
 .faq summary{grid-template-columns:34px 1fr 26px}
+/* v15 · términos y condiciones */
+.ft-legal a{color:inherit;text-decoration:none}
+.ft-legal a:hover{color:#fff;text-decoration:underline;text-underline-offset:3px}
+.tc{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:14px;max-width:860px}
+.tc li{display:flex;gap:18px;align-items:flex-start;padding:20px 22px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:16px}
+.tc-n{flex:none;font-family:var(--f-display);font-weight:800;font-size:.95rem;color:var(--teal);min-width:28px;padding-top:2px}
+.tc li p{margin:0;line-height:1.6}
+@media(max-width:620px){.tc li{padding:16px;gap:12px}}

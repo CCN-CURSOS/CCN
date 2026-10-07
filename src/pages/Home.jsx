@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { loadCatalog, destacados } from '../lib/data.js'
 import CourseCard from '../components/CourseCard.jsx'
 import { Header, Footer } from '../components/Layout.jsx'
-import { SeccionComo, SeccionHorarios, SeccionPreguntas, SeccionContacto, SeccionHerramientas } from '../components/Secciones.jsx'
+import { SeccionComo, SeccionPreguntas, SeccionContacto, SeccionHerramientas } from '../components/Secciones.jsx'
 
 export default function Home() {
   const [data, setData] = useState({ cursos: [], grupos: [] })
@@ -59,7 +59,6 @@ export default function Home() {
         </div></section>
 
         <SeccionComo />
-        <SeccionHorarios cursos={cursos} grupos={grupos} />
         <SeccionPreguntas />
         <SeccionContacto cursos={cursos} />
         <SeccionHerramientas />

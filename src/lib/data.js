@@ -15,7 +15,7 @@ export const telefono = () => {
 }
 
 /* Los que van en la página principal: los marcados como "En inicio" (máximo 5) */
-export const MAX_INICIO = 5
+export const MAX_INICIO = 3
 export function destacados(cursos) {
   const marcados = cursos.filter((c) => c.destacado)
   return (marcados.length ? marcados : cursos).slice(0, MAX_INICIO)
