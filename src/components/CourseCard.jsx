@@ -53,7 +53,7 @@ export default function CourseCard({ c, grupo }) {
             {abierto ? 'Cerrar' : 'Saber más'}
           </button>
           <a className="btn btn-wa" href={wa(msg)} target="_blank" rel="noopener noreferrer">
-            {lleno ? 'Lista de espera' : 'Quiero comprar'}
+            {lleno ? 'Lista de espera' : 'Quiero inscribirme'}
           </a>
         </div>
       </div>
