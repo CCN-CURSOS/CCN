@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { loadCatalog } from '../lib/data.js'
 import { Header, Footer } from '../components/Layout.jsx'
-import { SeccionComo, SeccionHorarios, SeccionPreguntas, SeccionContacto } from '../components/Secciones.jsx'
+import { SeccionComo, SeccionModalidades, SeccionRuta, SeccionCta, SeccionHorarios, SeccionPreguntas, SeccionContacto } from '../components/Secciones.jsx'
 
 function usarCatalogo() {
   const [data, setData] = useState({ cursos: [], grupos: [] })
@@ -21,7 +21,7 @@ function Pagina({ titulo, children }) {
 }
 
 export function PaginaComo() {
-  return <Pagina titulo="Cómo aprendes"><SeccionComo /></Pagina>
+  return <Pagina titulo="Cómo aprendes"><SeccionModalidades /><SeccionComo /><SeccionRuta /><SeccionCta /></Pagina>
 }
 export function PaginaHorarios() {
   const { cursos, grupos } = usarCatalogo()

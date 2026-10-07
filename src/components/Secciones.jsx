@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { wa, fechaCorta, COLORES } from '../lib/data.js'
 
 // Herramientas con las que se trabaja. Los logos son los archivos oficiales de cada marca,
@@ -49,6 +50,8 @@ const WHY = [
   ['Proyecto real de tu propio negocio en cada curso', <><rect x="8" y="8" width="32" height="32" rx="3" /><path d="M15 18h18M15 25h18" stroke="var(--teal)" /><path d="M15 32h10" /></>],
   ['Nivel extra CCN: temas que otros cursos no enseñan', <>{[0, 1, 2, 3, 4].map((i) => <path key={i} d={estrella(11 + i * 22, 24, 10, 4.2)} fill="var(--teal)" stroke="var(--teal)" strokeWidth="1" />)}</>, 110],
   ['Reto de 7 días y ruta para seguir aprendiendo', <><path d="M8 36l10-10 8 8 14-18" stroke="var(--teal)" /><path d="M30 16h10v10" /></>],
+  ['Profesores capacitados que te guían paso a paso', <><circle cx="24" cy="15" r="7" /><path d="M10 40c1-8 7-12 14-12s13 4 14 12" stroke="var(--teal)" /></>],
+  ['Más de la mitad de cada clase es práctica', <><path d="M10 14l-4 10 4 10M38 14l4 10-4 10" /><path d="M20 36l8-24" stroke="var(--teal)" /></>],
   ['Certificado al terminar el curso', <><rect x="7" y="9" width="34" height="24" rx="2" /><path d="M14 17h20M14 23h12" stroke="var(--teal)" /><circle cx="33" cy="35" r="5" /><path d="M30 39l-2 6 5-3 5 3-2-6" /></>],
 ]
 
@@ -150,6 +153,68 @@ export function SeccionHerramientas() {
       <ul className="herr-lista">
         {HERRAMIENTAS.map(([nombre, archivo]) => <Herramienta key={archivo} nombre={nombre} archivo={archivo} />)}
       </ul>
+    </div></section>
+  )
+}
+
+/* ---------- Página "Cómo aprendes": modalidades, ruta del alumno y llamado final ---------- */
+const MODALIDADES = [
+  ['Online en vivo', 'Clases virtuales en vivo, junto al instructor, con ejercicios aplicados a tu propio negocio.',
+    <><rect x="6" y="9" width="36" height="25" rx="3" /><path d="M16 42h16M24 34v8" /><path d="M20 17l9 5-9 5z" stroke="var(--teal)" /></>],
+  ['Presenciales', 'Cursos en aula, con práctica guiada y contacto directo con el instructor y tus compañeros.',
+    <><path d="M6 40V18l18-10 18 10v22" /><path d="M6 40h36" /><rect x="19" y="26" width="10" height="14" stroke="var(--teal)" /></>],
+  ['Mentorías', 'Acompañamiento personalizado para aplicar lo aprendido en tu negocio y resolver tus dudas con un especialista.',
+    <><circle cx="17" cy="17" r="6" /><circle cx="33" cy="19" r="5" stroke="var(--teal)" /><path d="M6 38c1-7 5-10 11-10s10 3 11 10M30 29c6 0 10 3 12 9" /></>],
+]
+
+export function SeccionModalidades() {
+  return (
+    <section className="mods" id="modalidades"><div className="wrap">
+      <div className="head"><span className="eyebrow">Cómo aprendes</span><h2>Aprende de la forma que mejor te acomode</h2><p>Capacitaciones pensadas para que lo aprendido se use desde la primera semana.</p></div>
+      <div className="mod-grid">
+        {MODALIDADES.map(([t, p, svg]) => (
+          <article className="mod" key={t}>
+            <span className="mod-ico"><Big>{svg}</Big></span>
+            <h3>{t}</h3>
+            <p>{p}</p>
+          </article>
+        ))}
+      </div>
+    </div></section>
+  )
+}
+
+const RUTA = [
+  ['Elige tu curso', 'Revisa el catálogo y escoge el tema que necesitas para tu negocio.'],
+  ['Escríbenos por WhatsApp', 'La inscripción es solo por WhatsApp: te confirmamos fecha, horario y cómo reservar tu cupo.'],
+  ['Se completa el grupo', 'Cada curso abre con un mínimo de 10 inscritos. Te avisamos apenas haya fecha.'],
+  ['Aprende y aplica', 'Clases prácticas con tu propio proyecto y un reto de 7 días para seguir avanzando.'],
+  ['Recibe tu certificado', 'Al terminar el curso y presentar tu proyecto, te entregamos tu certificado de CCN.'],
+]
+
+export function SeccionRuta() {
+  return (
+    <section className="ruta-sec" id="ruta"><div className="wrap">
+      <div className="head"><span className="eyebrow">Tu camino</span><h2>Así empiezas con CCN</h2></div>
+      <ol className="ruta">
+        {RUTA.map(([t, p], i) => (
+          <li key={t}><span className="ruta-n">{i + 1}</span><h3>{t}</h3><p>{p}</p></li>
+        ))}
+      </ol>
+    </div></section>
+  )
+}
+
+export function SeccionCta() {
+  return (
+    <section className="cta-sec"><div className="wrap">
+      <div className="cta-band">
+        <div><h2>¿Listo para empezar?</h2><p>Escríbenos y te contamos qué curso te conviene.</p></div>
+        <div className="cta-btns">
+          <a className="btn btn-wa" href={wa('Hola, quiero información sobre los cursos de CCN')} target="_blank" rel="noopener noreferrer">Escríbenos por WhatsApp</a>
+          <Link className="btn btn-line" to="/cursos">Ver los cursos</Link>
+        </div>
+      </div>
     </div></section>
   )
 }
