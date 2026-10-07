@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { wa, fechaCorta } from '../lib/data.js'
 
 const Flecha = () => (
@@ -6,7 +6,6 @@ const Flecha = () => (
 )
 
 export default function CourseCard({ c, grupo }) {
-  const [abierto, setAbierto] = useState(false)
   const lleno = grupo?.estado === 'lleno'
   const msg = grupo
     ? `Hola, quiero ${lleno ? 'entrar a la lista de espera de' : 'inscribirme en'} ${c.titulo}`
@@ -28,27 +27,12 @@ export default function CourseCard({ c, grupo }) {
           {grupo?.inicio && <> · Inicio {fechaCorta(grupo.inicio)}</>}
         </p>
         <div className="cc-precio">
-          {c.precio_antes > c.precio && <span className="antes">Antes S/{c.precio_antes}</span>}
           <b>S/{c.precio}</b>
+          {c.precio_antes > c.precio && <><span className="antes">S/{c.precio_antes}</span><span className="dsct">-{Math.round((1 - c.precio / c.precio_antes) * 100)}%</span></>}
         </div>
 
-        {abierto && (
-          <div className="panel">
-            {c.descripcion && <p className="cc-desc">{c.descripcion}</p>}
-            {grupo && (grupo.dias || grupo.horario) && <p className="cc-desc"><b>Horario:</b> {[grupo.dias, grupo.horario].filter(Boolean).join(' · ')}</p>}
-            {grupo?.mostrar_inscritos && <p className="cc-desc"><b>Inscritos:</b> {grupo.inscritos}</p>}
-            <ul>
-              {(c.temario?.length ? c.temario : ['Temario en preparación']).map((t, i) => <li key={i}>{t}</li>)}
-              {c.extra && <li className="sep">Nivel extra CCN: {c.extra}</li>}
-              {c.programas && <li className="sep">Programas: {c.programas}</li>}
-            </ul>
-          </div>
-        )}
-
         <div className="cc-pie">
-          <button className="cc-ver" type="button" aria-expanded={abierto} onClick={() => setAbierto(!abierto)}>
-            {abierto ? 'Cerrar' : 'Ver detalle'}
-          </button>
+          <Link className="cc-ver" to={`/cursos/${c.id}`}>Saber más</Link>
           <a className="cc-ins" href={wa(msg)} target="_blank" rel="noopener noreferrer">
             {lleno ? 'LISTA DE ESPERA' : 'INSCRÍBETE'} <Flecha />
           </a>

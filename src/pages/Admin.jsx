@@ -136,8 +136,8 @@ function CursoForm({ inicial, total, enInicio, onSave, onClose }) {
       <section className="fs">
         <h3>Precio y duración</h3>
         <div className="g2">
-          <label>Precio (S/)<input id="c-precio" type="number" min="0" value={f.precio} onChange={(e) => set('precio', e.target.value)} /></label>
-          <label>Precio anterior (opcional)<input id="c-antes" type="number" min="0" value={f.precio_antes} onChange={(e) => set('precio_antes', e.target.value)} placeholder="Para mostrarlo tachado" /></label>
+          <label>Precio actual en S/ (con descuento)<input id="c-precio" type="number" min="0" value={f.precio} onChange={(e) => set('precio', e.target.value)} /></label>
+          <label>Precio real en S/ (se muestra tachado, opcional)<input id="c-antes" type="number" min="0" value={f.precio_antes} onChange={(e) => set('precio_antes', e.target.value)} placeholder="Ej. 510 · déjalo vacío si no hay descuento" /></label>
           <label>Horas<input id="c-horas" type="number" min="1" value={f.horas} onChange={(e) => set('horas', e.target.value)} /></label>
           <label>Sesiones<input id="c-ses" type="number" min="1" value={f.sesiones} onChange={(e) => set('sesiones', e.target.value)} /></label>
         </div>

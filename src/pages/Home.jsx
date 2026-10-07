@@ -47,7 +47,7 @@ export default function Home() {
         </div></div>
 
         <section id="cursos"><div className="wrap">
-          <div className="head"><span className="eyebrow">Catálogo</span><h2>Nuestros cursos, todos con proyecto real</h2><p>Elige el curso que necesitas e inscríbete por WhatsApp.</p></div>
+          <div className="head"><span className="eyebrow">Catálogo</span><h2>Elige el curso que necesitas</h2></div>
           {error && <p className="note">{error}</p>}
           <div className="grid">
             {destacados(cursos).map((c) => <CourseCard key={c.id} c={c} grupo={gruposDe(c.id)[0]} />)}
