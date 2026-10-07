@@ -555,7 +555,18 @@ function Panel({ email, onSalir }) {
   )
 }
 
-/* ================= LOGIN ================= */
+/* ================= ACCESO (login) ================= */
+function Acceso({ children }) {
+  return (
+    <div className="gate">
+      <Link className="logo gate-logo" to="/" aria-label="Ir al inicio de CCN">CC<i>N</i></Link>
+      <p className="gate-lema">Aprende. Aplica. Crece.</p>
+      <div className="gate-card">{children}</div>
+      <p className="gate-foot">Powered by <b>Bro Engineering</b></p>
+    </div>
+  )
+}
+
 function Login({ onOk }) {
   const [email, setEmail] = useState('')
   const [pass, setPass] = useState('')
@@ -569,16 +580,16 @@ function Login({ onOk }) {
     onOk()
   }
   return (
-    <div className="login">
-      <form className="card-a" onSubmit={entrar}>
-        <Link className="logo" to="/">CC<i>N</i></Link>
-        <h2>Panel de administración</h2>
-        <label>Correo<input id="email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>
-        <label>Contraseña<input id="pass" type="password" autoComplete="current-password" value={pass} onChange={(e) => setPass(e.target.value)} required /></label>
-        {err && <p className="err">{err}</p>}
-        <button className="btn btn-teal" disabled={busy}>{busy ? 'Entrando…' : 'Entrar'}</button>
+    <Acceso>
+      <form onSubmit={entrar}>
+        <h1 className="gate-h">Hola de nuevo</h1>
+        <p className="gate-sub">Entra a tu espacio CCN</p>
+        <label className="gate-l"><span>Correo</span><input id="email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>
+        <label className="gate-l"><span>Contraseña</span><input id="pass" type="password" autoComplete="current-password" value={pass} onChange={(e) => setPass(e.target.value)} required /></label>
+        {err && <p className="err gate-err" role="alert">{err}</p>}
+        <button className="btn btn-teal gate-btn" disabled={busy}>{busy ? 'Entrando…' : 'Entrar'}</button>
       </form>
-    </div>
+    </Acceso>
   )
 }
 
@@ -596,14 +607,14 @@ export default function Admin() {
   useEffect(() => { revisar() }, [])
   async function salir() { await supabase.auth.signOut(); setEstado('login'); setEmail('') }
 
-  if (estado === 'cargando') return <div className="login"><p className="note">Cargando…</p></div>
+  if (estado === 'cargando') return <Acceso><p className="gate-sub" style={{ margin: 0 }}>Cargando…</p></Acceso>
   if (estado === 'login') return <Login onOk={revisar} />
   if (estado === 'sinpermiso') return (
-    <div className="login"><div className="card-a">
-      <h2>Sin permiso</h2>
-      <p className="note">{email} no está en la lista de administradores.</p>
-      <button className="btn btn-line" onClick={salir}>Salir</button>
-    </div></div>
+    <Acceso>
+      <h1 className="gate-h">Sin acceso</h1>
+      <p className="gate-sub">{email} no tiene acceso a este espacio.</p>
+      <button className="btn btn-line gate-btn" onClick={salir}>Salir</button>
+    </Acceso>
   )
   return <Panel email={email} onSalir={salir} />
 }
