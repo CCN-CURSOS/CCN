@@ -554,3 +554,6 @@ footer{padding-block:56px 0}
 .tc-n{flex:none;font-family:var(--f-display);font-weight:800;font-size:.95rem;color:var(--teal);min-width:28px;padding-top:2px}
 .tc li p{margin:0;line-height:1.6}
 @media(max-width:620px){.tc li{padding:16px;gap:12px}}
+/* v16 · titular del hero más pequeño */
+.hero.hero-foto h1{font-size:clamp(1.8rem,4.4vw,3.2rem);line-height:1.12;margin-block:10px 14px}
+.hero.hero-foto p.lead{font-size:clamp(1rem,1.6vw,1.2rem)}

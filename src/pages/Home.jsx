@@ -31,8 +31,8 @@ export default function Home() {
       <main id="top">
         <div className={`hero ${foto ? 'hero-foto' : ''}`}><div className="wrap hero-grid">
           <div>
-            <h1>Aprende IA, web y ventas digitales. <em>Aplícalo en tu negocio.</em></h1>
-            <p className="lead">Cursos online en vivo, con proyecto real.</p>
+            <h1>Aprende IA, web y ventas digitales <em>y más.</em></h1>
+            <p className="lead">Capacitaciones, cursos online y presenciales.</p>
             <div className="cta-row">
               <Link className="btn btn-line" to="/cursos">Ver los cursos</Link>
             </div>
