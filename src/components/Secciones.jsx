@@ -12,6 +12,10 @@ const HERRAMIENTAS = [
   ['Gemini', 'gemini'],
   ['ChatGPT', 'chatgpt'],
   ['WhatsApp', 'whatsapp'],
+  ['GitHub', 'github'],
+  ['Vercel', 'vercel'],
+  ['Meta', 'meta'],
+  ['Google Sheets', 'sheets'],
 ]
 const FORMATOS = ['svg', 'png']
 
@@ -19,13 +23,9 @@ function Herramienta({ nombre, archivo }) {
   const [i, setI] = useState(0)
   const hayLogo = i < FORMATOS.length
   return (
-    <li className="herr-item">
-      {hayLogo && (
-        <span className="herr-logo">
-          <img src={`/logos/${archivo}.${FORMATOS[i]}`} alt="" loading="lazy" onError={() => setI(i + 1)} />
-        </span>
-      )}
-      <span className="herr-nombre">{nombre}</span>
+    <li className="herr-chip">
+      {hayLogo && <img src={`/logos/${archivo}.${FORMATOS[i]}`} alt="" loading="lazy" onError={() => setI(i + 1)} />}
+      <span>{nombre}</span>
     </li>
   )
 }
@@ -148,12 +148,18 @@ export function SeccionContacto({ cursos }) {
 export function SeccionHerramientas() {
   return (
     <section className="herr" aria-label="Herramientas con las que trabajamos"><div className="wrap">
-      <span className="eyebrow">Herramientas</span>
-      <h3>Con las que trabajamos</h3>
-      <ul className="herr-lista">
-        {HERRAMIENTAS.map(([nombre, archivo]) => <Herramienta key={archivo} nombre={nombre} archivo={archivo} />)}
-      </ul>
-    </div></section>
+      <span className="eyebrow">Herramientas con las que trabajamos</span>
+    </div>
+      <div className="herr-marq">
+        <div className="herr-track">
+          {[0, 1, 2, 3].map((k) => (
+            <ul className="herr-lista" key={k} aria-hidden={k > 0 ? 'true' : undefined}>
+              {HERRAMIENTAS.map(([nombre, archivo]) => <Herramienta key={archivo} nombre={nombre} archivo={archivo} />)}
+            </ul>
+          ))}
+        </div>
+      </div>
+    </section>
   )
 }
 

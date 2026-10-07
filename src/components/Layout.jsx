@@ -72,7 +72,7 @@ export function Footer() {
         </div>
         <div className="ft-base">
           <span>© {new Date().getFullYear()} CCN · Centro de Capacitación &amp; Negocios</span>
-          <span className="ft-legal"><Link to="/terminos">Términos y condiciones</Link><span>Política de compras</span></span>
+          <span className="ft-legal"><Link to="/terminos">Términos y condiciones</Link></span>
           <span className="powered">Powered by <b>Bro Engineering</b></span>
         </div>
       </div></footer>

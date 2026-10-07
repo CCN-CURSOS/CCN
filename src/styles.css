@@ -580,3 +580,34 @@ footer{padding-block:56px 0}
 .subpage .sched .wrap{grid-template-columns:1fr;gap:28px}
 .subpage .sched{padding-block:64px}
 @media(max-width:880px){nav{display:none}.bar .btn{padding:10px 16px}}
+/* v19 · herramientas: franja compacta con desplazamiento suave */
+.herr{padding-block:26px;text-align:center;border-block:1px solid var(--line)}
+.herr .eyebrow{display:block;margin-bottom:16px;font-size:.72rem}
+.herr-marq{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.herr-track{display:flex;width:max-content;animation:herr-scroll 38s linear infinite}
+.herr-marq:hover .herr-track{animation-play-state:paused}
+.herr-lista{flex:none;flex-wrap:nowrap;gap:12px;padding-right:12px;justify-content:flex-start}
+.herr-chip{display:flex;align-items:center;gap:9px;padding:8px 16px 8px 10px;background:var(--surface);border:1px solid var(--line);border-radius:999px;white-space:nowrap}
+.herr-chip img{width:24px;height:24px;object-fit:contain;display:block;background:#fff;border-radius:6px;padding:2px}
+.herr-chip span{font-size:.85rem;font-weight:700;color:var(--ink)}
+@keyframes herr-scroll{to{transform:translateX(-25%)}}
+@media(prefers-reduced-motion:reduce){
+  .herr-track{animation:none;width:auto;justify-content:center}
+  .herr-lista[aria-hidden]{display:none}
+  .herr-lista{flex-wrap:wrap;justify-content:center;padding:0 16px}
+}
+/* v20 · hero (solo computadora): texto más abajo y más a la izquierda */
+@media(min-width:1000px){
+  .hero.hero-foto{align-items:flex-end}
+  .hero.hero-foto .hero-grid{padding-block:72px 140px;transform:translateX(calc(-1 * clamp(0px,(100vw - 1200px) / 2 - 20px,110px)))}
+}
+/* v21 · base del footer con términos centrado */
+@media(min-width:621px){
+  .ft-base{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
+  .ft-base .ft-legal{justify-content:center}
+  .ft-base .powered{justify-self:end}
+}
+/* v22 · hero a pantalla completa en computadora (sin franja blanca debajo) */
+@media(min-width:1000px){
+  .hero.hero-foto{min-height:clamp(560px,calc(100vh - 82px),920px)}
+}
