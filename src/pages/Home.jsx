@@ -32,6 +32,17 @@ function Herramienta({ nombre, archivo }) {
   )
 }
 
+// Estrella de 5 puntas (centro cx,cy; radio exterior ro, interior ri)
+function estrella(cx, cy, ro, ri) {
+  const pts = []
+  for (let k = 0; k < 10; k++) {
+    const r = k % 2 === 0 ? ro : ri
+    const a = (-90 + k * 36) * (Math.PI / 180)
+    pts.push(`${(cx + r * Math.cos(a)).toFixed(2)} ${(cy + r * Math.sin(a)).toFixed(2)}`)
+  }
+  return `M${pts.join('L')}Z`
+}
+
 const Big = ({ children }) => (
   <svg viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
 )
@@ -39,7 +50,7 @@ const Big = ({ children }) => (
 const WHY = [
   ['Clases en vivo con el instructor', <><rect x="6" y="9" width="36" height="25" rx="3" /><path d="M16 42h16M24 34v8" /><circle cx="24" cy="19" r="4" stroke="var(--teal)" /><path d="M17 29c1-4 4-5 7-5s6 1 7 5" stroke="var(--teal)" /></>],
   ['Proyecto real de tu propio negocio en cada curso', <><rect x="8" y="8" width="32" height="32" rx="3" /><path d="M15 18h18M15 25h18" stroke="var(--teal)" /><path d="M15 32h10" /></>],
-  ['Nivel extra CCN: temas que otros cursos no enseñan', <path d="M24 6l5 11 12 1-9 8 3 12-11-6-11 6 3-12-9-8 12-1z" stroke="var(--teal)" />],
+  ['Nivel extra CCN: temas que otros cursos no enseñan', <>{[0, 1, 2, 3, 4].map((i) => <path key={i} d={estrella(5.4 + i * 9.3, 24, 4.4, 1.8)} fill="var(--teal)" stroke="var(--teal)" strokeWidth="0.6" />)}</>],
   ['Reto de 7 días y ruta para seguir aprendiendo', <><path d="M8 36l10-10 8 8 14-18" stroke="var(--teal)" /><path d="M30 16h10v10" /></>],
   ['Certificado al terminar el curso', <><rect x="7" y="9" width="34" height="24" rx="2" /><path d="M14 17h20M14 23h12" stroke="var(--teal)" /><circle cx="33" cy="35" r="5" /><path d="M30 39l-2 6 5-3 5 3-2-6" /></>],
 ]
@@ -80,8 +91,7 @@ export default function Home() {
             <h1>Aprende IA, web y ventas digitales. <em>Aplícalo en tu negocio.</em></h1>
             <p className="lead">Cursos online en vivo, con proyecto real.</p>
             <div className="cta-row">
-              <a className="btn btn-wa" href={wa('Hola, quiero que me avisen cuando abra el próximo curso de CCN')} target="_blank" rel="noopener noreferrer">Avísame cuando abra</a>
-              <a className="btn btn-line" href="#cursos">Ver los cursos</a>
+              <Link className="btn btn-line" to="/cursos">Ver los cursos</Link>
             </div>
           </div>
           <div className="stack" aria-hidden="true">
@@ -99,7 +109,10 @@ export default function Home() {
           <div className="grid">
             {destacados(cursos).map((c) => <CourseCard key={c.id} c={c} grupo={gruposDe(c.id)[0]} />)}
           </div>
-          <div className="more-row"><Link className="btn btn-line" to="/cursos">Ver todos los cursos</Link></div>
+          <Link className="more-box" to="/cursos">
+            <span>Ver todos los cursos</span>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </Link>
         </div></section>
 
         <section className="how" id="como"><div className="wrap">

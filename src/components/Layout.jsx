@@ -22,7 +22,7 @@ export function Header() {
       <div className="wrap bar">
         <Link className="logo" to="/" aria-label="CCN Centro de Capacitaciones y Negocios">CC<i>N</i></Link>
         <nav aria-label="Principal">
-          <Link to="/cursos">Cursos</Link><Link to="/#como">Cómo aprendes</Link><Link to="/#horarios">Horarios</Link><Link to="/#preguntas">Preguntas</Link><Link to="/#contacto">Escríbenos</Link>
+          <Link to="/cursos">Cursos</Link><Link to="/#como">Cómo aprendes</Link><Link to="/#horarios">Horarios</Link><Link to="/#preguntas">Preguntas</Link><Link to="/#contacto">Escríbenos</Link><Link to="/links">Links</Link>
         </nav>
         <div className="bar-r">
           <a className="btn btn-wa" href={hola()} target="_blank" rel="noopener noreferrer">WhatsApp</a>
@@ -45,7 +45,7 @@ export function Footer() {
           <div className="fcol"><small>Pagos</small><span>Yape · Plin · Transferencia bancaria</span></div>
           <div className="fcol"><small>Con el respaldo de</small><span className="backers"><b>Fidtail Perú</b><b>Bro Engineering</b></span></div>
         </div>
-        <p className="flinks"><Link to="/cursos">Cursos</Link><Link to="/#preguntas">Preguntas</Link><span>Términos y condiciones</span><span>Política de compras</span><span>Libro de reclamaciones</span></p>
+        <p className="flinks"><Link to="/cursos">Cursos</Link><Link to="/#preguntas">Preguntas</Link><Link to="/links">Links</Link><span>Términos y condiciones</span><span>Política de compras</span><span>Libro de reclamaciones</span></p>
         <p className="powered">Powered by <b>Bro Engineering</b></p>
       </div></footer>
       <a className="wa-float" href={hola()} target="_blank" rel="noopener noreferrer" aria-label="Escribir por WhatsApp">

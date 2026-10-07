@@ -2,29 +2,39 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { loadEnlaces, hrefEnlace, contarClic } from '../lib/data.js'
 
+const Flecha = () => (
+  <svg className="lk-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+)
+
 export default function Links() {
   const [items, setItems] = useState(null)
   useEffect(() => {
-    document.title = 'CCN · Enlaces'
+    document.title = 'CCN · Links'
     loadEnlaces().then(setItems).catch(() => setItems([]))
   }, [])
 
   return (
     <div className="lk">
       <main className="lk-in">
-        <div className="lk-logo" aria-label="CCN">CC<i>N</i></div>
+        <Link to="/" className="lk-avatar" aria-label="Ir al inicio de CCN">
+          <span className="lk-logo">CC<i>N</i></span>
+        </Link>
+        <h1 className="lk-nombre">CCN</h1>
         <p className="lk-tag">Centro de Capacitaciones y Negocios</p>
         <p className="lk-lema">APRENDE. APLICA. CRECE.</p>
 
         <nav className="lk-list" aria-label="Enlaces">
-          {items === null && <div className="lk-skel" />}
+          {items === null && <><div className="lk-skel" /><div className="lk-skel" /></>}
           {items?.map((e) => {
             const href = hrefEnlace(e)
             const interno = href.startsWith('/')
             const cuerpo = (
               <>
-                <b>{e.titulo}</b>
-                {e.subtitulo && <span>{e.subtitulo}</span>}
+                <span className="lk-txt">
+                  <b>{e.titulo}</b>
+                  {e.subtitulo && <small>{e.subtitulo}</small>}
+                </span>
+                <Flecha />
               </>
             )
             const cls = `lk-card ${e.destacado ? 'main' : ''}`
@@ -36,6 +46,8 @@ export default function Links() {
           })}
           {items?.length === 0 && <p className="lk-vacio">Pronto habrá enlaces aquí.</p>}
         </nav>
+
+        <Link to="/" className="lk-back">Ir a la web de CCN</Link>
 
         <div className="lk-foot">
           <span>© {new Date().getFullYear()} CCN</span>

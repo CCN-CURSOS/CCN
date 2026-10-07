@@ -364,22 +364,6 @@ section[id]{scroll-margin-top:72px}
 .usr:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
 
 /* ===== Página de enlaces (/links) ===== */
-.lk{min-height:100vh;background:#f4f1ec;color:#0F2547;display:flex;justify-content:center;padding:48px 16px 32px;font-family:'DM Sans',system-ui,sans-serif}
-.lk-in{width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center}
-.lk-logo{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:44px;letter-spacing:-1px;color:#0F2547;line-height:1}
-.lk-logo i{font-style:normal;color:#1FBFA8}
-.lk-tag{margin:10px 0 0;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#5b6a85;text-align:center}
-.lk-lema{margin:4px 0 28px;font-size:12px;letter-spacing:.14em;font-weight:700;color:#1FBFA8}
-.lk-list{width:100%;display:flex;flex-direction:column;gap:10px}
-.lk-card{display:flex;flex-direction:column;gap:6px;padding:18px 20px;background:#fff;border:1px solid #e6e1d8;border-radius:10px;text-decoration:none;color:#0F2547;transition:transform .15s,box-shadow .15s}
-.lk-card b{font-size:14px;letter-spacing:.06em;font-weight:700}
-.lk-card span{font-size:12px;color:#7a869c}
-.lk-card:hover,.lk-card:focus-visible{transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,37,71,.12)}
-.lk-card.main{background:#0F2547;border-color:#0F2547;color:#fff}
-.lk-card.main span{color:#b9c6df}
-.lk-skel{height:78px;border-radius:10px;background:#e9e5dd}
-.lk-vacio{text-align:center;color:#7a869c;font-size:14px}
-.lk-foot{margin-top:36px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:#98a1b3}
 .lk-adm{display:flex;flex-direction:column;gap:8px}
 .lk-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid #e3e8f0;border-radius:10px;padding:12px 14px}
 .lk-row .nm{flex:1;min-width:180px;display:flex;flex-direction:column;gap:2px}
@@ -387,3 +371,48 @@ section[id]{scroll-margin-top:72px}
 .lk-row.off{opacity:.55}
 .seg.two{grid-template-columns:repeat(2,1fr)}
 label.inl{display:flex;align-items:center;gap:10px;flex-direction:row}
+
+/* ===== Ajustes de inicio y cursos (v7) ===== */
+/* Tarjetas de curso un poco más pequeñas; la última fila queda centrada */
+.grid{display:flex;flex-wrap:wrap;justify-content:center;gap:20px}
+.grid .course{flex:0 1 300px;width:300px;max-width:100%}
+.cover{min-height:150px;padding:20px 18px 16px;gap:14px}
+.cover h3{font-size:1.35rem}
+.body{padding:16px 18px 18px;gap:12px}
+.body p{font-size:.9rem}
+.rows{gap:8px}
+.rows div{font-size:.88rem}
+.rows .inv{font-size:1.35rem}
+/* Botones de la tarjeta: texto centrado, aunque pase a dos líneas */
+.two .btn{justify-content:center;text-align:center;line-height:1.2;padding:11px 8px;font-size:.82rem}
+/* Box "Ver todos los cursos" */
+.more-box{display:flex;align-items:center;justify-content:center;gap:12px;margin:26px auto 0;max-width:640px;padding:20px 24px;border:2px solid var(--ink);border-radius:20px;background:var(--surface);color:var(--ink);font-family:var(--f-display);font-weight:800;font-size:1.15rem;text-decoration:none;transition:transform .2s,box-shadow .2s,border-color .2s}
+.more-box:hover,.more-box:focus-visible{transform:translateY(-2px);border-color:var(--teal);box-shadow:0 10px 24px -14px rgba(15,37,71,.45)}
+.more-box:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+
+/* ===== Página Links (/links), estilo Beacons con la marca CCN ===== */
+.lk{min-height:100vh;background:radial-gradient(120% 70% at 50% 0%,#1d4a86 0%,#0F2547 55%,#0a1a36 100%);color:#fff;display:flex;justify-content:center;padding:44px 16px 32px;font-family:'DM Sans',system-ui,sans-serif}
+.lk-in{width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center}
+.lk-avatar{display:grid;place-items:center;width:104px;height:104px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(31,191,168,.55),0 16px 34px -12px rgba(0,0,0,.55);text-decoration:none}
+.lk-logo{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:38px;letter-spacing:-1px;color:#0F2547;line-height:1}
+.lk-logo i{font-style:normal;color:#1FBFA8}
+.lk-nombre{margin:18px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-size:1.6rem;font-weight:800;letter-spacing:-.01em;color:#fff}
+.lk-tag{margin:4px 0 0;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b9c6df;text-align:center}
+.lk-lema{margin:6px 0 26px;font-size:12px;letter-spacing:.14em;font-weight:700;color:#1FBFA8}
+.lk-list{width:100%;display:flex;flex-direction:column;gap:12px}
+.lk-card{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;background:#fff;border:2px solid transparent;border-radius:16px;text-decoration:none;color:#0F2547;box-shadow:0 10px 22px -14px rgba(0,0,0,.6);transition:transform .15s,box-shadow .15s}
+.lk-txt{display:flex;flex-direction:column;gap:3px;flex:1;text-align:center}
+.lk-card b{font-size:14px;letter-spacing:.06em;font-weight:700}
+.lk-card small{font-size:12px;color:#5b6a85}
+.lk-arrow{flex:0 0 auto;opacity:.55}
+.lk-card:hover,.lk-card:focus-visible{transform:translateY(-3px);box-shadow:0 16px 28px -14px rgba(0,0,0,.7)}
+.lk-card:focus-visible{outline:3px solid #1FBFA8;outline-offset:3px}
+.lk-card.main{background:linear-gradient(135deg,#1FBFA8,#0E8F9A);color:#04211D}
+.lk-card.main small{color:#0a3b37}
+.lk-card.main .lk-arrow{opacity:.8}
+.lk-skel{height:64px;border-radius:16px;background:rgba(255,255,255,.12)}
+.lk-vacio{text-align:center;color:#b9c6df;font-size:14px}
+.lk-back{margin-top:22px;font-size:13px;color:#b9c6df;text-decoration:underline;text-underline-offset:3px}
+.lk-back:hover{color:#fff}
+.lk-foot{margin-top:30px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:#8da0c2}
+@media(prefers-reduced-motion:reduce){.lk-card,.more-box{transition:none}}
