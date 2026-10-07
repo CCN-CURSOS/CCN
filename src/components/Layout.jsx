@@ -43,7 +43,7 @@ export function Header() {
   return (
     <header>
       <div className="wrap bar">
-        <Link className="logo" to="/" aria-label="CCN Centro de Capacitación y Negocios"><Logo /></Link>
+        <Link className="logo" to="/" aria-label="CCN Centro de Capacitación y Negocios"><Logo completo /></Link>
         <nav aria-label="Principal">
           <Link to="/cursos">Cursos</Link><Link to="/como-aprendes">Cómo aprendes</Link><Link to="/horarios">Horarios</Link><Link to="/preguntas">Preguntas</Link><Link to="/terminos">Términos y condiciones</Link><Link to="/links">Links</Link>
         </nav>

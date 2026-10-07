@@ -677,3 +677,11 @@ section.contact{padding-block:36px 40px}
 .cifras li{display:flex;flex-direction:column;gap:2px}
 .cifras b{font-family:var(--f-display);font-weight:800;font-size:clamp(2rem,4vw,2.8rem);line-height:1;color:var(--ink)}
 .cifras span{font-size:.92rem;color:var(--muted)}
+/* v28 · encabezado con logo completo */
+.bar{padding-block:8px}
+.bar .lg{height:62px}
+@media(max-width:620px){.bar .lg{height:50px}}
+@media(min-width:1000px){.hero.hero-foto{min-height:clamp(560px,calc(100vh - 90px),920px)}}
+/* v29 · botón enviar apagado hasta aceptar el tratamiento de datos */
+.cbtn:disabled{background:#9aa6b2;opacity:.75;cursor:not-allowed;filter:none}
+.cbtn:disabled[aria-busy]{cursor:progress}

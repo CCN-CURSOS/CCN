@@ -18,14 +18,14 @@ const HERRAMIENTAS = [
   ['Google Sheets', 'sheets'],
   ['AutoCAD', 'autocad'],
   ['Figma', 'figma'],
-  ['Shopify', 'shopify'],
-  ['WordPress', 'wordpress'],
   ['Google Analytics', 'googleanalytics'],
   ['Google Ads', 'googleads'],
   ['Python', 'python'],
   ['n8n', 'n8n'],
   ['Zoom', 'zoom'],
   ['SketchUp', 'sketchup'],
+  ['Canva', 'canva'],
+  ['VS Code', 'vscode'],
 ]
 const FORMATOS = ['svg', 'png']
 
@@ -80,9 +80,10 @@ export function SeccionComo({ cursos = [], grupos = [] }) {
   const horas = cursos.reduce((t, c) => t + (Number(c.horas) || 0), 0)
   const inscritos = grupos.reduce((t, g) => t + (Number(g.inscritos) || 0), 0)
   const cifras = [
-    [String(HERRAMIENTAS.length), 'programas y herramientas'],
-    horas > 0 && [String(horas), 'horas de formación en vivo'],
-    inscritos >= 50 && ['+' + Math.floor(inscritos / 10) * 10, 'alumnos inscritos'],
+    ['+' + Math.floor(HERRAMIENTAS.length / 10) * 10, 'programas y herramientas'],
+    ['+100', 'estudiantes formados por nuestros profesores'],
+    horas > 0 && [String(horas), 'horas de formación en el catálogo'],
+    inscritos >= 50 && ['+' + Math.floor(inscritos / 10) * 10, 'inscritos en CCN'],
   ].filter(Boolean)
   return (
     <section className="how" id="como"><div className="wrap">
@@ -184,11 +185,11 @@ export function SeccionContacto({ cursos }) {
   }
   return (
     <section className="contact" id="contacto"><div className="wrap">
-      <div className="head cform-head"><span className="eyebrow">Contacto</span><h2>Solicita información</h2><p>Completa el formulario y un asesor de CCN se comunicará contigo.</p></div>
+      <div className="head cform-head"><span className="eyebrow">Contacto</span><h2>Solicita información</h2><p>Completa el formulario y un asesor educativo de CCN se comunicará contigo.</p></div>
       {estado === 'ok' ? (
         <div className="cform cform-ok" role="status">
           <h3>¡Gracias, {f.nombres.trim().split(' ')[0]}!</h3>
-          <p>Recibimos tu solicitud. Un asesor de CCN se comunicará contigo muy pronto.</p>
+          <p>Recibimos tu solicitud. Un asesor educativo de CCN se comunicará contigo muy pronto.</p>
           <button type="button" className="btn btn-line" onClick={() => { setF(FORM_VACIO); setErr({}); setEstado('') }}>Enviar otra solicitud</button>
         </div>
       ) : (
@@ -235,7 +236,7 @@ export function SeccionContacto({ cursos }) {
               <span>Autorizo el tratamiento de mis datos para recibir información sobre otros cursos y novedades de CCN.</span></label>
           </div>
           {estado === 'error' && <p className="cfull ferr big" role="alert">No pudimos enviar tu solicitud. Inténtalo de nuevo o escríbenos por <a href={wa('Hola, quiero información sobre los cursos de CCN')} target="_blank" rel="noopener noreferrer">WhatsApp</a>.</p>}
-          <button className="cfull cbtn" type="submit" disabled={estado === 'enviando'}>{estado === 'enviando' ? 'ENVIANDO…' : 'ENVIAR'}</button>
+          <button className="cfull cbtn" type="submit" disabled={estado === 'enviando' || !f.acepta_datos} title={f.acepta_datos ? '' : 'Marca la primera autorización para poder enviar'}>{estado === 'enviando' ? 'ENVIANDO…' : 'ENVIAR'}</button>
         </form>
       )}
     </div></section>
