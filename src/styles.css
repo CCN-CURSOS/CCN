@@ -575,3 +575,8 @@ footer{padding-block:56px 0}
 .cta-band .btn-line{border-color:#fff;color:#fff}
 .cta-band .btn-line:hover{background:#fff;color:#0F2547}
 @media(max-width:620px){.cta-band{padding:28px 22px}}
+/* v18 · horarios sin hueco blanco y tabla a todo el ancho */
+.subpage-osc{background:var(--band)}
+.subpage .sched .wrap{grid-template-columns:1fr;gap:28px}
+.subpage .sched{padding-block:64px}
+@media(max-width:880px){nav{display:none}.bar .btn{padding:10px 16px}}

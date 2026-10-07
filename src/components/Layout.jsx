@@ -34,7 +34,7 @@ export function Header() {
       <div className="wrap bar">
         <Link className="logo" to="/" aria-label="CCN Centro de Capacitación y Negocios"><Logo /></Link>
         <nav aria-label="Principal">
-          <Link to="/cursos">Cursos</Link><Link to="/como-aprendes">Cómo aprendes</Link><Link to="/horarios">Horarios</Link><Link to="/preguntas">Preguntas</Link><Link to="/contacto">Escríbenos</Link><Link to="/links">Links</Link>
+          <Link to="/cursos">Cursos</Link><Link to="/como-aprendes">Cómo aprendes</Link><Link to="/horarios">Horarios</Link><Link to="/preguntas">Preguntas</Link><Link to="/terminos">Términos y condiciones</Link><Link to="/links">Links</Link>
         </nav>
         <div className="bar-r">
           <a className="btn btn-wa" href={hola()} target="_blank" rel="noopener noreferrer">WhatsApp</a>
@@ -54,7 +54,7 @@ export function Footer() {
         <div className="ft">
           <div className="ft-marca">
             <Link className="logo" to="/" aria-label="CCN Centro de Capacitación y Negocios"><Logo fijo="oscuro" completo /></Link>
-            <p>Cursos online en vivo de IA, web y ventas digitales, con proyecto real.</p>
+            <p>Capacitaciones, cursos online y presenciales en IA, web, ventas digitales y más.</p>
           </div>
           <nav className="ft-col" aria-label="Explora">
             <h4>Explora</h4>

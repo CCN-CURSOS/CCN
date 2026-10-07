@@ -9,12 +9,12 @@ function usarCatalogo() {
   return data
 }
 
-function Pagina({ titulo, children }) {
+function Pagina({ titulo, children, oscuro }) {
   useEffect(() => { document.title = `CCN · ${titulo}` }, [titulo])
   return (
     <>
       <Header />
-      <main className="subpage">{children}</main>
+      <main className={`subpage${oscuro ? ' subpage-osc' : ''}`}>{children}</main>
       <Footer />
     </>
   )
@@ -25,7 +25,7 @@ export function PaginaComo() {
 }
 export function PaginaHorarios() {
   const { cursos, grupos } = usarCatalogo()
-  return <Pagina titulo="Horarios"><SeccionHorarios cursos={cursos} grupos={grupos} /></Pagina>
+  return <Pagina titulo="Horarios" oscuro><SeccionHorarios cursos={cursos} grupos={grupos} /></Pagina>
 }
 export function PaginaPreguntas() {
   return <Pagina titulo="Preguntas"><SeccionPreguntas /></Pagina>
