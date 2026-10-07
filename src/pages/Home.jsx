@@ -8,6 +8,14 @@ import { SeccionComo, SeccionHorarios, SeccionPreguntas, SeccionContacto, Seccio
 export default function Home() {
   const [data, setData] = useState({ cursos: [], grupos: [] })
   const [error, setError] = useState('')
+  const [foto, setFoto] = useState(false)
+
+  // Si existe /hero.jpg en public/, el inicio usa la foto grande; si no, las tarjetas de siempre.
+  useEffect(() => {
+    const img = new Image()
+    img.onload = () => setFoto(true)
+    img.src = '/hero.jpg'
+  }, [])
 
   useEffect(() => {
     loadCatalog().then(setData).catch(() => setError('No se pudo cargar el catálogo. Escríbenos por WhatsApp.'))
@@ -21,7 +29,7 @@ export default function Home() {
       <Header />
 
       <main id="top">
-        <div className="hero"><div className="wrap hero-grid">
+        <div className={`hero ${foto ? 'hero-foto' : ''}`}><div className="wrap hero-grid">
           <div>
             <h1>Aprende IA, web y ventas digitales. <em>Aplícalo en tu negocio.</em></h1>
             <p className="lead">Cursos online en vivo, con proyecto real.</p>
@@ -29,13 +37,13 @@ export default function Home() {
               <Link className="btn btn-line" to="/cursos">Ver los cursos</Link>
             </div>
           </div>
-          <div className="stack" aria-hidden="true">
+          {!foto && <div className="stack" aria-hidden="true">
             {destacados(cursos).slice(0, 3).map((c, i) => (
               <div key={c.id} className={`card c${i + 1}`} style={{ background: `var(--${c.color})` }}>
                 <small>{c.horas} H · ONLINE</small><b>{c.titulo.toUpperCase()}</b>
               </div>
             ))}
-          </div>
+          </div>}
         </div></div>
 
         <section id="cursos"><div className="wrap">

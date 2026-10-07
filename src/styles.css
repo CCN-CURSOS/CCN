@@ -482,3 +482,18 @@ header .logo{flex:none}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cc-titulo,:root:not([data-theme="light"]) .cc-ins{color:#fff}}
 :root[data-theme="dark"] .cc-titulo,:root[data-theme="dark"] .cc-ins{color:#fff}
 @media(max-width:560px){.grid .course.cc{flex-basis:100%;width:100%;max-width:420px}}
+
+/* v12: hero con foto de fondo (se activa solo si existe public/hero.jpg) */
+.hero.hero-foto{position:relative;padding-block:0;min-height:clamp(540px,80vh,780px);display:flex;align-items:center;color:#fff;
+  background:linear-gradient(90deg,rgba(6,14,36,.55) 0%,rgba(6,14,36,.32) 38%,rgba(6,14,36,0) 62%,rgba(6,14,36,0) 100%),url('/hero.jpg') center right/cover no-repeat}
+.hero.hero-foto .hero-grid{grid-template-columns:minmax(0,640px);padding-block:72px}
+.hero.hero-foto h1{color:#fff}
+.hero.hero-foto h1 em{background:linear-gradient(90deg,#1FBFA8,#7DE3D3);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero.hero-foto p.lead{color:rgba(255,255,255,.88)}
+.hero.hero-foto .btn-line{border-color:#fff;color:#fff}
+.hero.hero-foto .btn-line:hover{background:#fff;color:#0F2547}
+@media(max-width:860px){.hero.hero-foto{align-items:flex-end;min-height:680px;background:linear-gradient(180deg,rgba(6,14,36,.1) 0%,rgba(6,14,36,.25) 38%,rgba(6,14,36,.94) 82%),url('/hero.jpg') 76% top/cover no-repeat}.hero.hero-foto .hero-grid{padding-block:40px 44px}}
+
+.hero.hero-foto>.wrap{width:100%}
+.hero.hero-foto h1,.hero.hero-foto p.lead{text-shadow:0 2px 18px rgba(6,14,36,.55)}
+.hero.hero-foto h1 em{text-shadow:none;filter:drop-shadow(0 2px 10px rgba(6,14,36,.5))}
