@@ -104,20 +104,30 @@ export default function CursoDetalle() {
               </div>
             </div>
 
-            <aside className="cd-side">
+            <aside className="cd-side" style={{ top: alto + 96 }}>
               <div className="cd-box">
                 <div className="cd-precio">
                   <b>S/{curso.precio}</b>
                   {curso.precio_antes > curso.precio && <><span className="antes">S/{curso.precio_antes}</span><span className="dsct">-{Math.round((1 - curso.precio / curso.precio_antes) * 100)}% DSCT.</span></>}
                 </div>
                 <dl>
-                  <div><dt>Inicio</dt><dd>{grupo?.inicio ? fechaCorta(grupo.inicio) : 'Por confirmar'}</dd></div>
+                  {grupo?.inicio && <div><dt>Inicio</dt><dd>{fechaCorta(grupo.inicio)}</dd></div>}
                   {grupo && (grupo.dias || grupo.horario) && <div><dt>Horario</dt><dd>{[grupo.dias, grupo.horario].filter(Boolean).join(' · ')}</dd></div>}
                   <div><dt>Duración</dt><dd>{curso.horas} h · {curso.sesiones} sesiones</dd></div>
                   <div><dt>Modalidad</dt><dd>Online en vivo</dd></div>
                   {grupo?.mostrar_inscritos && <div><dt>Inscritos</dt><dd>{grupo.inscritos}</dd></div>}
                 </dl>
+                <h3 className="cd-inc">Qué incluye</h3>
+                <ul className="cd-incl">
+                  <li>Clases en vivo con el instructor</li>
+                  <li>Más de la mitad de cada clase es práctica</li>
+                  <li>Proyecto real de tu propio negocio</li>
+                  {curso.extra && <li>Nivel extra CCN</li>}
+                  <li>Reto de 7 días y ruta para seguir aprendiendo</li>
+                  <li>Certificado al terminar el curso</li>
+                </ul>
                 <a className="cd-btn" href={wa(msg)} target="_blank" rel="noopener noreferrer">{cta} <Flecha /></a>
+                <a className="cd-dudas" href={wa(`Hola, tengo una duda sobre el curso ${curso.titulo}`)} target="_blank" rel="noopener noreferrer">¿Tienes dudas? Escríbenos por WhatsApp</a>
                 <p className="cd-nota">La inscripción se realiza por WhatsApp.</p>
               </div>
             </aside>
