@@ -456,3 +456,9 @@ footer .lg{height:44px}
 .logo{flex:none}
 .lg{flex:none;height:40px;width:auto;max-width:none;min-width:0;object-fit:contain}
 header .logo{flex:none}
+
+/* v10: portada con imagen completa; el título va dentro del box, debajo de la imagen */
+.cover.con-imagen{aspect-ratio:16/9;min-height:0;padding:0;gap:0}
+.body .ctitulo{font-size:1.08rem;font-weight:800;line-height:1.25;color:var(--navy);margin:0 0 8px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .body .ctitulo{color:#fff}}
+:root[data-theme="dark"] .body .ctitulo{color:#fff}

@@ -12,18 +12,22 @@ export default function CourseCard({ c, grupo }) {
     ? `Hola, quiero ${lleno ? 'entrar a la lista de espera de' : 'inscribirme en'} ${c.titulo}`
     : `Hola, quiero información del curso ${c.titulo}`
   const fondo = c.imagen_url
-    ? { backgroundImage: `linear-gradient(180deg, rgba(8,16,40,.15) 0%, rgba(8,16,40,.78) 100%), url("${c.imagen_url}")`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    ? { backgroundImage: `url("${c.imagen_url}")`, backgroundSize: 'cover', backgroundPosition: 'center' }
     : { background: `var(--${c.color})` }
   return (
     <article className="course">
-      <div className="cover" style={fondo}>
-        <span className="chip">CURSO ONLINE</span>
-        <h3>{c.titulo}</h3>
-      </div>
+      {c.imagen_url ? (
+        <div className="cover con-imagen" style={fondo} role="img" aria-label={c.titulo} />
+      ) : (
+        <div className="cover" style={fondo}>
+          <h3>{c.titulo}</h3>
+        </div>
+      )}
       <div className="body">
+        {c.imagen_url && <h3 className="ctitulo">{c.titulo}</h3>}
         <p>{c.descripcion}</p>
         <dl className="rows">
-          <div><dt>Inicio:</dt><dd>{grupo?.inicio ? fechaCorta(grupo.inicio) : 'Próximamente'} <Ico><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></Ico></dd></div>
+          {grupo?.inicio && <div><dt>Inicio:</dt><dd>{grupo?.inicio ? fechaCorta(grupo.inicio) : 'Próximamente'} <Ico><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></Ico></dd></div>}
           {grupo && (grupo.dias || grupo.horario) && (
             <div><dt>Horario:</dt><dd>{[grupo.dias, grupo.horario].filter(Boolean).join(' · ')}</dd></div>
           )}
