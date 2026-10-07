@@ -11,6 +11,17 @@ export function ScrollToHash() {
     }
     window.scrollTo(0, 0)
   }, [pathname, hash])
+  // SEO: dirección canónica de cada página y /admin fuera de Google
+  useEffect(() => {
+    let link = document.querySelector('link[rel="canonical"]')
+    if (!link) { link = document.createElement('link'); link.rel = 'canonical'; document.head.appendChild(link) }
+    link.href = 'https://ccnperuacademy.com' + (pathname === '/' ? '' : pathname)
+    let rb = document.querySelector('meta[name="robots"]')
+    if (pathname.startsWith('/admin')) {
+      if (!rb) { rb = document.createElement('meta'); rb.name = 'robots'; document.head.appendChild(rb) }
+      rb.content = 'noindex, nofollow'
+    } else if (rb) rb.remove()
+  }, [pathname])
   return null
 }
 
@@ -72,7 +83,7 @@ export function Footer() {
         </div>
         <div className="ft-base">
           <span>© {new Date().getFullYear()} CCN · Centro de Capacitación &amp; Negocios</span>
-          <span className="ft-legal"><Link to="/terminos">Términos y condiciones</Link></span>
+          <span className="ft-legal"><Link to="/terminos">Términos y condiciones</Link><Link to="/privacidad">Política de privacidad</Link></span>
           <span className="powered">Powered by <b>Bro Engineering</b></span>
         </div>
       </div></footer>

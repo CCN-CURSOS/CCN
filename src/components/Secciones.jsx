@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { wa, fechaCorta, COLORES } from '../lib/data.js'
+import { wa, fechaCorta, COLORES, crearConsulta } from '../lib/data.js'
 
 // Herramientas con las que se trabaja. Los logos son los archivos oficiales de cada marca,
 // guardados en public/logos/ (ej. public/logos/notion.svg). Si el archivo no existe,
@@ -16,6 +16,16 @@ const HERRAMIENTAS = [
   ['Vercel', 'vercel'],
   ['Meta', 'meta'],
   ['Google Sheets', 'sheets'],
+  ['AutoCAD', 'autocad'],
+  ['Figma', 'figma'],
+  ['Shopify', 'shopify'],
+  ['WordPress', 'wordpress'],
+  ['Google Analytics', 'googleanalytics'],
+  ['Google Ads', 'googleads'],
+  ['Python', 'python'],
+  ['n8n', 'n8n'],
+  ['Zoom', 'zoom'],
+  ['SketchUp', 'sketchup'],
 ]
 const FORMATOS = ['svg', 'png']
 
@@ -119,36 +129,112 @@ export function SeccionPreguntas() {
   )
 }
 
+const FORM_VACIO = { nombres: '', apellido_paterno: '', apellido_materno: '', email: '', tipo_doc: 'DNI', documento: '', celular: '', modalidad: '', curso: '', otro_tema: '', acepta_datos: false, acepta_adicional: false, web: '' }
+
+function validar(f) {
+  const e = {}
+  const t = (v) => v.trim()
+  if (t(f.nombres).length < 2) e.nombres = 'Ingresa tus nombres'
+  if (t(f.apellido_paterno).length < 2) e.apellido_paterno = 'Ingresa tu apellido paterno'
+  if (t(f.apellido_materno).length < 2) e.apellido_materno = 'Ingresa tu apellido materno'
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(t(f.email))) e.email = 'Ingresa un correo válido'
+  const doc = t(f.documento)
+  if (f.tipo_doc === 'DNI' ? !/^\d{8}$/.test(doc) : !/^[A-Za-z0-9]{9,12}$/.test(doc)) e.documento = f.tipo_doc === 'DNI' ? 'El DNI tiene 8 dígitos' : 'Ingresa tu carné (9 a 12 caracteres)'
+  if (!/^\+?\d{9,15}$/.test(f.celular.replace(/[\s-]/g, ''))) e.celular = 'Ingresa un celular válido'
+  if (!f.modalidad) e.modalidad = 'Selecciona una modalidad'
+  if (!f.curso) e.curso = 'Selecciona un curso'
+  if (f.curso === 'Otro' && t(f.otro_tema).length < 3) e.otro_tema = 'Cuéntanos qué tema te interesa'
+  if (!f.acepta_datos) e.acepta_datos = 'Debes autorizar el tratamiento de tus datos'
+  return e
+}
+
 export function SeccionContacto({ cursos }) {
-  const [f, setF] = useState({ n: '', c: '', k: 'Aún no decido', o: '', m: '' })
-  const sendMsg = `Hola, soy ${f.n.trim() || '[mi nombre]'}. Me interesa: ${f.k === 'Otro' ? `otro tema${f.o.trim() ? ` (${f.o.trim()})` : ''}` : f.k}.${f.c.trim() ? ` Mi celular: ${f.c.trim()}.` : ''}${f.m.trim() ? ` ${f.m.trim()}` : ''}`
+  const [f, setF] = useState(FORM_VACIO)
+  const [err, setErr] = useState({})
+  const [estado, setEstado] = useState('') // '', 'enviando', 'ok', 'error'
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
+  const campo = (k, etiqueta, props = {}) => (
+    <label className={err[k] ? 'bad' : ''}>{etiqueta}
+      <input id={`f-${k}`} value={f[k]} onChange={set(k)} aria-invalid={Boolean(err[k])} {...props} />
+      {err[k] && <small className="ferr">{err[k]}</small>}
+    </label>
+  )
+  async function enviar(e) {
+    e.preventDefault()
+    if (f.web) return // trampa para robots
+    const v = validar(f)
+    setErr(v)
+    if (Object.keys(v).length) { document.getElementById(`f-${Object.keys(v)[0]}`)?.focus(); return }
+    setEstado('enviando')
+    try {
+      await crearConsulta({ ...f, nombres: f.nombres.trim(), apellido_paterno: f.apellido_paterno.trim(), apellido_materno: f.apellido_materno.trim(), email: f.email.trim().toLowerCase(), documento: f.documento.trim().toUpperCase(), celular: f.celular.replace(/[\s-]/g, ''), otro_tema: f.curso === 'Otro' ? f.otro_tema.trim() : '' })
+      setEstado('ok')
+    } catch (x) { setEstado('error') }
+  }
   return (
     <section className="contact" id="contacto"><div className="wrap">
-      <div className="head"><span className="eyebrow">Contacto</span><h2>Solicita información</h2><p>Déjanos tus datos y se abrirá WhatsApp con tu mensaje listo para enviar.</p></div>
-      <form className="form" onSubmit={(e) => e.preventDefault()}>
-        <label>Nombre completo<input id="n" autoComplete="name" placeholder="Tu nombre" value={f.n} onChange={(e) => setF({ ...f, n: e.target.value })} /></label>
-        <label>Celular<input id="c" inputMode="tel" autoComplete="tel" placeholder="9XX XXX XXX" value={f.c} onChange={(e) => setF({ ...f, c: e.target.value })} /></label>
-        <label className="full">Curso
-          <select id="k" value={f.k} onChange={(e) => setF({ ...f, k: e.target.value })}>
-            <option>Aún no decido</option>
-            {cursos.map((c) => <option key={c.id}>{c.titulo}</option>)}
-            <option>Otro</option>
-          </select>
-        </label>
-        {f.k === 'Otro' && (
-          <label className="full">¿Qué tema te interesa?<input id="o" placeholder="Cuéntanos qué te gustaría aprender" value={f.o} onChange={(e) => setF({ ...f, o: e.target.value })} /></label>
-        )}
-        <label className="full">Mensaje<textarea id="m" placeholder="¿Algo que quieras preguntar?" value={f.m} onChange={(e) => setF({ ...f, m: e.target.value })} /></label>
-        <div className="full"><a className="btn btn-wa" href={wa(sendMsg)} target="_blank" rel="noopener noreferrer">Enviar por WhatsApp</a></div>
-      </form>
+      <div className="head cform-head"><span className="eyebrow">Contacto</span><h2>Solicita información</h2><p>Completa el formulario y un asesor de CCN se comunicará contigo.</p></div>
+      {estado === 'ok' ? (
+        <div className="cform cform-ok" role="status">
+          <h3>¡Gracias, {f.nombres.trim().split(' ')[0]}!</h3>
+          <p>Recibimos tu solicitud. Un asesor de CCN se comunicará contigo muy pronto.</p>
+          <button type="button" className="btn btn-line" onClick={() => { setF(FORM_VACIO); setErr({}); setEstado('') }}>Enviar otra solicitud</button>
+        </div>
+      ) : (
+        <form className="cform" onSubmit={enviar} noValidate>
+          {campo('nombres', 'Nombres*', { autoComplete: 'given-name', placeholder: 'Nombres' })}
+          {campo('apellido_paterno', 'Apellido paterno*', { autoComplete: 'family-name', placeholder: 'Apellido paterno' })}
+          {campo('apellido_materno', 'Apellido materno*', { placeholder: 'Apellido materno' })}
+          {campo('email', 'Email*', { type: 'email', autoComplete: 'email', placeholder: 'Email' })}
+          <label className={err.documento ? 'bad' : ''}>Documento*
+            <span className="docgrp">
+              <select aria-label="Tipo de documento" value={f.tipo_doc} onChange={(e) => setF({ ...f, tipo_doc: e.target.value, documento: '' })}>
+                <option value="DNI">DNI</option>
+                <option value="CE">Carné de extranjería</option>
+              </select>
+              <input id="f-documento" value={f.documento} onChange={set('documento')} inputMode={f.tipo_doc === 'DNI' ? 'numeric' : 'text'} maxLength={f.tipo_doc === 'DNI' ? 8 : 12} placeholder={f.tipo_doc === 'DNI' ? 'N° de DNI' : 'N° de carné'} aria-invalid={Boolean(err.documento)} />
+            </span>
+            {err.documento && <small className="ferr">{err.documento}</small>}
+          </label>
+          {campo('celular', 'Celular*', { type: 'tel', inputMode: 'tel', autoComplete: 'tel', placeholder: 'Celular' })}
+          <label className={err.modalidad ? 'bad' : ''}>Modalidad*
+            <select id="f-modalidad" value={f.modalidad} onChange={set('modalidad')} aria-invalid={Boolean(err.modalidad)}>
+              <option value="">Selecciona</option>
+              <option>Online en vivo</option>
+              <option>Presencial</option>
+              <option>Aún no decido</option>
+            </select>
+            {err.modalidad && <small className="ferr">{err.modalidad}</small>}
+          </label>
+          <label className={err.curso ? 'bad' : ''}>Curso*
+            <select id="f-curso" value={f.curso} onChange={set('curso')} aria-invalid={Boolean(err.curso)}>
+              <option value="">Selecciona</option>
+              {cursos.map((c) => <option key={c.id}>{c.titulo}</option>)}
+              <option>Otro</option>
+            </select>
+            {err.curso && <small className="ferr">{err.curso}</small>}
+          </label>
+          {f.curso === 'Otro' && <div className="cfull">{campo('otro_tema', '¿Qué tema te interesa?*', { placeholder: 'Cuéntanos qué te gustaría aprender' })}</div>}
+          <input className="hp" tabIndex={-1} autoComplete="off" aria-hidden="true" name="web" value={f.web} onChange={set('web')} />
+          <div className="cfull cchecks">
+            <label className={`chk ${err.acepta_datos ? 'bad' : ''}`}><input type="checkbox" id="f-acepta_datos" checked={f.acepta_datos} onChange={set('acepta_datos')} />
+              <span>Autorizo el tratamiento de mis datos personales para atender mi solicitud, según los <Link to="/terminos">términos y condiciones</Link> y la <Link to="/privacidad">política de privacidad</Link>.*</span></label>
+            {err.acepta_datos && <small className="ferr">{err.acepta_datos}</small>}
+            <label className="chk"><input type="checkbox" checked={f.acepta_adicional} onChange={set('acepta_adicional')} />
+              <span>Autorizo el tratamiento de mis datos para recibir información sobre otros cursos y novedades de CCN.</span></label>
+          </div>
+          {estado === 'error' && <p className="cfull ferr big" role="alert">No pudimos enviar tu solicitud. Inténtalo de nuevo o escríbenos por <a href={wa('Hola, quiero información sobre los cursos de CCN')} target="_blank" rel="noopener noreferrer">WhatsApp</a>.</p>}
+          <button className="cfull cbtn" type="submit" disabled={estado === 'enviando'}>{estado === 'enviando' ? 'ENVIANDO…' : 'ENVIAR'}</button>
+        </form>
+      )}
     </div></section>
   )
 }
 
 export function SeccionHerramientas() {
   return (
-    <section className="herr" aria-label="Herramientas con las que trabajamos"><div className="wrap">
-      <span className="eyebrow">Herramientas con las que trabajamos</span>
+    <section className="herr" aria-label="Programas y herramientas que aprenderás en CCN"><div className="wrap">
+      <span className="eyebrow">Programas y herramientas que aprenderás en CCN</span>
     </div>
       <div className="herr-marq">
         <div className="herr-track">
@@ -193,7 +279,6 @@ export function SeccionModalidades() {
 const RUTA = [
   ['Elige tu curso', 'Revisa el catálogo y escoge el tema que necesitas para tu negocio.'],
   ['Escríbenos por WhatsApp', 'La inscripción es solo por WhatsApp: te confirmamos fecha, horario y cómo reservar tu cupo.'],
-  ['Se completa el grupo', 'Cada curso abre con un mínimo de 10 inscritos. Te avisamos apenas haya fecha.'],
   ['Aprende y aplica', 'Clases prácticas con tu propio proyecto y un reto de 7 días para seguir avanzando.'],
   ['Recibe tu certificado', 'Al terminar el curso y presentar tu proyecto, te entregamos tu certificado de CCN.'],
 ]

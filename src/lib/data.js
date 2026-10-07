@@ -96,9 +96,9 @@ const LS = 'ccn-demo-v1'
 const demoRead = () => {
   try {
     const raw = localStorage.getItem(LS)
-    if (raw) { const d = JSON.parse(raw); if (!d.enlaces) d.enlaces = SEED_ENLACES; return d }
+    if (raw) { const d = JSON.parse(raw); if (!d.enlaces) d.enlaces = SEED_ENLACES; if (!d.consultas) d.consultas = []; return d }
   } catch (e) { /* sin almacenamiento */ }
-  return { cursos: SEED_CURSOS, grupos: [], enlaces: SEED_ENLACES, ajustes: { whatsapp: WA_ENV } }
+  return { cursos: SEED_CURSOS, grupos: [], enlaces: SEED_ENLACES, consultas: [], ajustes: { whatsapp: WA_ENV } }
 }
 const demoWrite = (db) => { try { localStorage.setItem(LS, JSON.stringify(db)) } catch (e) { /* ignorar */ } }
 const uid = () => 'd' + Math.random().toString(36).slice(2, 10)
@@ -159,16 +159,61 @@ export async function contarClic(id) {
 /* ---------- Panel admin ---------- */
 export async function loadAll() {
   if (!hasBackend) { const db = demoRead(); return { ...db, ajustes: db.ajustes || { whatsapp: WA_ENV } } }
-  const [c, g, a, en] = await Promise.all([
+  const [c, g, a, en, co] = await Promise.all([
     supabase.from('cursos').select('*').order('orden'),
     supabase.from('grupos').select('*').order('inicio', { ascending: false }),
     supabase.from('ajustes').select('*'),
     supabase.from('enlaces').select('*').order('orden'),
+    supabase.from('consultas').select('*').order('creado', { ascending: false }),
   ])
   if (c.error) throw c.error
   if (g.error) throw g.error
   const ajustes = Object.fromEntries((a.data || []).map((x) => [x.clave, x.valor]))
-  return { cursos: c.data, grupos: g.data, enlaces: en.data || [], ajustes: { whatsapp: WA_ENV, ...ajustes } }
+  // Si la tabla "consultas" aún no existe en Supabase, el panel sigue funcionando (solo sin esa sección).
+  return { cursos: c.data, grupos: g.data, enlaces: en.data || [], consultas: co.error ? [] : (co.data || []), consultasError: co.error ? co.error.message : '', ajustes: { whatsapp: WA_ENV, ...ajustes } }
+}
+
+/* ---------- Solicitudes de información (formulario de la web) ---------- */
+export async function crearConsulta(c) {
+  const fila = {
+    nombres: c.nombres, apellido_paterno: c.apellido_paterno, apellido_materno: c.apellido_materno,
+    email: c.email, tipo_doc: c.tipo_doc, documento: c.documento, celular: c.celular,
+    modalidad: c.modalidad, curso: c.curso, otro_tema: c.otro_tema || '',
+    acepta_datos: true, acepta_adicional: Boolean(c.acepta_adicional), estado: 'nuevo',
+  }
+  if (!hasBackend) {
+    const db = demoRead()
+    db.consultas.unshift({ ...fila, id: uid(), creado: new Date().toISOString() })
+    demoWrite(db)
+    return
+  }
+  const { error } = await supabase.from('consultas').insert(fila)
+  if (error) throw error
+}
+
+export async function marcarConsulta(id, estado) {
+  if (!hasBackend) {
+    const db = demoRead(); const x = db.consultas.find((y) => y.id === id)
+    if (x) { x.estado = estado; demoWrite(db) }
+    return
+  }
+  const { error } = await supabase.from('consultas').update({ estado }).eq('id', id)
+  if (error) throw error
+}
+
+/* Excel: archivo CSV con tildes correctas (se abre directo en Excel) */
+export function consultasCSV(lista) {
+  const cab = ['Fecha', 'Hora', 'Nombres', 'Apellido paterno', 'Apellido materno', 'Email', 'Tipo de documento', 'N° de documento', 'Celular', 'Modalidad', 'Curso', 'Otro tema', 'Acepta información adicional', 'Estado']
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+  const filas = lista.map((x) => {
+    const d = x.creado ? new Date(x.creado) : null
+    return [
+      d ? d.toLocaleDateString('es-PE') : '', d ? d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }) : '',
+      x.nombres, x.apellido_paterno, x.apellido_materno, x.email, x.tipo_doc, x.documento, x.celular,
+      x.modalidad, x.curso, x.otro_tema, x.acepta_adicional ? 'Sí' : 'No', x.estado,
+    ]
+  })
+  return '﻿sep=,\r\n' + [cab, ...filas].map((f) => f.map(esc).join(',')).join('\r\n')
 }
 
 export async function saveAjuste(clave, valor) {
