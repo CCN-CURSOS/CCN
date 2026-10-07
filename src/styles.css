@@ -462,3 +462,23 @@ header .logo{flex:none}
 .body .ctitulo{font-size:1.08rem;font-weight:800;line-height:1.25;color:var(--navy);margin:0 0 8px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .body .ctitulo{color:#fff}}
 :root[data-theme="dark"] .body .ctitulo{color:#fff}
+
+/* v11: tarjeta de curso estilo catálogo (imagen arriba, ONLINE, título en mayúsculas, INSCRÍBETE →) */
+.grid .course.cc{flex:0 1 320px;width:320px;border-radius:18px;box-shadow:0 10px 30px -18px rgba(15,37,71,.35)}
+.cc-cover{position:relative;aspect-ratio:16/9;min-height:0;padding:0;display:block}
+.cc-badge{position:absolute;top:12px;left:12px;background:var(--teal);color:#06231F;font-weight:800;font-size:.8rem;letter-spacing:.04em;padding:6px 12px;border-radius:10px;line-height:1}
+.cc-sobre{position:absolute;left:18px;right:18px;bottom:16px;color:#fff;font-size:1.3rem;font-weight:800;line-height:1.15;margin:0}
+.cc-body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
+.cc-titulo{margin:0;font-size:.98rem;font-weight:800;line-height:1.3;text-transform:uppercase;letter-spacing:.01em;color:var(--navy)}
+.cc-meta{margin:0;color:var(--muted);font-size:.88rem}
+.cc-precio{display:flex;align-items:baseline;gap:8px}
+.cc-precio b{font-size:1.25rem;color:#0E8F7C}
+.cc-precio .antes{text-decoration:line-through;color:var(--muted);font-size:.82rem}
+.cc-desc{margin:6px 0 0;font-size:.9rem;color:var(--muted)}
+.cc-pie{margin-top:auto;padding-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cc-ver{border:0;background:none;font:inherit;font-size:.85rem;color:var(--muted);cursor:pointer;text-decoration:underline;padding:6px 0}
+.cc-ins{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:.92rem;letter-spacing:.03em;color:var(--navy);text-decoration:none}
+.cc-ins:hover{color:#0E8F7C}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cc-titulo,:root:not([data-theme="light"]) .cc-ins{color:#fff}}
+:root[data-theme="dark"] .cc-titulo,:root[data-theme="dark"] .cc-ins{color:#fff}
+@media(max-width:560px){.grid .course.cc{flex-basis:100%;width:100%;max-width:420px}}

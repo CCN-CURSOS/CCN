@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { wa, fechaCorta } from '../lib/data.js'
 
-const Ico = ({ children }) => (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
+const Flecha = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
 )
 
 export default function CourseCard({ c, grupo }) {
@@ -11,40 +11,32 @@ export default function CourseCard({ c, grupo }) {
   const msg = grupo
     ? `Hola, quiero ${lleno ? 'entrar a la lista de espera de' : 'inscribirme en'} ${c.titulo}`
     : `Hola, quiero información del curso ${c.titulo}`
-  const fondo = c.imagen_url
+  const conImagen = Boolean(c.imagen_url)
+  const fondo = conImagen
     ? { backgroundImage: `url("${c.imagen_url}")`, backgroundSize: 'cover', backgroundPosition: 'center' }
     : { background: `var(--${c.color})` }
   return (
-    <article className="course">
-      {c.imagen_url ? (
-        <div className="cover con-imagen" style={fondo} role="img" aria-label={c.titulo} />
-      ) : (
-        <div className="cover" style={fondo}>
-          <h3>{c.titulo}</h3>
+    <article className="course cc">
+      <div className={`cover cc-cover ${conImagen ? 'con-imagen' : ''}`} style={fondo} role={conImagen ? 'img' : undefined} aria-label={conImagen ? c.titulo : undefined}>
+        <span className="cc-badge">ONLINE</span>
+        {!conImagen && <h3 className="cc-sobre">{c.titulo}</h3>}
+      </div>
+      <div className="cc-body">
+        {conImagen && <h3 className="cc-titulo">{c.titulo}</h3>}
+        <p className="cc-meta">
+          {c.horas} h · {c.sesiones} sesiones
+          {grupo?.inicio && <> · Inicio {fechaCorta(grupo.inicio)}</>}
+        </p>
+        <div className="cc-precio">
+          {c.precio_antes > c.precio && <span className="antes">Antes S/{c.precio_antes}</span>}
+          <b>S/{c.precio}</b>
         </div>
-      )}
-      <div className="body">
-        {c.imagen_url && <h3 className="ctitulo">{c.titulo}</h3>}
-        <p>{c.descripcion}</p>
-        <dl className="rows">
-          {grupo?.inicio && <div><dt>Inicio:</dt><dd>{grupo?.inicio ? fechaCorta(grupo.inicio) : 'Próximamente'} <Ico><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></Ico></dd></div>}
-          {grupo && (grupo.dias || grupo.horario) && (
-            <div><dt>Horario:</dt><dd>{[grupo.dias, grupo.horario].filter(Boolean).join(' · ')}</dd></div>
-          )}
-          <div><dt>Duración:</dt><dd>{c.horas} h · {c.sesiones} sesiones <Ico><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></Ico></dd></div>
-          {grupo?.mostrar_inscritos && (
-            <div><dt>Inscritos:</dt><dd>{grupo.inscritos} de {grupo.minimo}</dd></div>
-          )}
-          <div>
-            <dt>Inversión:</dt>
-            <dd>
-              {c.precio_antes > c.precio && <span className="antes">Antes S/{c.precio_antes}</span>}
-              <span className="inv">S/{c.precio}</span>
-            </dd>
-          </div>
-        </dl>
+
         {abierto && (
           <div className="panel">
+            {c.descripcion && <p className="cc-desc">{c.descripcion}</p>}
+            {grupo && (grupo.dias || grupo.horario) && <p className="cc-desc"><b>Horario:</b> {[grupo.dias, grupo.horario].filter(Boolean).join(' · ')}</p>}
+            {grupo?.mostrar_inscritos && <p className="cc-desc"><b>Inscritos:</b> {grupo.inscritos} de {grupo.minimo}</p>}
             <ul>
               {(c.temario?.length ? c.temario : ['Temario en preparación']).map((t, i) => <li key={i}>{t}</li>)}
               {c.extra && <li className="sep">Nivel extra CCN: {c.extra}</li>}
@@ -52,12 +44,13 @@ export default function CourseCard({ c, grupo }) {
             </ul>
           </div>
         )}
-        <div className="two">
-          <button className="btn btn-line" type="button" aria-expanded={abierto} onClick={() => setAbierto(!abierto)}>
-            {abierto ? 'Cerrar' : 'Saber más'}
+
+        <div className="cc-pie">
+          <button className="cc-ver" type="button" aria-expanded={abierto} onClick={() => setAbierto(!abierto)}>
+            {abierto ? 'Cerrar' : 'Ver detalle'}
           </button>
-          <a className="btn btn-wa" href={wa(msg)} target="_blank" rel="noopener noreferrer">
-            {lleno ? 'Lista de espera' : 'Quiero inscribirme'}
+          <a className="cc-ins" href={wa(msg)} target="_blank" rel="noopener noreferrer">
+            {lleno ? 'LISTA DE ESPERA' : 'INSCRÍBETE'} <Flecha />
           </a>
         </div>
       </div>
