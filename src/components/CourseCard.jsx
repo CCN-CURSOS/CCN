@@ -36,7 +36,7 @@ export default function CourseCard({ c, grupo }) {
           <div className="panel">
             {c.descripcion && <p className="cc-desc">{c.descripcion}</p>}
             {grupo && (grupo.dias || grupo.horario) && <p className="cc-desc"><b>Horario:</b> {[grupo.dias, grupo.horario].filter(Boolean).join(' · ')}</p>}
-            {grupo?.mostrar_inscritos && <p className="cc-desc"><b>Inscritos:</b> {grupo.inscritos} de {grupo.minimo}</p>}
+            {grupo?.mostrar_inscritos && <p className="cc-desc"><b>Inscritos:</b> {grupo.inscritos}</p>}
             <ul>
               {(c.temario?.length ? c.temario : ['Temario en preparación']).map((t, i) => <li key={i}>{t}</li>)}
               {c.extra && <li className="sep">Nivel extra CCN: {c.extra}</li>}

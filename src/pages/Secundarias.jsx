@@ -21,7 +21,8 @@ function Pagina({ titulo, children, oscuro }) {
 }
 
 export function PaginaComo() {
-  return <Pagina titulo="Cómo aprendes"><SeccionModalidades /><SeccionComo /><SeccionRuta /><SeccionCta /></Pagina>
+  const { cursos, grupos } = usarCatalogo()
+  return <Pagina titulo="Cómo aprendes"><SeccionModalidades /><SeccionComo cursos={cursos} grupos={grupos} /><SeccionRuta /><SeccionCta /></Pagina>
 }
 export function PaginaHorarios() {
   const { cursos, grupos } = usarCatalogo()

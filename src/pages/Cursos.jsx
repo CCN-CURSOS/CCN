@@ -21,7 +21,7 @@ export default function Cursos() {
           <div className="head">
             <span className="eyebrow">Catálogo completo</span>
             <h1 style={{ fontSize: 'clamp(2rem,5vw,3.2rem)', fontWeight: 800 }}>Todos los cursos</h1>
-            <p>Cada curso abre cuando se completa el grupo. Te avisamos por WhatsApp apenas haya fecha.</p>
+            <p>Elige el curso que necesitas e inscríbete por WhatsApp.</p>
           </div>
         </div></div>
         <section style={{ paddingTop: 24 }}><div className="wrap">

@@ -70,18 +70,29 @@ const FAQ = [
   ['¿Cuáles son los medios de pago?', 'Aceptamos Yape, Plin y transferencia bancaria. Te enviaremos los datos de pago por WhatsApp una vez confirmada tu inscripción.'],
   ['¿Las clases son en vivo?', 'Sí. Las sesiones se dictan de forma virtual y en vivo, junto al instructor, y quedan grabadas para que puedas repasarlas.'],
   ['¿Se requiere experiencia previa?', 'No. Cada curso detalla sus requisitos, que por lo general se limitan a una laptop con conexión a internet.'],
-  ['¿Cuándo inicia el próximo grupo?', 'Cada curso inicia una vez completado el grupo. Escríbenos y te avisaremos con prioridad cuando haya fecha.'],
+  ['¿Cuándo inicia el próximo grupo?', 'Las fechas y los horarios de cada curso se publican en la web. Escríbenos y te informaremos las próximas fechas disponibles.'],
   ['¿Se entrega certificado?', 'Sí. Al finalizar el curso y presentar tu proyecto recibirás un certificado de CCN.'],
 ]
 
 /* ---------- Secciones reutilizables (inicio y páginas propias del menú) ---------- */
-export function SeccionComo() {
+export function SeccionComo({ cursos = [], grupos = [] }) {
+  // Cifras reales: salen del catálogo y de los grupos del panel, nunca se escriben a mano.
+  const horas = cursos.reduce((t, c) => t + (Number(c.horas) || 0), 0)
+  const inscritos = grupos.reduce((t, g) => t + (Number(g.inscritos) || 0), 0)
+  const cifras = [
+    [String(HERRAMIENTAS.length), 'programas y herramientas'],
+    horas > 0 && [String(horas), 'horas de formación en vivo'],
+    inscritos >= 50 && ['+' + Math.floor(inscritos / 10) * 10, 'alumnos inscritos'],
+  ].filter(Boolean)
   return (
     <section className="how" id="como"><div className="wrap">
       <h2 className="uline">¿Por qué elegirnos?</h2>
       <div className="whys">
         {WHY.map(([txt, svg, ancho]) => <div className="why" key={txt}><Big ancho={ancho}>{svg}</Big><p>{txt}</p></div>)}
       </div>
+      <ul className="cifras">
+        {cifras.map(([n, t]) => <li key={t}><b>{n}</b><span>{t}</span></li>)}
+      </ul>
     </div></section>
   )
 }
@@ -97,7 +108,7 @@ export function SeccionHorarios({ cursos, grupos }) {
       <div>
         <span className="eyebrow">Horarios</span>
         <h2>Elige el curso y organiza tu semana</h2>
-        <p style={{ marginTop: 14 }}>Cuando abra cada grupo, la fecha y el horario aparecen aquí. Si necesitas otro horario, escríbenos y te avisamos del próximo inicio.</p>
+        <p style={{ marginTop: 14 }}>La fecha y el horario de cada curso aparecen aquí. Si necesitas otro horario, escríbenos y te informamos las próximas fechas.</p>
         <a className="btn btn-wa" style={{ marginTop: 8 }} href={wa('Hola, quiero que me avisen los próximos horarios de CCN')} target="_blank" rel="noopener noreferrer">Reservar por WhatsApp</a>
       </div>
       <div className="tablebox"><table className="table">

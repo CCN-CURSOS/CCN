@@ -651,3 +651,29 @@ footer{padding-block:56px 0}
 .legal p:last-child{margin-bottom:0}
 .legal a{color:var(--ink)}
 .ft-legal{gap:6px 28px}
+/* v25 · hero: texto más abajo en computadora */
+@media(min-width:1000px){
+  .hero.hero-foto .hero-grid{padding-block:72px 56px}
+}
+/* v26 · formulario más compacto (que se vea completo en una pantalla) */
+section.contact{padding-block:36px 40px}
+.cform-head{gap:4px;margin-bottom:16px}
+.cform-head h2{font-size:clamp(1.4rem,3vw,1.8rem);margin:0}
+.cform-head p{font-size:.9rem}
+.cform{max-width:520px;gap:10px 12px;padding:18px 20px 18px;border-radius:12px}
+.cform label{font-size:.66rem;gap:4px}
+.cform input:not([type=checkbox]),.cform select{height:34px;padding:0 10px;font-size:.84rem;border-radius:5px}
+.cform .docgrp{gap:6px}
+.cform .ferr{font-size:.68rem}
+.cchecks{gap:6px;margin-top:2px}
+.cform .chk{font-size:.7rem;line-height:1.35;gap:8px}
+.cform .chk input{width:14px;height:14px;margin-top:1px}
+.cbtn{height:40px;font-size:.85rem}
+.cform-ok{padding:24px 20px}
+@media(max-width:620px){.cform{padding:16px 14px}}
+@media(max-width:620px){.cform input:not([type=checkbox]),.cform select{font-size:16px}}
+/* v27 · cifras reales */
+.cifras{list-style:none;margin:44px 0 0;padding:28px 0 0;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:24px 56px}
+.cifras li{display:flex;flex-direction:column;gap:2px}
+.cifras b{font-family:var(--f-display);font-weight:800;font-size:clamp(2rem,4vw,2.8rem);line-height:1;color:var(--ink)}
+.cifras span{font-size:.92rem;color:var(--muted)}
