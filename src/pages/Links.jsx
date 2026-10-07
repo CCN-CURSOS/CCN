@@ -16,11 +16,9 @@ export default function Links() {
   return (
     <div className="lk">
       <main className="lk-in">
-        <Link to="/" className="lk-avatar" aria-label="Ir al inicio de CCN">
-          <img className="lk-img" src="/logo.png" alt="CCN" />
+        <Link to="/" className="lk-logo-full" aria-label="Ir al inicio de CCN">
+          <img src="/logo-completo-blanco.png" alt="CCN Centro de Capacitación & Negocios" />
         </Link>
-        <h1 className="lk-nombre">CCN</h1>
-        <p className="lk-tag">CENTRO DE CAPACITACIÓN &amp; NEGOCIOS</p>
 
         <nav className="lk-list" aria-label="Enlaces">
           {items === null && <><div className="lk-skel" /><div className="lk-skel" /></>}
@@ -50,7 +48,7 @@ export default function Links() {
 
         <div className="lk-foot">
           <span>© {new Date().getFullYear()} CCN</span>
-          <span>Powered by Bro Engineering</span>
+          <span>Powered by <b>Bro Engineering</b></span>
         </div>
       </main>
     </div>

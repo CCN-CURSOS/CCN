@@ -31,8 +31,8 @@ export default function Cursos() {
           </div>
         </div></section>
         <div className="strip"><div className="wrap">
-          <h2>¿No encuentras lo que buscas?</h2>
-          <a className="btn btn-wa" href={wa('Hola, quiero proponer un curso para CCN')} target="_blank" rel="noopener noreferrer">Cuéntanos qué curso quieres</a>
+          <h2>¿Buscas otra capacitación?</h2>
+          <a className="btn btn-wa" href={wa('Hola, quisiera información sobre otra capacitación que no encuentro en CCN')} target="_blank" rel="noopener noreferrer">Consúltanos por WhatsApp</a>
         </div></div>
       </main>
       <Footer />

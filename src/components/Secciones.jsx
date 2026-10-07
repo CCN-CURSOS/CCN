@@ -53,12 +53,12 @@ const WHY = [
 ]
 
 const FAQ = [
-  ['¿Cómo me inscribo?', 'Escríbenos por WhatsApp con el curso que te interesa. Te confirmamos la fecha, el horario y cómo separar tu cupo.'],
-  ['¿Cómo pago?', 'Aceptamos Yape, Plin y transferencia bancaria. Te enviamos los datos por WhatsApp.'],
-  ['¿Las clases son en vivo?', 'Sí, son virtuales y en vivo con el instructor.'],
-  ['¿Necesito experiencia previa?', 'No. Cada curso indica sus requisitos, que casi siempre se reducen a una laptop con internet.'],
-  ['¿Cuándo abre el próximo grupo?', 'Cada curso abre cuando se completa el grupo. Escríbenos y te avisamos primero.'],
-  ['¿Recibo certificado?', 'Sí, al terminar el curso y presentar tu proyecto.'],
+  ['¿Cómo puedo inscribirme?', 'La inscripción se realiza únicamente por WhatsApp. Indícanos el curso de tu interés y te confirmaremos la fecha, el horario y el procedimiento para reservar tu cupo.'],
+  ['¿Cuáles son los medios de pago?', 'Aceptamos Yape, Plin y transferencia bancaria. Te enviaremos los datos de pago por WhatsApp una vez confirmada tu inscripción.'],
+  ['¿Las clases son en vivo?', 'Sí. Las sesiones se dictan de forma virtual y en vivo, junto al instructor, y quedan grabadas para que puedas repasarlas.'],
+  ['¿Se requiere experiencia previa?', 'No. Cada curso detalla sus requisitos, que por lo general se limitan a una laptop con conexión a internet.'],
+  ['¿Cuándo inicia el próximo grupo?', 'Cada curso inicia una vez completado el grupo. Escríbenos y te avisaremos con prioridad cuando haya fecha.'],
+  ['¿Se entrega certificado?', 'Sí. Al finalizar el curso y presentar tu proyecto recibirás un certificado de CCN.'],
 ]
 
 /* ---------- Secciones reutilizables (inicio y páginas propias del menú) ---------- */
@@ -108,20 +108,20 @@ export function SeccionHorarios({ cursos, grupos }) {
 export function SeccionPreguntas() {
   return (
     <section id="preguntas"><div className="wrap">
-      <div className="head"><span className="eyebrow">Preguntas frecuentes</span><h2>Lo que nos preguntan antes de inscribirse</h2></div>
+      <div className="head"><span className="eyebrow">Preguntas frecuentes</span><h2>Resolvemos tus dudas antes de inscribirte</h2></div>
       <div className="faq">
-        {FAQ.map(([q, a]) => <details key={q}><summary>{q}</summary><p>{a}</p></details>)}
+        {FAQ.map(([q, a], i) => <details key={q}><summary><span className="fq-n">{String(i + 1).padStart(2, '0')}</span><span className="fq-q">{q}</span><span className="fq-i" aria-hidden="true" /></summary><p>{a}</p></details>)}
       </div>
     </div></section>
   )
 }
 
 export function SeccionContacto({ cursos }) {
-  const [f, setF] = useState({ n: '', c: '', k: 'Aún no decido', m: '' })
-  const sendMsg = `Hola, soy ${f.n.trim() || '[mi nombre]'}. Me interesa: ${f.k}.${f.c.trim() ? ` Mi celular: ${f.c.trim()}.` : ''}${f.m.trim() ? ` ${f.m.trim()}` : ''}`
+  const [f, setF] = useState({ n: '', c: '', k: 'Aún no decido', o: '', m: '' })
+  const sendMsg = `Hola, soy ${f.n.trim() || '[mi nombre]'}. Me interesa: ${f.k === 'Otro' ? `otro tema${f.o.trim() ? ` (${f.o.trim()})` : ''}` : f.k}.${f.c.trim() ? ` Mi celular: ${f.c.trim()}.` : ''}${f.m.trim() ? ` ${f.m.trim()}` : ''}`
   return (
     <section className="contact" id="contacto"><div className="wrap">
-      <div className="head"><span className="eyebrow">Escríbenos</span><h2>Cuéntanos qué curso quieres</h2><p>Completa tus datos y se abre WhatsApp con el mensaje listo para enviar.</p></div>
+      <div className="head"><span className="eyebrow">Contacto</span><h2>Solicita información</h2><p>Déjanos tus datos y se abrirá WhatsApp con tu mensaje listo para enviar.</p></div>
       <form className="form" onSubmit={(e) => e.preventDefault()}>
         <label>Nombre completo<input id="n" autoComplete="name" placeholder="Tu nombre" value={f.n} onChange={(e) => setF({ ...f, n: e.target.value })} /></label>
         <label>Celular<input id="c" inputMode="tel" autoComplete="tel" placeholder="9XX XXX XXX" value={f.c} onChange={(e) => setF({ ...f, c: e.target.value })} /></label>
@@ -129,8 +129,12 @@ export function SeccionContacto({ cursos }) {
           <select id="k" value={f.k} onChange={(e) => setF({ ...f, k: e.target.value })}>
             <option>Aún no decido</option>
             {cursos.map((c) => <option key={c.id}>{c.titulo}</option>)}
+            <option>Otro</option>
           </select>
         </label>
+        {f.k === 'Otro' && (
+          <label className="full">¿Qué tema te interesa?<input id="o" placeholder="Cuéntanos qué te gustaría aprender" value={f.o} onChange={(e) => setF({ ...f, o: e.target.value })} /></label>
+        )}
         <label className="full">Mensaje<textarea id="m" placeholder="¿Algo que quieras preguntar?" value={f.m} onChange={(e) => setF({ ...f, m: e.target.value })} /></label>
         <div className="full"><a className="btn btn-wa" href={wa(sendMsg)} target="_blank" rel="noopener noreferrer">Enviar por WhatsApp</a></div>
       </form>
