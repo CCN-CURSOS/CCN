@@ -561,7 +561,6 @@ function Acceso({ children }) {
   return (
     <div className="gate">
       <Link className="logo gate-logo" to="/" aria-label="Ir al inicio de CCN"><Logo completo /></Link>
-      <p className="gate-lema">Aprende. Aplica. Crece.</p>
       <div className="gate-card">{children}</div>
       <p className="gate-foot">Powered by <b>Bro Engineering</b></p>
     </div>

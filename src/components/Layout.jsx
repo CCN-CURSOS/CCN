@@ -32,7 +32,7 @@ export function Header() {
   return (
     <header>
       <div className="wrap bar">
-        <Link className="logo" to="/" aria-label="CCN Centro de Capacitaciones y Negocios"><Logo /></Link>
+        <Link className="logo" to="/" aria-label="CCN Centro de Capacitación y Negocios"><Logo /></Link>
         <nav aria-label="Principal">
           <Link to="/cursos">Cursos</Link><Link to="/como-aprendes">Cómo aprendes</Link><Link to="/horarios">Horarios</Link><Link to="/preguntas">Preguntas</Link><Link to="/contacto">Escríbenos</Link><Link to="/links">Links</Link>
         </nav>
@@ -52,7 +52,7 @@ export function Footer() {
     <>
       <footer><div className="wrap">
         <div className="frow">
-          <div className="fbrand"><Link className="logo" to="/" aria-label="CCN"><Logo fijo="oscuro" /></Link><span>Aprende. Aplica. Crece.</span></div>
+          <div className="fbrand"><Link className="logo" to="/" aria-label="CCN"><Logo fijo="oscuro" /></Link><span>CENTRO DE CAPACITACIÓN &amp; NEGOCIOS</span></div>
           <div className="fcol"><small>Contacto</small><span>WhatsApp {telefono()}</span></div>
           <div className="fcol"><small>Pagos</small><span>Yape · Plin · Transferencia bancaria</span></div>
           <div className="fcol"><small>Con el respaldo de</small><span className="backers"><b>Fidtail Perú</b><b>Bro Engineering</b></span></div>

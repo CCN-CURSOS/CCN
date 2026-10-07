@@ -20,8 +20,7 @@ export default function Links() {
           <img className="lk-img" src="/logo.png" alt="CCN" />
         </Link>
         <h1 className="lk-nombre">CCN</h1>
-        <p className="lk-tag">Centro de Capacitaciones y Negocios</p>
-        <p className="lk-lema">APRENDE. APLICA. CRECE.</p>
+        <p className="lk-tag">CENTRO DE CAPACITACIÓN &amp; NEGOCIOS</p>
 
         <nav className="lk-list" aria-label="Enlaces">
           {items === null && <><div className="lk-skel" /><div className="lk-skel" /></>}

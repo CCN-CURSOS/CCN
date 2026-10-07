@@ -451,4 +451,8 @@ footer .lg{height:44px}
 .side .lg{height:38px}
 .gate-logo .lg{height:clamp(110px,22vw,150px)}
 .lk-img{width:78%;height:auto}
-@media(max-width:560px){.lg{height:34px}}
+
+/* logo estático: nunca se encoge ni se deforma */
+.logo{flex:none}
+.lg{flex:none;height:40px;width:auto;max-width:none;min-width:0;object-fit:contain}
+header .logo{flex:none}
