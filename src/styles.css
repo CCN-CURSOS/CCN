@@ -783,3 +783,10 @@ section{padding-block:64px}
 .cd-por{gap:18px}
 .cd-mas{margin-top:64px}
 @media(max-width:900px){.cd-portada{max-width:none}}
+/* v34 · celular: "¿Por qué elegirnos?" en 2 columnas más pequeñas */
+@media(max-width:620px){
+  .whys{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px}
+  .why{gap:8px}
+  .why svg{height:34px;width:auto;max-width:100%}
+  .why p{font-size:.86rem;line-height:1.35}
+}
