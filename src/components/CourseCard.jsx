@@ -29,8 +29,7 @@ export default function CourseCard({ c, grupo }) {
         </div>
 
         <div className="cc-pie">
-          <Link className="cc-ver" to={`/cursos/${c.id}`}>Saber más</Link>
-          <Link className="cc-ins" to={`/inscripcion/${c.id}`}>
+          <Link className="cc-ins" to={`/cursos/${c.id}`}>
             {lleno ? 'LISTA DE ESPERA' : 'INSCRÍBETE'} <Flecha />
           </Link>
         </div>

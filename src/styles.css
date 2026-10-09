@@ -799,3 +799,9 @@ section{padding-block:64px}
 .insc-curso span{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-ink);font-weight:800}
 .insc-curso b{font-size:1.05rem;text-transform:uppercase}
 .insc-curso small{color:var(--muted)}
+/* v36 · tarjeta con un solo botón */
+.cc-pie{justify-content:stretch}
+.cc-ins{width:100%;justify-content:center;background:var(--teal);color:#06231F;border-radius:999px;padding:12px 18px}
+.cc-ins:hover{color:#06231F;filter:brightness(.95)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cc-ins{color:#06231F}}
+:root[data-theme="dark"] .cc-ins{color:#06231F}
