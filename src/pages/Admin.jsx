@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Logo } from '../components/Layout.jsx'
 import {
-  hasBackend, supabase, loadAll, save, remove, saveAjuste, esAdmin, fechaCorta, subirImagen, telefono, setNumero, COLORES, MAX_INICIO, consultasCSV, marcarConsulta,
+  hasBackend, supabase, loadAll, save, remove, saveAjuste, esAdmin, fechaCorta, subirImagen, telefono, setNumero, COLORES, MAX_INICIO, consultasCSV, interesadosCSV, marcarConsulta,
 } from '../lib/data.js'
 
 /* ================= piezas pequeñas ================= */
@@ -471,35 +471,37 @@ function Enlaces({ data, hacer }) {
 }
 
 /* ================= CONSULTAS (formulario de la web) ================= */
-function Consultas({ data, hacer }) {
-  const lista = data.consultas || []
+function Consultas({ data, hacer, tabla = 'consultas' }) {
+  const esInt = tabla === 'interesados'
+  const lista = data[tabla] || []
+  const errTabla = esInt ? data.interesadosError : data.consultasError
   const [ver, setVer] = useState('todas')
   const [borrando, setBorrando] = useState(null)
   const nuevas = lista.filter((x) => x.estado === 'nuevo').length
   const mostrar = ver === 'nuevas' ? lista.filter((x) => x.estado === 'nuevo') : lista
   const bajar = () => {
-    const blob = new Blob([consultasCSV(lista)], { type: 'text/csv;charset=utf-8' })
+    const blob = new Blob([(esInt ? interesadosCSV : consultasCSV)(lista)], { type: 'text/csv;charset=utf-8' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
-    a.download = `consultas-ccn-${new Date().toISOString().slice(0, 10)}.csv`
+    a.download = `${tabla}-ccn-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(a.href)
   }
   const cuando = (iso) => iso ? new Date(iso).toLocaleString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''
   return (
     <>
-      <Seccion titulo="Consultas" ayuda="Aquí llegan las solicitudes del formulario de la web. Solo las ve el equipo de CCN. Puedes descargarlas en Excel.">
+      <Seccion titulo={esInt ? 'Interesados' : 'Consultas'} ayuda={esInt ? 'Aquí llegan las personas que se inscriben desde la página de cada curso (antes de seguir por WhatsApp). Solo las ve el equipo de CCN. Puedes descargarlas en Excel.' : 'Aquí llegan las solicitudes del formulario de la web. Solo las ve el equipo de CCN. Puedes descargarlas en Excel.'}>
         <button className="btn btn-line" onClick={() => setVer(ver === 'todas' ? 'nuevas' : 'todas')}>{ver === 'todas' ? `Ver solo nuevas (${nuevas})` : 'Ver todas'}</button>
         <button className="btn btn-teal" onClick={bajar} disabled={!lista.length}>Descargar Excel</button>
       </Seccion>
-      {data.consultasError && hasBackend && (
-        <p className="banner">Falta crear la tabla de consultas en Supabase (paso del SQL). Mensaje: {data.consultasError}</p>
+      {errTabla && hasBackend && (
+        <p className="banner">Falta crear la tabla de {esInt ? 'interesados' : 'consultas'} en Supabase (paso del SQL). Mensaje: {errTabla}</p>
       )}
-      {mostrar.length === 0 && !data.consultasError && <div className="vacio"><p>{lista.length ? 'No hay solicitudes nuevas.' : 'Aún no llega ninguna solicitud.'}</p></div>}
+      {mostrar.length === 0 && !errTabla && <div className="vacio"><p>{lista.length ? (esInt ? 'No hay interesados nuevos.' : 'No hay solicitudes nuevas.') : (esInt ? 'Aún no se inscribe nadie.' : 'Aún no llega ninguna solicitud.')}</p></div>}
       {mostrar.length > 0 && (
         <div className="cons-wrap">
           <table className="cons-table">
-            <thead><tr><th>Fecha</th><th>Nombre</th><th>Documento</th><th>Celular</th><th>Email</th><th>Modalidad</th><th>Curso</th><th>Atendida</th><th /></tr></thead>
+            <thead><tr><th>Fecha</th><th>Nombre</th><th>Documento</th><th>Celular</th><th>Email</th>{!esInt && <th>Modalidad</th>}<th>Curso</th><th>{esInt ? 'Contactado' : 'Atendida'}</th><th /></tr></thead>
             <tbody>
               {mostrar.map((x) => (
                 <tr key={x.id} className={x.estado === 'nuevo' ? 'nueva' : ''}>
@@ -508,9 +510,9 @@ function Consultas({ data, hacer }) {
                   <td>{x.tipo_doc} {x.documento}</td>
                   <td><a href={`https://wa.me/${String(x.celular).replace(/\D/g, '').replace(/^(\d{9})$/, '51$1')}`} target="_blank" rel="noopener noreferrer">{x.celular}</a></td>
                   <td>{x.email}</td>
-                  <td>{x.modalidad}</td>
-                  <td>{x.curso === 'Otro' ? `Otro: ${x.otro_tema}` : x.curso}</td>
-                  <td><Switch on={x.estado !== 'nuevo'} label={`Atendida: ${x.nombres}`} onChange={(v) => hacer(() => marcarConsulta(x.id, v ? 'atendida' : 'nuevo'), v ? 'Marcada como atendida' : 'Marcada como nueva')} /></td>
+                  {!esInt && <td>{x.modalidad}</td>}
+                  <td>{esInt ? <>{x.curso}{x.lista_espera && <> <b>(lista de espera)</b></>}</> : (x.curso === 'Otro' ? `Otro: ${x.otro_tema}` : x.curso)}</td>
+                  <td><Switch on={x.estado !== 'nuevo'} label={`Atendida: ${x.nombres}`} onChange={(v) => hacer(() => marcarConsulta(x.id, v ? 'atendida' : 'nuevo', tabla), v ? 'Marcado como atendido' : 'Marcado como nuevo')} /></td>
                   <td><button className="ib red" onClick={() => setBorrando(x)} aria-label="Borrar">🗑</button></td>
                 </tr>
               ))}
@@ -519,8 +521,8 @@ function Consultas({ data, hacer }) {
         </div>
       )}
       {borrando && (
-        <Confirmar texto={`¿Borrar la solicitud de ${borrando.nombres} ${borrando.apellido_paterno}?`} onNo={() => setBorrando(null)}
-          onSi={() => { const x = borrando; setBorrando(null); hacer(() => remove('consultas', x.id), 'Solicitud borrada') }} />
+        <Confirmar texto={`¿Borrar el registro de ${borrando.nombres} ${borrando.apellido_paterno}?`} onNo={() => setBorrando(null)}
+          onSi={() => { const x = borrando; setBorrando(null); hacer(() => remove(tabla, x.id), esInt ? 'Interesado borrado' : 'Solicitud borrada') }} />
       )}
     </>
   )
@@ -572,7 +574,7 @@ function Panel({ email, onSalir }) {
   }
   const abrirGrupo = (cursoId) => setGrupoForm({ curso_id: cursoId })
   const abiertos = data.grupos.filter((g) => g.estado === 'abierto' && g.activo).length
-  const items = [['cursos', 'Cursos', data.cursos.length], ['grupos', 'Horarios', abiertos], ['enlaces', 'Enlaces', (data.enlaces || []).length], ['consultas', 'Consultas', (data.consultas || []).filter((x) => x.estado === 'nuevo').length], ['ajustes', 'Ajustes', null]]
+  const items = [['cursos', 'Cursos', data.cursos.length], ['grupos', 'Horarios', abiertos], ['enlaces', 'Enlaces', (data.enlaces || []).length], ['interesados', 'Interesados', (data.interesados || []).filter((x) => x.estado === 'nuevo').length], ['consultas', 'Consultas', (data.consultas || []).filter((x) => x.estado === 'nuevo').length], ['ajustes', 'Ajustes', null]]
 
   return (
     <div className="shell">
@@ -601,6 +603,7 @@ function Panel({ email, onSalir }) {
         {tab === 'grupos' && <Grupos data={data} hacer={hacer} abrirGrupo={abrirGrupo} editarGrupo={setGrupoForm} />}
         {tab === 'enlaces' && <Enlaces data={data} hacer={hacer} />}
         {tab === 'consultas' && <Consultas data={data} hacer={hacer} />}
+        {tab === 'interesados' && <Consultas data={data} hacer={hacer} tabla="interesados" />}
         {tab === 'ajustes' && <Ajustes data={data} hacer={hacer} />}
       </main>
 

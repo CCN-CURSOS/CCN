@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { wa, fechaCorta } from '../lib/data.js'
+import { fechaCorta } from '../lib/data.js'
 
 const Flecha = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -7,9 +7,6 @@ const Flecha = () => (
 
 export default function CourseCard({ c, grupo }) {
   const lleno = grupo?.estado === 'lleno'
-  const msg = grupo
-    ? `Hola, quiero ${lleno ? 'entrar a la lista de espera de' : 'inscribirme en'} ${c.titulo}`
-    : `Hola, quiero información del curso ${c.titulo}`
   const conImagen = Boolean(c.imagen_url)
   const fondo = conImagen
     ? { backgroundImage: `url("${c.imagen_url}")`, backgroundSize: 'cover', backgroundPosition: 'center' }
@@ -33,9 +30,9 @@ export default function CourseCard({ c, grupo }) {
 
         <div className="cc-pie">
           <Link className="cc-ver" to={`/cursos/${c.id}`}>Saber más</Link>
-          <a className="cc-ins" href={wa(msg)} target="_blank" rel="noopener noreferrer">
+          <Link className="cc-ins" to={`/inscripcion/${c.id}`}>
             {lleno ? 'LISTA DE ESPERA' : 'INSCRÍBETE'} <Flecha />
-          </a>
+          </Link>
         </div>
       </div>
     </article>

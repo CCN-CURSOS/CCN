@@ -66,7 +66,7 @@ const WHY = [
 ]
 
 const FAQ = [
-  ['¿Cómo puedo inscribirme?', 'La inscripción se realiza únicamente por WhatsApp. Indícanos el curso de tu interés y te confirmaremos la fecha, el horario y el procedimiento para reservar tu cupo.'],
+  ['¿Cómo puedo inscribirme?', 'Elige tu curso, completa el formulario de inscripción en la web y te llevamos a WhatsApp, donde te confirmaremos la fecha, el horario y el procedimiento para reservar tu cupo.'],
   ['¿Cuáles son los medios de pago?', 'Aceptamos Yape, Plin y transferencia bancaria. Te enviaremos los datos de pago por WhatsApp una vez confirmada tu inscripción.'],
   ['¿Las clases son en vivo?', 'Sí. Las sesiones se dictan de forma virtual y en vivo, junto al instructor, y quedan grabadas para que puedas repasarlas.'],
   ['¿Se requiere experiencia previa?', 'No. Cada curso detalla sus requisitos, que por lo general se limitan a una laptop con conexión a internet.'],
@@ -140,9 +140,9 @@ export function SeccionPreguntas() {
   )
 }
 
-const FORM_VACIO = { nombres: '', apellido_paterno: '', apellido_materno: '', email: '', tipo_doc: 'DNI', documento: '', celular: '', modalidad: '', curso: '', otro_tema: '', acepta_datos: false, acepta_adicional: false, web: '' }
+export const FORM_VACIO = { nombres: '', apellido_paterno: '', apellido_materno: '', email: '', tipo_doc: 'DNI', documento: '', celular: '', modalidad: '', curso: '', otro_tema: '', acepta_datos: false, acepta_adicional: false, web: '' }
 
-function validar(f) {
+export function validar(f) {
   const e = {}
   const t = (v) => v.trim()
   if (t(f.nombres).length < 2) e.nombres = 'Ingresa tus nombres'
@@ -289,7 +289,7 @@ export function SeccionModalidades() {
 
 const RUTA = [
   ['Elige tu curso', 'Revisa el catálogo y escoge el tema que necesitas para tu negocio.'],
-  ['Escríbenos por WhatsApp', 'La inscripción es solo por WhatsApp: te confirmamos fecha, horario y cómo reservar tu cupo.'],
+  ['Inscríbete y escríbenos', 'Completa tu inscripción en la web y te llevamos a WhatsApp, donde te confirmamos fecha, horario y cómo reservar tu cupo.'],
   ['Aprende y aplica', 'Clases prácticas con tu propio proyecto y un reto de 7 días para seguir avanzando.'],
   ['Recibe tu certificado', 'Al terminar el curso y presentar tu proyecto, te entregamos tu certificado de CCN.'],
 ]

@@ -17,7 +17,7 @@ export function ScrollToHash() {
     if (!link) { link = document.createElement('link'); link.rel = 'canonical'; document.head.appendChild(link) }
     link.href = 'https://ccnperuacademy.com' + (pathname === '/' ? '' : pathname)
     let rb = document.querySelector('meta[name="robots"]')
-    if (pathname.startsWith('/admin')) {
+    if (pathname.startsWith('/admin') || pathname.startsWith('/inscripcion')) {
       if (!rb) { rb = document.createElement('meta'); rb.name = 'robots'; document.head.appendChild(rb) }
       rb.content = 'noindex, nofollow'
     } else if (rb) rb.remove()

@@ -43,9 +43,6 @@ export default function CursoDetalle() {
 
   const grupo = data.grupos.filter((g) => g.curso_id === curso.id).sort((a, b) => (a.inicio || '9999').localeCompare(b.inicio || '9999'))[0]
   const lleno = grupo?.estado === 'lleno'
-  const msg = grupo
-    ? `Hola, quiero ${lleno ? 'entrar a la lista de espera de' : 'inscribirme en'} ${curso.titulo}`
-    : `Hola, quiero información del curso ${curso.titulo}`
   const cta = lleno ? 'LISTA DE ESPERA' : 'INSCRÍBETE'
   const conImagen = Boolean(curso.imagen_url)
   const fondo = conImagen
@@ -62,7 +59,7 @@ export default function CursoDetalle() {
       <div className={`cd-bar ${barra ? 'on' : ''}`} style={{ top: alto }} aria-hidden={!barra}>
         <div className="wrap cd-bar-in">
           <div><b>{curso.titulo}</b><span>S/{curso.precio}{curso.precio_antes > curso.precio && <s>S/{curso.precio_antes}</s>}</span></div>
-          <a className="cd-btn" href={wa(msg)} target="_blank" rel="noopener noreferrer" tabIndex={barra ? 0 : -1}>{cta} <Flecha /></a>
+          <Link className="cd-btn" to={`/inscripcion/${curso.id}`} tabIndex={barra ? 0 : -1}>{cta} <Flecha /></Link>
         </div>
       </div>
       <main className="cd">
@@ -126,9 +123,9 @@ export default function CursoDetalle() {
                   <li>Reto de 7 días y ruta para seguir aprendiendo</li>
                   <li>Certificado al terminar el curso</li>
                 </ul>
-                <a className="cd-btn" href={wa(msg)} target="_blank" rel="noopener noreferrer">{cta} <Flecha /></a>
+                <Link className="cd-btn" to={`/inscripcion/${curso.id}`}>{cta} <Flecha /></Link>
                 <a className="cd-dudas" href={wa(`Hola, tengo una duda sobre el curso ${curso.titulo}`)} target="_blank" rel="noopener noreferrer">¿Tienes dudas? Escríbenos por WhatsApp</a>
-                <p className="cd-nota">La inscripción se realiza por WhatsApp.</p>
+                <p className="cd-nota">Completa tu inscripción y te llevamos a WhatsApp.</p>
               </div>
             </aside>
           </div>
