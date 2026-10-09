@@ -102,7 +102,7 @@ export default function Inscripcion() {
                 <span>Autorizo el tratamiento de mis datos para recibir información sobre otros cursos y novedades de CCN.</span></label>
             </div>
             {estado === 'error' && <p className="cfull ferr big" role="alert">No pudimos registrar tus datos. Inténtalo de nuevo o escríbenos directo por <a href={wa(`Hola, quiero inscribirme en el curso ${curso.titulo}`)} target="_blank" rel="noopener noreferrer">WhatsApp</a>.</p>}
-            <button className="cfull cbtn" type="submit" disabled={estado === 'enviando' || !f.acepta_datos} title={f.acepta_datos ? '' : 'Marca la primera autorización para poder enviar'}>{estado === 'enviando' ? 'ENVIANDO…' : 'ENVIAR E IR A WHATSAPP'}</button>
+            <button className="cfull cbtn" type="submit" disabled={estado === 'enviando' || !f.acepta_datos} title={f.acepta_datos ? '' : 'Marca la primera autorización para poder enviar'}>{estado === 'enviando' ? 'ENVIANDO…' : (lleno ? 'UNIRME A LA LISTA DE ESPERA' : 'INSCRIBIRME')}</button>
           </form>
         )}
       </div></main>
