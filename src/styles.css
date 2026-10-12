@@ -1272,3 +1272,39 @@ section{padding-block:64px}
 .shell .plant-grid+.note,.shell .cons-wrap+.note{margin:12px 0 4px}
 .shell .plant-grid~h3,.shell .cons-wrap+.note+h3{margin:22px 0 10px}
 .shell .cons-wrap{margin-bottom:6px}
+
+/* ===== Profesor: clases y asistencia ===== */
+.drawer.ancho{width:min(860px,100%)}
+.sub{font-size:1rem;margin:22px 0 8px}
+.sep{border:0;border-top:1px solid var(--line);margin:26px 0 6px}
+.vent{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.74rem;font-weight:700;background:var(--soft);color:var(--muted)}
+.vent.abierta{background:#DCFCE7;color:#166534}
+.vent.cerrada{background:var(--line);color:var(--muted)}
+.asis-aviso{border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:.88rem;margin-bottom:14px;background:var(--soft)}
+.asis-aviso.abierta{border-color:#86EFAC;background:#F0FDF4}
+.asis-aviso:empty{display:none}
+.asis-lista{display:grid;gap:8px;margin-top:12px}
+.asis-fila{display:grid;grid-template-columns:minmax(150px,1.1fr) 2fr auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--surface)}
+.asis-nom{display:grid}
+.asis-nom small{color:var(--muted);font-size:.74rem}
+.asis-est{margin:0}
+.asis-est button{padding:5px 10px;font-size:.8rem}
+.asis-est button.sel.presente{background:#22C55E;border-color:#22C55E;color:#052E16}
+.asis-est button.sel.tarde{background:#FACC15;border-color:#FACC15;color:#422006}
+.asis-est button.sel.falta{background:#F87171;border-color:#F87171;color:#450A0A}
+.asis-est button.sel.justificada{background:#93C5FD;border-color:#93C5FD;color:#172554}
+.asis-est button:disabled{cursor:default;opacity:.75}
+.asis-part{font-size:.84rem;white-space:nowrap}
+.asis-motivo{display:grid;gap:6px;margin-top:16px;font-weight:700;font-size:.86rem}
+.asis-motivo textarea{font:inherit;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);color:var(--ink)}
+.asis-hist{margin-top:14px;font-size:.84rem}
+.asis-hist ul{margin:6px 0 0;padding-left:18px;display:grid;gap:4px}
+.asis-hist small{color:var(--muted)}
+.pill.baja{background:#FEE2E2;color:#991B1B}
+.gen-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:10px 0}
+.gen-form label{display:grid;gap:4px;font-size:.78rem;font-weight:700;color:var(--muted)}
+.gen-acc{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}
+.tabs{margin:6px 0 16px}
+.temario{margin:6px 0 14px;padding-left:20px;display:grid;gap:4px}
+.cons-table input[type=date],.cons-table input[type=time]{min-width:0;width:100%}
+@media(max-width:700px){.asis-fila{grid-template-columns:1fr}}

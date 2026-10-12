@@ -79,6 +79,7 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Programas las instalaciones de programas dentro de las ventanas permitidas; las instalaciones las hace gerencia.
 - Creas y administras los grupos de WhatsApp de cada curso.
 - Atiendes y registras quejas y reclamos.
+- Subes las clases grabadas: entras a cada clase en Zoom, descargas el video y lo subes al Drive, en la carpeta "Cursos" > carpeta del curso > carpeta del código del grupo (la misma que el grupo de WhatsApp). Plazo máximo: 24 horas después de la clase. Solo trabajas dentro de la carpeta "Cursos"; esa carpeta del grupo es la que se comparte con los alumnos del grupo (solo lectura). La carpeta de un grupo se elimina un mes después de terminado el curso; gerencia te avisa.
 
 4. PLAZOS Y LÍMITES (lo que no puedes pasar por alto)
 - Respuesta a mensajes: máximo 2 horas entre las 8 a. m. y las 7 p. m. Lo que llega después de las 7 p. m. se responde al día siguiente. Cada mensaje sin responder es una venta que se puede perder.
@@ -106,6 +107,8 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Si el curso requiere instalar un programa, envías también los requisitos mínimos de PC.
 - Verificas que el pago entre a una cuenta oficial de CCN y registras el comprobante.
 - Confirmas el curso, el grupo y la fecha de inicio.
+- El DNI o carné de extranjería y el correo del alumno son OBLIGATORIOS. Revisa que el correo esté bien escrito: a ese correo llega su bienvenida, y al terminar el curso, sus documentos. Un correo mal escrito significa que el alumno no recibirá nada.
+- Tras inscribir, envías el correo de bienvenida desde el panel (botón con vista previa) cuando esté disponible.
 
 7. REGLAS AL VENDER
 - Precio fijo según la lista de cada curso en el sistema. Descuentos solo con autorización previa de gerencia; el sistema te pide marcarla y anotar quién y por qué.
@@ -117,10 +120,17 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Si un alumno tiene un problema, lo atiendes tú, pero consultas siempre con gerencia cómo solucionarlo.
 - Una queja o reclamo se registra en "Quejas y reclamos" y se avisa a gerencia de inmediato.
 
-9. TU PAGO
+9. AL TERMINAR UN CURSO: CERTIFICADOS Y ASISTENCIAS
+- Al terminar, cada alumno recibe por CORREO su constancia de participación (si cumplió la asistencia mínima) y, si cumplió además la participación y los entregables del curso, su certificado. Los aprueba gerencia y el sistema los envía solo.
+- NO avises a los grupos de WhatsApp que el certificado ya se emitió: el correo llega directo al alumno. Si alguien pregunta, dile que le llega a su correo una vez aprobado por gerencia.
+- Las asistencias las toma el profesor durante la clase y se cierran al terminar. Tú NO puedes modificarlas ni prometer que se cambiarán.
+- Si un alumno reclama por su asistencia, indícale que escriba al correo oficial de la escuela con su sustento. Solo gerencia decide si se corrige.
+- Cada certificado y cada constancia tienen un código y un QR con el que cualquier persona puede verificarlos.
+
+10. TU PAGO
 Honorario base mensual (recibo por honorarios) + comisión sobre lo vendido en el mes (3 % de 0 a 9 cupos, 4 % de 10 a 14, 5 % desde 15) + S/ 50 por cada curso que se llena (20 alumnos) en el que vendiste al menos un alumno. Lo ves en "Mi avance".
 
-10. LO QUE SE REVISA
+11. LO QUE SE REVISA
 Gerencia revisa tu reporte semanal: inscritos, ventas, atención, recontactos, pendientes y horas.`,
   },
 }

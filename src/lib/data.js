@@ -105,9 +105,9 @@ export const DEMO_USER = 'demo@ccn.pe'
 const demoRead = () => {
   try {
     const raw = localStorage.getItem(LS)
-    if (raw) { const d = JSON.parse(raw); if (!d.enlaces) d.enlaces = SEED_ENLACES; if (!d.consultas) d.consultas = []; if (!d.interesados) d.interesados = []; for (const k of ['alumnos', 'matriculas', 'pagos', 'historial', 'prospectos', 'trabajadores', 'gruposWa', 'asignaciones', 'pagos_trabajador', 'instalaciones', 'accesos', 'jornadas', 'pendientes', 'notas_agenda', 'plantillas', 'documentos', 'quejas']) if (!d[k]) d[k] = []; if (!d.equipo) d.equipo = [{ email: 'demo@ccn.pe', rol: 'gerente' }]; return d }
+    if (raw) { const d = JSON.parse(raw); if (!d.enlaces) d.enlaces = SEED_ENLACES; if (!d.consultas) d.consultas = []; if (!d.interesados) d.interesados = []; for (const k of ['alumnos', 'matriculas', 'pagos', 'historial', 'prospectos', 'trabajadores', 'gruposWa', 'asignaciones', 'pagos_trabajador', 'instalaciones', 'accesos', 'jornadas', 'pendientes', 'notas_agenda', 'plantillas', 'documentos', 'quejas', 'clases', 'asistencias']) if (!d[k]) d[k] = []; if (!d.equipo) d.equipo = [{ email: 'demo@ccn.pe', rol: 'gerente' }]; return d }
   } catch (e) { /* sin almacenamiento */ }
-  return { cursos: SEED_CURSOS, grupos: [], enlaces: SEED_ENLACES, consultas: [], interesados: [], alumnos: [], matriculas: [], pagos: [], historial: [], prospectos: [], trabajadores: [], gruposWa: [], asignaciones: [], pagos_trabajador: [], instalaciones: [], accesos: [], jornadas: [], pendientes: [], notas_agenda: [], plantillas: [], documentos: [], quejas: [], equipo: [{ email: 'demo@ccn.pe', rol: 'gerente' }], ajustes: { whatsapp: WA_ENV } }
+  return { cursos: SEED_CURSOS, grupos: [], enlaces: SEED_ENLACES, consultas: [], interesados: [], alumnos: [], matriculas: [], pagos: [], historial: [], prospectos: [], trabajadores: [], gruposWa: [], asignaciones: [], pagos_trabajador: [], instalaciones: [], accesos: [], jornadas: [], pendientes: [], notas_agenda: [], plantillas: [], documentos: [], quejas: [], clases: [], asistencias: [], equipo: [{ email: 'demo@ccn.pe', rol: 'gerente' }], ajustes: { whatsapp: WA_ENV } }
 }
 const demoWrite = (db) => { try { localStorage.setItem(LS, JSON.stringify(db)) } catch (e) { /* ignorar */ } }
 const uid = () => 'd' + Math.random().toString(36).slice(2, 10)
@@ -550,6 +550,7 @@ export function inscritosCSV(lista) {
 export const ROLES = {
   gerente: { nombre: 'Gerente', ayuda: 'Ve y maneja todo: gerencia, ventas y web.' },
   vendedora: { nombre: 'Vendedora', ayuda: 'Módulo de ventas: prospectos, inscritos, pagos y grupos.' },
+  profesor: { nombre: 'Profesor', ayuda: 'Solo ve sus grupos: alumnos, asistencia y documentos. No ve pagos ni precios.' },
 }
 export async function guardarMiembro({ email, rol }) {
   const mail = String(email).trim().toLowerCase()
@@ -562,6 +563,93 @@ export async function guardarMiembro({ email, rol }) {
   const { error } = await supabase.from('admins').upsert({ email: mail, rol })
   if (error) throw error
 }
+/* ---------- Clases y asistencia (rol profesor + gerencia) ---------- */
+export async function cargarProfesor() {
+  if (!hasBackend) {
+    const db = demoRead()
+    const t = (db.trabajadores || []).find((x) => String(x.email || '').toLowerCase() === DEMO_USER)
+    const asg = t ? (db.asignaciones || []).filter((a) => a.trabajador_id === t.id) : []
+    const grupos = db.grupos.filter((g) => asg.some((a) => String(a.grupo_id) === String(g.id)))
+    return { grupos, cursos: db.cursos, mias: asg.map((a) => ({ grupo_id: a.grupo_id, horas: a.horas, horas_dictadas: a.horas_dictadas })) }
+  }
+  const { data: mias, error } = await supabase.rpc('profesor_mis_grupos')
+  if (error) throw error
+  const ids = (mias || []).map((x) => x.grupo_id)
+  if (!ids.length) return { grupos: [], cursos: [], mias: [] }
+  const g = await supabase.from('grupos').select('*').in('id', ids).order('inicio')
+  if (g.error) throw g.error
+  const cids = [...new Set((g.data || []).map((x) => x.curso_id))]
+  const c = await supabase.from('cursos').select('*').in('id', cids)
+  if (c.error) throw c.error
+  return { grupos: g.data || [], cursos: c.data || [], mias: mias || [] }
+}
+
+/* Clases, alumnos (solo nombre, código y correo) y asistencias de un grupo */
+export async function cargarClasesGrupo(grupoId) {
+  const gid = String(grupoId)
+  if (!hasBackend) {
+    const db = demoRead()
+    const alumnos = db.matriculas.filter((m) => String(m.grupo_id) === gid && m.estado === 'activa')
+      .map((m) => { const a = db.alumnos.find((x) => x.id === m.alumno_id) || {}; return { alumno_id: m.alumno_id, matricula_id: m.id, codigo: a.codigo, nombres: a.nombres, apellido_paterno: a.apellido_paterno, apellido_materno: a.apellido_materno, email: a.email } })
+    return { clases: db.clases.filter((c) => c.grupo_id === gid).sort((a, b) => a.numero - b.numero), alumnos, asistencias: db.asistencias.filter((a) => a.grupo_id === gid) }
+  }
+  const [c, a, al] = await Promise.all([
+    supabase.from('clases').select('*').eq('grupo_id', gid).order('numero'),
+    supabase.from('asistencias').select('*').eq('grupo_id', gid).limit(5000),
+    supabase.rpc('alumnos_del_grupo', { p_grupo: gid }),
+  ])
+  const fallo = [c, a, al].find((x) => x.error)
+  if (fallo) throw new Error(fallo.error.message.includes('does not exist') || fallo.error.code === '42P01' || fallo.error.code === 'PGRST202' ? 'Falta pegar profesores.sql en Supabase (SQL Editor).' : fallo.error.message)
+  return { clases: c.data || [], asistencias: a.data || [], alumnos: al.data || [] }
+}
+
+/* Gerencia genera o ajusta las clases de un grupo. filas: [{ numero, inicio, fin }]; quitar: números a borrar */
+export async function guardarClases(grupoId, filas, quitar = []) {
+  const gid = String(grupoId)
+  if (!filas.length) throw new Error('Agrega al menos una clase.')
+  for (const f of filas) if (!(new Date(f.fin) > new Date(f.inicio))) throw new Error(`La clase ${f.numero} termina antes de empezar.`)
+  if (!hasBackend) {
+    const db = demoRead()
+    db.clases = db.clases.filter((c) => c.grupo_id !== gid || !quitar.includes(c.numero))
+    filas.forEach((f) => { const x = db.clases.find((c) => c.grupo_id === gid && c.numero === f.numero); if (x) Object.assign(x, f); else db.clases.push({ id: uid(), creado: new Date().toISOString(), grupo_id: gid, ...f }) })
+    demoWrite(db); return
+  }
+  if (quitar.length) { const d = await supabase.from('clases').delete().eq('grupo_id', gid).in('numero', quitar); if (d.error) throw d.error }
+  const { error } = await supabase.from('clases').upsert(filas.map((f) => ({ grupo_id: gid, numero: f.numero, inicio: f.inicio, fin: f.fin })), { onConflict: 'grupo_id,numero' })
+  if (error) throw error
+}
+
+/* Guarda la asistencia de una clase. filas: [{ clase_id, alumno_id, estado, participo, motivo }].
+   El servidor decide si se puede: el profesor solo dentro de la clase; después solo gerencia, con sustento. */
+export async function guardarAsistencias(filas, { gerente = false, clase } = {}) {
+  if (!filas.length) return
+  if (!hasBackend) {
+    const db = demoRead()
+    const t = Date.now(), ini = new Date(clase.inicio).getTime(), fin = new Date(clase.fin).getTime()
+    const fuera = t > fin || t < ini - 10 * 60000
+    if (fuera && !gerente) throw new Error('La clase terminó: la asistencia está cerrada. Solo gerencia puede corregirla.')
+    if (fuera && gerente && !filas.every((f) => String(f.motivo || '').trim().length >= 10)) throw new Error('La clase está cerrada. Para cambiar la asistencia escribe el sustento (el correo del alumno).')
+    filas.forEach((f) => {
+      const x = db.asistencias.find((a) => a.clase_id === f.clase_id && a.alumno_id === f.alumno_id)
+      if (x) Object.assign(x, { estado: f.estado, participo: f.participo, motivo: f.motivo || x.motivo, editado_por: DEMO_USER, editado_en: new Date().toISOString() })
+      else db.asistencias.push({ id: uid(), creado: new Date().toISOString(), clase_id: f.clase_id, grupo_id: clase.grupo_id, alumno_id: f.alumno_id, estado: f.estado, participo: Boolean(f.participo), registrado_por: DEMO_USER, editado_por: '', motivo: f.motivo || '' })
+    })
+    demoWrite(db); return
+  }
+  const { error } = await supabase.from('asistencias').upsert(
+    filas.map((f) => ({ clase_id: f.clase_id, alumno_id: f.alumno_id, estado: f.estado, participo: Boolean(f.participo), motivo: f.motivo || '' })),
+    { onConflict: 'clase_id,alumno_id' })
+  if (error) throw error
+}
+
+/* Quién cambió qué en una clase (solo gerencia) */
+export async function historialAsistencia(claseId) {
+  if (!hasBackend) return []
+  const { data, error } = await supabase.from('asistencia_historial').select('*').eq('clase_id', claseId).order('creado', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+
 export async function quitarMiembro(email) {
   if (!hasBackend) { const db = demoRead(); db.equipo = db.equipo.filter((y) => y.email !== email); demoWrite(db); return }
   const { error } = await supabase.from('admins').delete().eq('email', email)

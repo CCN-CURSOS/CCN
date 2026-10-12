@@ -7,6 +7,7 @@ import { lunesDe, semanaHoras, minutosJornada, jornadaSinSenal, fmtHM, MINIMO_SE
 import { TIPOS_DOC, VARIABLES_DOC, renderDoc, plantillaDe, fechaLarga } from '../lib/docs'
 import { Link } from 'react-router-dom'
 import { Logo } from '../components/Layout.jsx'
+import PanelProfesor, { ClasesDrawer } from './Profesor'
 import {
   hasBackend, supabase, loadAll, save, remove, CATEGORIAS_ACCESO, saveAjuste, getRol, fechaCorta, subirImagen, telefono, setNumero, COLORES, MAX_INICIO, consultasCSV, interesadosCSV, marcarConsulta,
   subirComprobante, urlComprobante, crearInscripcion, agregarPago, estadoInscripcion, borrarInscripcion, armarInscripciones, inscritosCSV, guardarMiembro, quitarMiembro, ROLES, seguimientoInteresado, reasignarInteresado, recibeInteresados, guardarProspecto, borrarProspecto, guardarTrabajador, guardarWhatsapp, asignarGrupo, pagarTrabajador, guardarInstalacion, ESTADOS_PROSPECTO, ORIGENES, guardarPendiente, marcarPendiente, borrarPendiente, guardarNota, borrarNota, guardarPlantilla, enviarDocumentos, firmarDocumento, borrarDocumento, guardarQueja, atenderQueja, numeroGerencia,
@@ -501,6 +502,7 @@ function Grupos({ data, hacer, abrirGrupo, editarGrupo, soloLeer }) {
   const nombre = (id) => data.cursos.find((c) => c.id === id)
   const lista = [...data.grupos].sort((a, b) => (b.inicio || '9999').localeCompare(a.inicio || '9999'))
   const [wa, setWa] = useState(null)
+  const [clasesG, setClasesG] = useState(null)
   const waDe = (g) => (data.gruposWa || []).find((w) => String(w.grupo_id) === String(g.id))
   const faltan = gruposSinWhatsapp(data)
   return (
@@ -532,6 +534,7 @@ function Grupos({ data, hacer, abrirGrupo, editarGrupo, soloLeer }) {
                 </div>
               </div>
               <div className="btns">
+                {!soloLeer && <button className="btn btn-line sm" onClick={() => setClasesG(g)} title="Calendario de clases y asistencia">Clases</button>}
                 {g.codigo && <button className={`btn sm ${waDe(g) ? 'btn-line' : 'btn-teal'}`} onClick={() => setWa(g)}>{waDe(g) ? 'WhatsApp' : '+ Registrar WhatsApp'}</button>}
                 <span className="cupos" title="Se cuenta solo desde Inscritos"><b>{g.inscritos}</b>/{g.minimo} <small>mín.</small></span>
                 {soloLeer ? <span className={`est ${g.estado}`}>{g.estado === 'abierto' ? 'Abierto' : g.estado === 'lleno' ? 'Lleno' : 'Cerrado'}</span> : <>
@@ -545,6 +548,7 @@ function Grupos({ data, hacer, abrirGrupo, editarGrupo, soloLeer }) {
           )
         })}
       </div>
+      {clasesG && <ClasesDrawer g={clasesG} curso={nombre(clasesG.curso_id)} onClose={() => setClasesG(null)} avisar={(t) => hacer(async () => {}, t)} />}
       {wa && <WhatsappForm g={wa} curso={nombre(wa.curso_id)} actual={waDe(wa)} onClose={() => setWa(null)}
         onSave={(f) => hacer(async () => { await guardarWhatsapp({ grupo_id: wa.id, ...f }); setWa(null) }, 'Grupo de WhatsApp registrado')} />}
       {borrando && (
@@ -1875,7 +1879,7 @@ function Equipo({ data, hacer, email }) {
   const [quitando, setQuitando] = useState(null)
   return (
     <>
-      <Seccion titulo="Equipo" ayuda="Quién entra al panel y qué módulos ve. Gerente: todo. Vendedora: solo Ventas." />
+      <Seccion titulo="Equipo" ayuda="Quién entra al panel y qué ve. Gerente: todo. Vendedora: solo Ventas. Profesor: solo sus grupos (alumnos y asistencia). Al profesor también hay que ponerlo en Trabajadores (con el mismo correo) y asignarle su grupo." />
       {!hasBackend && <p className="banner">En modo demostración esto es solo de práctica.</p>}
       <div className="cons-wrap" style={{ maxWidth: 760 }}>
         <table className="cons-table" style={{ minWidth: 0 }}>
@@ -2649,7 +2653,7 @@ export default function Admin() {
   const [email, setEmail] = useState('')
   const [rol, setRol] = useState('gerente')
   async function revisar() {
-    if (!hasBackend) { const r = await getRol('demo@ccn.pe'); setRol(r || 'gerente'); if (r === 'vendedora') setEmail('demo@ccn.pe'); setEstado('ok'); return }
+    if (!hasBackend) { const r = await getRol('demo@ccn.pe'); setRol(r || 'gerente'); if (r === 'vendedora' || r === 'profesor') setEmail('demo@ccn.pe'); setEstado('ok'); return }
     const { data } = await supabase.auth.getSession()
     const mail = data.session?.user?.email
     if (!mail) { setEstado('login'); return }
@@ -2670,5 +2674,6 @@ export default function Admin() {
       <button className="btn btn-line gate-btn" onClick={salir}>Salir</button>
     </Acceso>
   )
+  if (rol === 'profesor') return <PanelProfesor email={email} onSalir={salir} />
   return <Panel email={email} rol={rol} onSalir={salir} />
 }
