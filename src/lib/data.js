@@ -64,6 +64,9 @@ export const COLORES = {
   g9: { nombre: 'Naranja', hex: '#F97316' },
   g10: { nombre: 'Esmeralda', hex: '#059669' },
   g11: { nombre: 'Marino', hex: '#1E3A8A' },
+  g12: { nombre: 'Grafito', hex: '#111827' },
+  g13: { nombre: 'Ámbar', hex: '#FF9A00' },
+  g14: { nombre: 'Terracota', hex: '#D97757' },
 }
 
 /* ---------- Datos de ejemplo (modo demostración, sin Supabase) ---------- */

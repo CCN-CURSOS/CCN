@@ -71,22 +71,35 @@ Mínimo 24 horas por semana (4 h por día, lunes a sábado), en varios bloques s
 - Programas las instalaciones de programas dentro de las ventanas permitidas; las instalaciones las hace gerencia.
 - Eres administradora de los grupos de WhatsApp: los dejas para que nadie escriba hasta antes del curso.
 
-4. REGLAS AL VENDER
-- Precio fijo S/ 299. Descuentos solo con autorización previa de gerencia.
+4. GRUPOS DE WHATSAPP: CÓMO CREARLOS Y NOMBRARLOS
+- Creas el grupo de cada curso apenas gerencia confirma la fecha de inicio. Un grupo por curso y por fecha de inicio.
+- El nombre del grupo es el CÓDIGO DEL GRUPO, siempre con este formato:
+  G + número del grupo (2 cifras) - DÍAS - CURSO - FECHA DE INICIO (día.mes)
+  Ejemplo: G05-M/J-NOTION-24.11
+- Número del grupo: correlativo, en el orden en que se crean (G01, G02, G03...). No se repite ni se reutiliza.
+- Días de clase, con estas letras: L = lunes, M = martes, X = miércoles, J = jueves, V = viernes, S = sábado, D = domingo. Dos días van separados por una barra: L/X (lunes y miércoles), M/J (martes y jueves). Un solo día va solo: D.
+- Curso: en MAYÚSCULAS, sin tildes ni espacios (usa guion si hace falta). Ejemplos: CLUB, WORD, EXCEL, POWERPOINT, NOTION, PHOTOSHOP, ILLUSTRATOR, WEB, CLAUDE, IA, CANVA.
+- Fecha de inicio: día y mes separados por punto (24.11, 04.01). Si la fecha cambia, renombras el grupo y avisas a gerencia.
+- Ejemplos: G01-L/X-CLUB-23.11 · G02-L/X-WORD-23.11 · G05-M/J-NOTION-24.11 · G08-D-WEB-22.11
+- Después de crearlo: lo dejas en "solo administradores" hasta el inicio del curso y lo registras en Ventas → Grupos de WhatsApp (el sistema avisa si falta).
+- Cualquier duda con el código, consulta a gerencia antes de crear el grupo.
+
+5. REGLAS AL VENDER
+- Precio fijo según la lista de cada curso en el sistema. Descuentos solo con autorización previa de gerencia.
 - Antes de inscribir envías los términos y condiciones (y los requisitos de PC si aplica). El sistema no te deja inscribir sin marcarlo.
 - Los pagos entran SOLO a las cuentas oficiales de CCN, nunca a cuentas personales.
 - Devoluciones: en primera instancia la respuesta es NO.
 - Separación de vacante: se paga a más tardar un día antes del curso. Si el curso empieza y no pagó, no se le dan accesos y se le retira del grupo hasta que pague.
 - Club Ofimática: es un paquete (Word + Excel + PowerPoint), cuenta como 1 cupo.
 
-5. PROBLEMAS, QUEJAS Y RECLAMOS
+6. PROBLEMAS, QUEJAS Y RECLAMOS
 - Si un alumno tiene un problema, lo atiendes tú, pero consultas siempre con gerencia cómo solucionarlo.
 - Una queja o reclamo se avisa a gerencia de inmediato.
 
-6. TU PAGO
+7. TU PAGO
 Honorario base mensual (recibo por honorarios) + comisión sobre lo vendido (3 % / 4 % / 5 % según cupos del mes) + S/ 50 por curso cerrado en el que vendiste. Lo ves en "Mi avance".
 
-7. LO QUE SE REVISA
+8. LO QUE SE REVISA
 Gerencia revisa tu reporte semanal: inscritos, ventas, atención, recontactos, pendientes y horas.`,
   },
 }

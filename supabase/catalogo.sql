@@ -7,7 +7,7 @@
 --      horas, temario y portada (Visible = sí)
 -- ===================================================================================
 alter table public.cursos drop constraint if exists cursos_color_check;
-alter table public.cursos add constraint cursos_color_check check (color ~ '^g([1-9]|1[01])$');
+alter table public.cursos add constraint cursos_color_check check (color ~ '^g([1-9]|1[0-4])$');
 
 -- 2) cursos viejos: ocultos (los grupos e inscritos que tengan se conservan)
 update public.cursos set activo = false, destacado = false
