@@ -626,3 +626,304 @@ create trigger trg_alumnos_codigo_fijo before update on public.alumnos
   for each row execute function public.fijar_codigo_alumno();
 
 create unique index if not exists alumnos_codigo_uq on public.alumnos (codigo);
+
+
+-- ===================================================================================
+-- 18) FICHA POR CURSO: enlace al brochure (PDF) de cada curso
+-- ===================================================================================
+alter table public.cursos add column if not exists brochure_url text not null default '';
+
+
+-- ===================================================================================
+-- 19) ACCESOS: bóveda de cuentas y contraseñas. SOLO el gerente la ve y la edita.
+-- ===================================================================================
+create table if not exists public.accesos (
+  id        uuid primary key default gen_random_uuid(),
+  creado    timestamptz not null default now(),
+  servicio  text not null check (char_length(servicio) between 1 and 120),
+  categoria text not null default 'Otros',
+  url       text not null default '',
+  usuario   text not null default '',
+  clave     text not null default '',
+  notas     text not null default ''
+);
+alter table public.accesos enable row level security;
+drop policy if exists "accesos_gerente" on public.accesos;
+create policy "accesos_gerente" on public.accesos for all to authenticated
+  using (public.es_gerente()) with check (public.es_gerente());
+
+
+-- ===================================================================================
+-- 20) Fecha de inicio del trabajador (desde ahí se calcula su pago)
+-- ===================================================================================
+alter table public.trabajadores add column if not exists fecha_inicio date;
+
+
+-- ===================================================================================
+-- 21) Metas (hitos) por trabajador: [{"fecha":"2026-10-26","cupos":3,"cursos":1}, ...]
+-- ===================================================================================
+alter table public.trabajadores add column if not exists metas jsonb;
+
+
+-- ===================================================================================
+-- 22) Regla de ventas: antes de inscribir se envían Términos y condiciones y, si el curso
+--     instala software, los requisitos mínimos de PC. Queda registrado en cada matrícula.
+-- ===================================================================================
+alter table public.matriculas add column if not exists terminos_enviados boolean not null default false;
+alter table public.matriculas add column if not exists requisitos_enviados boolean not null default false;
+
+
+-- ===================================================================================
+-- 23) JORNADAS: la vendedora inicia y termina su jornada; el gerente ve las horas por semana.
+--     Mínimo: 24 h por semana (4 h al día, lunes a sábado); puede trabajar más. Sin señal por más de 15 min = se cierra sola.
+-- ===================================================================================
+create table if not exists public.jornadas (
+  id            uuid primary key default gen_random_uuid(),
+  creado        timestamptz not null default now(),
+  vendedor      text not null,
+  inicio        timestamptz not null default now(),
+  fin           timestamptz,
+  ultimo_pulso  timestamptz not null default now(),
+  estado        text not null default 'abierta' check (estado in ('abierta','cerrada','interrumpida')),
+  cierre        text not null default '' check (cierre in ('','manual','tope','sin_senal','gerente')),
+  dispositivo   text not null default '',
+  nota          text not null default ''
+);
+create unique index if not exists jornadas_una_abierta on public.jornadas (vendedor) where estado = 'abierta';
+create index if not exists jornadas_vendedor_inicio on public.jornadas (vendedor, inicio desc);
+alter table public.jornadas enable row level security;
+
+drop policy if exists "jornadas_ver" on public.jornadas;
+create policy "jornadas_ver" on public.jornadas for select to authenticated
+  using (public.es_gerente() or vendedor = (auth.jwt() ->> 'email'));
+drop policy if exists "jornadas_crear" on public.jornadas;
+create policy "jornadas_crear" on public.jornadas for insert to authenticated
+  with check (public.es_ventas() and (public.es_gerente() or vendedor = (auth.jwt() ->> 'email')));
+drop policy if exists "jornadas_editar" on public.jornadas;
+create policy "jornadas_editar" on public.jornadas for update to authenticated
+  using (public.es_gerente() or (vendedor = (auth.jwt() ->> 'email') and estado = 'abierta'))
+  with check (public.es_gerente() or vendedor = (auth.jwt() ->> 'email'));
+drop policy if exists "jornadas_borrar" on public.jornadas;
+create policy "jornadas_borrar" on public.jornadas for delete to authenticated using (public.es_gerente());
+
+-- La vendedora no puede cambiar horas: el servidor pone la hora de inicio, de pulso y de fin.
+create or replace function public.proteger_jornada() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if public.es_gerente() then return new; end if;
+  if tg_op = 'INSERT' then
+    new.vendedor := (auth.jwt() ->> 'email');
+    new.inicio := now(); new.ultimo_pulso := now(); new.fin := null;
+    new.estado := 'abierta'; new.cierre := ''; new.nota := '';
+    return new;
+  end if;
+  -- UPDATE (solo mientras está abierta)
+  new.vendedor := old.vendedor; new.inicio := old.inicio; new.nota := old.nota; new.dispositivo := old.dispositivo;
+  if new.estado = 'abierta' then
+    new.ultimo_pulso := now(); new.fin := null; new.cierre := '';
+  elsif new.estado = 'cerrada' then
+    new.fin := now(); new.ultimo_pulso := old.ultimo_pulso;
+    if new.cierre not in ('manual','tope') then new.cierre := 'manual'; end if;
+  else
+    new.estado := 'interrumpida'; new.fin := old.ultimo_pulso; new.ultimo_pulso := old.ultimo_pulso; new.cierre := 'sin_senal';
+  end if;
+  return new;
+end $$;
+drop trigger if exists trg_proteger_jornada on public.jornadas;
+create trigger trg_proteger_jornada before insert or update on public.jornadas
+  for each row execute function public.proteger_jornada();
+
+
+-- ===================================================================================
+-- 24) AGENDA de la vendedora: contactos 1 y 2 en prospectos, pendientes y notas
+-- ===================================================================================
+alter table public.prospectos add column if not exists contacto1_fecha date;
+alter table public.prospectos add column if not exists contacto1_obs text not null default '';
+alter table public.prospectos add column if not exists recontactar1 text not null default '';
+alter table public.prospectos add column if not exists recontactar1_fecha date;
+alter table public.prospectos add column if not exists contacto2_fecha date;
+alter table public.prospectos add column if not exists contacto2_obs text not null default '';
+alter table public.prospectos add column if not exists recontactar2 text not null default '';
+alter table public.prospectos add column if not exists recontactar2_fecha date;
+alter table public.prospectos add column if not exists recontacto2_hecho boolean not null default false;
+alter table public.prospectos drop constraint if exists prospectos_recontactar_check;
+alter table public.prospectos add constraint prospectos_recontactar_check
+  check (recontactar1 in ('','si','no') and recontactar2 in ('','si','no'));
+
+create table if not exists public.pendientes (
+  id            uuid primary key default gen_random_uuid(),
+  creado        timestamptz not null default now(),
+  vendedor      text not null,
+  creado_por    text not null default '',
+  titulo        text not null check (char_length(titulo) between 1 and 160),
+  detalle       text not null default '',
+  fecha_limite  date,
+  estado        text not null default 'pendiente' check (estado in ('pendiente','realizado')),
+  realizado_en  timestamptz
+);
+create index if not exists pendientes_vendedor_idx on public.pendientes (vendedor, estado);
+alter table public.pendientes enable row level security;
+drop policy if exists "pendientes_ver" on public.pendientes;
+create policy "pendientes_ver" on public.pendientes for select to authenticated
+  using (public.es_gerente() or vendedor = (auth.jwt() ->> 'email'));
+drop policy if exists "pendientes_crear" on public.pendientes;
+create policy "pendientes_crear" on public.pendientes for insert to authenticated
+  with check (public.es_ventas() and (public.es_gerente() or vendedor = (auth.jwt() ->> 'email')));
+drop policy if exists "pendientes_editar" on public.pendientes;
+create policy "pendientes_editar" on public.pendientes for update to authenticated
+  using (public.es_gerente() or vendedor = (auth.jwt() ->> 'email'))
+  with check (public.es_gerente() or vendedor = (auth.jwt() ->> 'email'));
+drop policy if exists "pendientes_borrar" on public.pendientes;
+create policy "pendientes_borrar" on public.pendientes for delete to authenticated
+  using (public.es_gerente() or (vendedor = (auth.jwt() ->> 'email') and creado_por = vendedor));
+
+-- Un pendiente realizado ya no se edita ni se borra (ni siquiera el gerente).
+create or replace function public.proteger_pendiente() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'DELETE' then
+    if old.estado = 'realizado' then raise exception 'Un pendiente realizado ya no se puede borrar.'; end if;
+    return old;
+  end if;
+  if tg_op = 'INSERT' then
+    if not public.es_gerente() then
+      new.vendedor := (auth.jwt() ->> 'email'); new.estado := 'pendiente'; new.realizado_en := null;
+    end if;
+    new.creado_por := (auth.jwt() ->> 'email');
+    return new;
+  end if;
+  if old.estado = 'realizado' then raise exception 'Un pendiente realizado ya no se puede editar.'; end if;
+  if new.estado = 'realizado' then new.realizado_en := now(); else new.realizado_en := null; end if;
+  if not public.es_gerente() then
+    new.vendedor := old.vendedor; new.creado_por := old.creado_por;
+    if old.creado_por <> old.vendedor then
+      new.titulo := old.titulo; new.detalle := old.detalle; new.fecha_limite := old.fecha_limite;  -- asignado por gerencia: solo puede marcarlo
+    end if;
+  else
+    new.creado_por := old.creado_por;
+  end if;
+  return new;
+end $$;
+drop trigger if exists trg_proteger_pendiente on public.pendientes;
+create trigger trg_proteger_pendiente before insert or update or delete on public.pendientes
+  for each row execute function public.proteger_pendiente();
+
+create table if not exists public.notas_agenda (
+  id          uuid primary key default gen_random_uuid(),
+  creado      timestamptz not null default now(),
+  actualizado timestamptz not null default now(),
+  vendedor    text not null default (auth.jwt() ->> 'email'),
+  titulo      text not null default '',
+  texto       text not null default ''
+);
+alter table public.notas_agenda enable row level security;
+drop policy if exists "notas_ver" on public.notas_agenda;
+create policy "notas_ver" on public.notas_agenda for select to authenticated
+  using (public.es_gerente() or vendedor = (auth.jwt() ->> 'email'));
+drop policy if exists "notas_propias" on public.notas_agenda;
+create policy "notas_propias" on public.notas_agenda for all to authenticated
+  using (vendedor = (auth.jwt() ->> 'email') and public.es_ventas())
+  with check (vendedor = (auth.jwt() ->> 'email') and public.es_ventas());
+
+
+-- ===================================================================================
+-- 25) CONTRATOS: plantillas editables y documentos enviados a cada trabajador
+-- ===================================================================================
+create table if not exists public.plantillas_doc (
+  tipo        text primary key check (tipo in ('contrato','confidencialidad','plan')),
+  titulo      text not null,
+  contenido   text not null,
+  actualizado timestamptz not null default now()
+);
+alter table public.plantillas_doc enable row level security;
+drop policy if exists "plantillas_ver" on public.plantillas_doc;
+create policy "plantillas_ver" on public.plantillas_doc for select to authenticated using (public.es_ventas());
+drop policy if exists "plantillas_gerente" on public.plantillas_doc;
+create policy "plantillas_gerente" on public.plantillas_doc for all to authenticated
+  using (public.es_gerente()) with check (public.es_gerente());
+
+create table if not exists public.documentos_trab (
+  id             uuid primary key default gen_random_uuid(),
+  creado         timestamptz not null default now(),
+  vendedor       text not null,
+  tipo           text not null check (tipo in ('contrato','confidencialidad')),
+  titulo         text not null,
+  contenido      text not null,
+  fecha_inicio   date,
+  fecha_fin      date,
+  estado         text not null default 'enviado' check (estado in ('enviado','firmado')),
+  firmado_nombre text not null default '',
+  firmado_en     timestamptz,
+  huella         text not null default '',
+  enviado_por    text not null default ''
+);
+create index if not exists documentos_trab_vendedor_idx on public.documentos_trab (vendedor, estado);
+alter table public.documentos_trab enable row level security;
+drop policy if exists "docs_ver" on public.documentos_trab;
+create policy "docs_ver" on public.documentos_trab for select to authenticated
+  using (public.es_gerente() or vendedor = (auth.jwt() ->> 'email'));
+drop policy if exists "docs_enviar" on public.documentos_trab;
+create policy "docs_enviar" on public.documentos_trab for insert to authenticated with check (public.es_gerente());
+drop policy if exists "docs_firmar" on public.documentos_trab;
+create policy "docs_firmar" on public.documentos_trab for update to authenticated
+  using (estado = 'enviado' and (public.es_gerente() or vendedor = (auth.jwt() ->> 'email')))
+  with check (public.es_gerente() or vendedor = (auth.jwt() ->> 'email'));
+drop policy if exists "docs_borrar" on public.documentos_trab;
+create policy "docs_borrar" on public.documentos_trab for delete to authenticated using (public.es_gerente() and estado = 'enviado');
+
+-- La firma: el servidor pone fecha y huella; el contenido no cambia una vez enviado.
+create or replace function public.proteger_documento() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'INSERT' then
+    new.estado := 'enviado'; new.firmado_nombre := ''; new.firmado_en := null; new.huella := '';
+    new.enviado_por := (auth.jwt() ->> 'email'); return new;
+  end if;
+  if old.estado = 'firmado' then raise exception 'Un documento firmado ya no se puede modificar.'; end if;
+  new.vendedor := old.vendedor; new.tipo := old.tipo; new.titulo := old.titulo; new.contenido := old.contenido;
+  new.fecha_inicio := old.fecha_inicio; new.fecha_fin := old.fecha_fin; new.enviado_por := old.enviado_por; new.creado := old.creado;
+  if new.estado = 'firmado' then
+    if char_length(btrim(new.firmado_nombre)) < 5 then raise exception 'Escribe tu nombre completo para firmar.'; end if;
+    new.firmado_en := now();
+    new.huella := encode(sha256(convert_to(old.contenido || '|' || new.firmado_nombre || '|' || new.firmado_en::text || '|' || old.vendedor, 'UTF8')), 'hex');
+  else
+    new.firmado_nombre := ''; new.firmado_en := null; new.huella := '';
+  end if;
+  return new;
+end $$;
+drop trigger if exists trg_proteger_documento on public.documentos_trab;
+create trigger trg_proteger_documento before insert or update on public.documentos_trab
+  for each row execute function public.proteger_documento();
+
+
+-- ===================================================================================
+-- 26) REGLAS DE VENTA: descuento autorizado, grupo WhatsApp "solo admins", quejas y reclamos
+-- ===================================================================================
+alter table public.matriculas add column if not exists descuento_autorizado boolean not null default false;
+alter table public.matriculas add column if not exists descuento_motivo text not null default '';
+alter table public.grupos_whatsapp add column if not exists solo_admins boolean not null default false;
+
+create table if not exists public.quejas (
+  id             uuid primary key default gen_random_uuid(),
+  creado         timestamptz not null default now(),
+  vendedor       text not null default (auth.jwt() ->> 'email'),
+  tipo           text not null default 'queja' check (tipo in ('queja','reclamo','problema')),
+  alumno         text not null default '',
+  celular        text not null default '',
+  detalle        text not null check (char_length(detalle) >= 5),
+  estado         text not null default 'nueva' check (estado in ('nueva','atendida')),
+  nota_gerencia  text not null default '',
+  atendido_en    timestamptz
+);
+alter table public.quejas enable row level security;
+drop policy if exists "quejas_ver" on public.quejas;
+create policy "quejas_ver" on public.quejas for select to authenticated
+  using (public.es_gerente() or vendedor = (auth.jwt() ->> 'email'));
+drop policy if exists "quejas_crear" on public.quejas;
+create policy "quejas_crear" on public.quejas for insert to authenticated
+  with check (public.es_ventas() and vendedor = (auth.jwt() ->> 'email'));
+drop policy if exists "quejas_gerente" on public.quejas;
+create policy "quejas_gerente" on public.quejas for update to authenticated
+  using (public.es_gerente()) with check (public.es_gerente());
+drop policy if exists "quejas_borrar" on public.quejas;
+create policy "quejas_borrar" on public.quejas for delete to authenticated using (public.es_gerente());

@@ -36,6 +36,8 @@ const TERMINOS = [
   'Si el alumno requiere de forma imprevista una reprogramación o cambio de curso, deberá comunicarse oportunamente con el equipo de CCN. Podrá hacerlo hasta dos (02) días hábiles antes del día de inicio del curso, a través de cualquier canal de contacto oficial de CCN.',
   'Una vez iniciado el curso y como máximo hasta la mitad del mismo, si el alumno desea cambiar de horario, temporada o curso en el que se inscribió, deberá pagar una penalidad de S/ 50 soles o $14 dólares americanos, según sea el caso.',
   'El alumno se compromete a pagar la totalidad del valor monetario del curso en las fechas establecidas por el equipo de CCN.',
+  'La separación de vacante se completa pagando el saldo del curso a más tardar un (01) día antes de su inicio. Si el curso inicia y el pago no se ha realizado, no se brindan los accesos y el alumno es retirado del grupo de WhatsApp hasta que pague.',
+  'Todo pago se realiza únicamente a las cuentas oficiales de CCN que te indique el equipo por los canales oficiales.',
   'Cada curso abre con un mínimo de diez (10) participantes por horario. Si no se llega a completar, CCN podrá postergar el inicio del mismo por 1 o 2 semanas como máximo.',
   'El material producido por el alumno para la obtención de todo tipo de constancia o certificado podrá ser usado por CCN con fines publicitarios, acreditando la autoría del material al alumno correspondiente.',
   'No se realizan devoluciones.',

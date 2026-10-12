@@ -1,8 +1,8 @@
 /* Gráficos simples hechos a mano (SVG/CSS), sin librerías. */
 
-export function Barras({ datos, series, alto = 150, formato = (n) => n }) {
+export function Barras({ datos, series, alto = 150, formato = (n) => n, minMax = 1 }) {
   // datos: [{ label, a, b }]  series: [{ key, nombre, color }]
-  const max = Math.max(1, ...datos.flatMap((d) => series.map((s) => Number(d[s.key] || 0))))
+  const max = Math.max(1, minMax, ...datos.flatMap((d) => series.map((s) => Number(d[s.key] || 0))))
   const ancho = 100 / datos.length
   return (
     <figure className="chart" aria-label={series.map((s) => s.nombre).join(' y ')}>
@@ -14,7 +14,7 @@ export function Barras({ datos, series, alto = 150, formato = (n) => n }) {
           return <rect key={`${i}-${j}`} x={i * ancho + ancho * 0.15 + j * w} y={alto / 3 - h} width={w - 0.4} height={h} rx="0.8" fill={s.color}><title>{`${d.label}: ${s.nombre} ${formato(d[s.key] || 0)}`}</title></rect>
         }))}
       </svg>
-      <div className="chart-x">{datos.map((d) => <span key={d.label}>{d.label}</span>)}</div>
+      <div className="chart-x">{datos.map((d, i) => <span key={i}>{d.label}</span>)}</div>
       <div className="chart-leg">{series.map((s) => <span key={s.key}><i style={{ background: s.color }} />{s.nombre}</span>)}</div>
     </figure>
   )

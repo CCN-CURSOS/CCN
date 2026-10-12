@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import AvanceVendedor from './AvanceVendedor'
+import JornadaCard from '../components/JornadaCard'
 import Icon from '../components/Icons'
-import { PUESTOS, SUELDO_DEF, TARIFA_HORA_DEF, TRAMOS_DEF, tramosDe, metricasVendedor, metricasProfesor, nombreGrupoWa, gruposSinWhatsapp, AVISO_INSTALACION, PROGRAMAS, ESTADOS_INSTALACION, programaSugerido, errorHorarioInstalacion, choqueInstalacion, horaCorta, hora12 } from '../lib/ventas'
+import { Barras, Embudo } from '../components/Charts'
+import { lunesDe, semanaHoras, minutosJornada, jornadaSinSenal, fmtHM, MINIMO_SEMANA_MIN, metasDe, PUESTOS, SUELDO_DEF, TARIFA_HORA_DEF, TRAMOS_DEF, tramosDe, metricasVendedor, metricasProfesor, nombreGrupoWa, gruposSinWhatsapp, metricasCurso, AVISO_INSTALACION, PROGRAMAS, ESTADOS_INSTALACION, programaSugerido, errorHorarioInstalacion, choqueInstalacion, horaCorta, hora12, proximoRecontacto, recontactoVencido, reporteSemana, alertasVenta } from '../lib/ventas'
+import { TIPOS_DOC, VARIABLES_DOC, renderDoc, plantillaDe, fechaLarga } from '../lib/docs'
 import { Link } from 'react-router-dom'
 import { Logo } from '../components/Layout.jsx'
 import {
-  hasBackend, supabase, loadAll, save, remove, saveAjuste, getRol, fechaCorta, subirImagen, telefono, setNumero, COLORES, MAX_INICIO, consultasCSV, interesadosCSV, marcarConsulta,
-  subirComprobante, urlComprobante, crearInscripcion, agregarPago, estadoInscripcion, borrarInscripcion, armarInscripciones, inscritosCSV, guardarMiembro, quitarMiembro, ROLES, seguimientoInteresado, reasignarInteresado, recibeInteresados, guardarProspecto, borrarProspecto, guardarTrabajador, guardarWhatsapp, asignarGrupo, pagarTrabajador, guardarInstalacion, ESTADOS_PROSPECTO, ORIGENES,
+  hasBackend, supabase, loadAll, save, remove, CATEGORIAS_ACCESO, saveAjuste, getRol, fechaCorta, subirImagen, telefono, setNumero, COLORES, MAX_INICIO, consultasCSV, interesadosCSV, marcarConsulta,
+  subirComprobante, urlComprobante, crearInscripcion, agregarPago, estadoInscripcion, borrarInscripcion, armarInscripciones, inscritosCSV, guardarMiembro, quitarMiembro, ROLES, seguimientoInteresado, reasignarInteresado, recibeInteresados, guardarProspecto, borrarProspecto, guardarTrabajador, guardarWhatsapp, asignarGrupo, pagarTrabajador, guardarInstalacion, ESTADOS_PROSPECTO, ORIGENES, guardarPendiente, marcarPendiente, borrarPendiente, guardarNota, borrarNota, guardarPlantilla, enviarDocumentos, firmarDocumento, borrarDocumento, guardarQueja, atenderQueja, numeroGerencia,
 } from '../lib/data.js'
 
 /* ================= piezas pequeñas ================= */
@@ -473,7 +476,7 @@ function Instalaciones({ data, hacer, gerente }) {
 /* ================= GRUPO DE WHATSAPP (lo registra ventas) ================= */
 function WhatsappForm({ g, curso, actual, onClose, onSave }) {
   const sugerido = nombreGrupoWa(g, curso)
-  const [f, setF] = useState({ nombre: actual?.nombre || sugerido, enlace: actual?.enlace || '' })
+  const [f, setF] = useState({ nombre: actual?.nombre || sugerido, enlace: actual?.enlace || '', solo_admins: !!actual?.solo_admins })
   return (
     <Drawer titulo={`WhatsApp · ${g.codigo}`} onClose={onClose}
       pie={<><button className="btn btn-line" onClick={onClose}>Cancelar</button><button className="btn btn-teal" onClick={() => onSave(f)}>Guardar</button></>}>
@@ -487,6 +490,7 @@ function WhatsappForm({ g, curso, actual, onClose, onSave }) {
           <input id="wa-link" value={f.enlace} onChange={(e) => setF({ ...f, enlace: e.target.value })} placeholder="https://chat.whatsapp.com/…" />
         </label>
         <p className="note">Crea el grupo en WhatsApp, copia el enlace de invitación y pégalo aquí. Solo lo ve el equipo.</p>
+        <label className="chk"><input id="wa-admin" type="checkbox" checked={f.solo_admins} onChange={(e) => setF({ ...f, solo_admins: e.target.checked })} /> Ya configuré el grupo para que <b>solo los administradores</b> puedan escribir (hasta que empiece el curso)</label>
       </div>
     </Drawer>
   )
@@ -523,7 +527,7 @@ function Grupos({ data, hacer, abrirGrupo, editarGrupo, soloLeer }) {
                   <b>{g.codigo && <span className="cod">{g.codigo}</span>}{c?.titulo || 'Curso eliminado'}</b>
                   <small>{g.inicio ? fechaCorta(g.inicio) : 'Sin fecha'} · {g.dias || 'días por definir'} · {g.horario || 'horario por definir'}</small>
                   {g.codigo && (waDe(g)
-                    ? <small className="wa ok">WhatsApp: <a href={waDe(g).enlace} target="_blank" rel="noopener noreferrer">{waDe(g).nombre}</a>{waDe(g).creado_por && <> · {waDe(g).creado_por.split('@')[0]}</>}</small>
+                    ? <small className="wa ok">WhatsApp: <a href={waDe(g).enlace} target="_blank" rel="noopener noreferrer">{waDe(g).nombre}</a>{waDe(g).creado_por && <> · {waDe(g).creado_por.split('@')[0]}</>} · {waDe(g).solo_admins ? '🔒 solo admins' : '⚠️ falta dejarlo en solo admins'}</small>
                     : <small className="wa falta">Falta crear el grupo de WhatsApp</small>)}
                 </div>
               </div>
@@ -796,13 +800,13 @@ function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial }) {
   const hoy = new Date().toISOString().slice(0, 10)
   const todos = data.prospectos || []
   const activos = todos.filter((p) => !['inscrito', 'perdido'].includes(p.estado))
-  const vencidos = activos.filter((p) => p.seguimiento && p.seguimiento <= hoy)
+  const vencidos = activos.filter((p) => { const r = proximoRecontacto(p); return r ? r.fecha <= hoy : (p.seguimiento && p.seguimiento <= hoy) })
   const cerrar = () => { setForm(null); onCerrarInicial && onCerrarInicial() }
   const cambiar = (p, cambios) => hacer(() => guardarProspecto({ ...p, ...cambios }), 'Guardado')
   return (
     <>
       <Seccion titulo="Prospectos" ayuda={gerente ? 'La base de prospectos de cada vendedor.' : 'Tu base de prospectos: gente que conseguiste por WhatsApp, redes o referidos.'}>
-        <button className="btn btn-teal" onClick={() => setForm({ nombres: '', celular: '', curso: '', origen: 'WhatsApp', estado: 'nuevo', seguimiento: '', notas: '' })}>+ Nuevo prospecto</button>
+        <button className="btn btn-teal" onClick={() => setForm({ nombres: '', celular: '', curso: '', origen: 'WhatsApp', estado: 'nuevo', seguimiento: '', notas: '', recontactar1: '', recontactar2: '' })}>+ Nuevo prospecto</button>
       </Seccion>
       {data.prospectosError && hasBackend && <p className="banner">Falta pegar <b>crm.sql</b> en Supabase. Mensaje: {data.prospectosError}</p>}
       <div className="kpis">
@@ -826,13 +830,13 @@ function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial }) {
             <thead><tr><th>Prospecto</th>{gerente && <th>Vendedor</th>}<th>Curso</th><th>Origen</th><th>Estado</th><th>Seguimiento</th><th>Notas</th><th /></tr></thead>
             <tbody>
               {lista.map((p) => (
-                <tr key={p.id} className={p.seguimiento && p.seguimiento <= hoy && !['inscrito', 'perdido'].includes(p.estado) ? 'nueva' : ''}>
+                <tr key={p.id} className={(() => { const r = proximoRecontacto(p); const f = r ? r.fecha : p.seguimiento; return f && f <= hoy && !['inscrito', 'perdido'].includes(p.estado) ? 'nueva' : '' })()}>
                   <td><b>{p.nombres}</b>{p.celular && <small className="paq"><a href={wa(p.celular)} target="_blank" rel="noopener noreferrer">{p.celular}</a></small>}</td>
                   {gerente && <td>{(p.vendedor || '').split('@')[0]}</td>}
                   <td>{p.curso || '—'}</td>
                   <td>{p.origen}</td>
                   <td><select aria-label={`Estado de ${p.nombres}`} value={p.estado} onChange={(e) => cambiar(p, { estado: e.target.value })}>{Object.entries(ESTADOS_PROSPECTO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
-                  <td><input type="date" aria-label={`Seguimiento de ${p.nombres}`} value={p.seguimiento || ''} onChange={(e) => cambiar(p, { seguimiento: e.target.value })} /></td>
+                  <td>{(() => { const r = proximoRecontacto(p); const f = r ? r.fecha : p.seguimiento; return f ? <span className={recontactoVencido(p) ? 'vencido' : ''}>{fechaCorta(f)}{r ? ` · contacto ${r.etapa + 1}` : ''}{recontactoVencido(p) ? ' ⚠️' : ''}</span> : <small>{p.recontactar1 === 'no' || p.recontactar2 === 'no' ? 'No recontactar' : '—'}</small> })()}</td>
                   <td className="notas">{p.notas || '—'}</td>
                   <td className="acc">
                     <button className="btn btn-line sm" onClick={() => setForm(p)}>Editar</button>
@@ -860,14 +864,523 @@ function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial }) {
               <label>Origen<select value={form.origen} onChange={(e) => setForm({ ...form, origen: e.target.value })}>{ORIGENES.map((o) => <option key={o}>{o}</option>)}</select></label>
               <label>Estado<select value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value })}>{Object.entries(ESTADOS_PROSPECTO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
             </div>
-            <label>Próximo seguimiento<input type="date" value={form.seguimiento || ''} onChange={(e) => setForm({ ...form, seguimiento: e.target.value })} /></label>
-            <label>Notas<textarea rows={3} value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} /></label>
+            <label>Notas generales<textarea rows={2} value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} /></label>
+            {[1, 2].map((n) => {
+              const f = (k) => `${k}${n}`
+              const rc = form['recontactar' + n] || ''
+              return (
+                <fieldset key={n} className="contacto">
+                  <legend>Contacto {n}{n === 1 ? ' · primera interacción' : ''}</legend>
+                  <label>Fecha<input type="date" value={form['contacto' + n + '_fecha'] || ''} onChange={(e) => setForm({ ...form, ['contacto' + n + '_fecha']: e.target.value })} /></label>
+                  <label>¿En qué quedó con el cliente?<textarea rows={2} value={form['contacto' + n + '_obs'] || ''} onChange={(e) => setForm({ ...form, ['contacto' + n + '_obs']: e.target.value })} /></label>
+                  <div className="g2">
+                    <label>¿Volver a contactar?
+                      <select value={rc} onChange={(e) => setForm({ ...form, ['recontactar' + n]: e.target.value })}>
+                        <option value="">Elegir…</option><option value="si">Sí</option><option value="no">No</option>
+                      </select>
+                    </label>
+                    {rc === 'si' && <label>Volver a contactar el<input type="date" value={form['recontactar' + n + '_fecha'] || ''} onChange={(e) => setForm({ ...form, ['recontactar' + n + '_fecha']: e.target.value })} /></label>}
+                  </div>
+                  {n === 2 && rc === 'si' && <label className="chk"><input type="checkbox" checked={!!form.recontacto2_hecho} onChange={(e) => setForm({ ...form, recontacto2_hecho: e.target.checked })} /> Ya lo volví a contactar</label>}
+                </fieldset>
+              )
+            })}
           </div>
         </Drawer>
       )}
       {borrando && (
         <Confirmar texto={`¿Borrar a ${borrando.nombres}?`} onNo={() => setBorrando(null)}
           onSi={() => { const p = borrando; setBorrando(null); hacer(() => borrarProspecto(p.id), 'Prospecto borrado') }} />
+      )}
+    </>
+  )
+}
+
+
+/* ================= AGENDA (pendientes, notas, calendario) ================= */
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre']
+function PendienteForm({ inicial, onClose, onSave }) {
+  const [f, setF] = useState(inicial)
+  return (
+    <Drawer titulo={f.id ? 'Editar pendiente' : (f.vendedor ? 'Asignar pendiente' : 'Nuevo pendiente')} onClose={onClose}
+      pie={<><button className="btn btn-line" onClick={onClose}>Cancelar</button><button className="btn btn-teal" onClick={() => onSave(f)}>Guardar</button></>}>
+      <div className="fs">
+        <label>¿Qué hay que hacer?<input id="pd-tit" value={f.titulo} maxLength={160} onChange={(e) => setF({ ...f, titulo: e.target.value })} /></label>
+        <label>Detalle (opcional)<textarea rows={3} value={f.detalle || ''} onChange={(e) => setF({ ...f, detalle: e.target.value })} /></label>
+        <label>Fecha límite (opcional)<input id="pd-fec" type="date" value={f.fecha_limite || ''} onChange={(e) => setF({ ...f, fecha_limite: e.target.value })} /></label>
+      </div>
+    </Drawer>
+  )
+}
+
+function ListaPendientes({ lista, email, hacer, gerente, onEditar }) {
+  const hoy = hoyISO()
+  const [borrando, setBorrando] = useState(null)
+  if (!lista.length) return <div className="vacio"><p>Nada por aquí.</p></div>
+  return (
+    <>
+      <ul className="pend">
+        {lista.map((x) => {
+          const hecho = x.estado === 'realizado'
+          const asignado = x.creado_por && x.creado_por !== x.vendedor
+          const vencido = !hecho && x.fecha_limite && x.fecha_limite < hoy
+          const puedeEditar = !hecho && (gerente || !asignado)
+          return (
+            <li key={x.id} className={`${hecho ? 'hecho' : ''} ${vencido ? 'vencido' : ''}`}>
+              <input type="checkbox" checked={hecho} disabled={hecho} aria-label={`Marcar como realizado: ${x.titulo}`}
+                onChange={() => hacer(() => marcarPendiente(x.id), 'Pendiente realizado ✅')} />
+              <div>
+                <b>{x.titulo}</b>
+                {x.detalle && <small>{x.detalle}</small>}
+                <small>
+                  {asignado && <span className="tag">Asignado por gerencia</span>}
+                  {x.fecha_limite && <span> · Para el {fechaCorta(x.fecha_limite)}{vencido ? ' ⚠️ vencido' : ''}</span>}
+                  {hecho && x.realizado_en && <span> · Hecho el {fechaCorta(x.realizado_en)}</span>}
+                </small>
+              </div>
+              {puedeEditar && (
+                <span className="acc">
+                  <button className="btn btn-line sm" onClick={() => onEditar(x)}>Editar</button>
+                  <button className="ib red" onClick={() => setBorrando(x)} aria-label="Borrar"><Icon n="trash" /></button>
+                </span>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+      {borrando && <Confirmar texto={`¿Borrar «${borrando.titulo}»?`} onNo={() => setBorrando(null)} onSi={() => { const x = borrando; setBorrando(null); hacer(() => borrarPendiente(x.id), 'Pendiente borrado') }} />}
+    </>
+  )
+}
+
+function Calendario({ data, email }) {
+  const hoy = hoyISO()
+  const [mes, setMes] = useState(hoy.slice(0, 7))
+  const [dia, setDia] = useState(hoy)
+  const [y, m] = mes.split('-').map(Number)
+  const primero = new Date(y, m - 1, 1)
+  const offset = (primero.getDay() + 6) % 7
+  const nd = new Date(y, m, 0).getDate()
+  const eventos = {}
+  const add = (f, e) => { if (!f) return; const k = String(f).slice(0, 10); (eventos[k] = eventos[k] || []).push(e) }
+  ;(data.prospectos || []).filter((p) => !p.vendedor || p.vendedor === email).forEach((p) => {
+    if (['inscrito', 'perdido'].includes(p.estado)) return
+    const r = proximoRecontacto(p); if (r) add(r.fecha, { tipo: 'rc', txt: `Volver a contactar a ${p.nombres}`, sub: `Contacto ${r.etapa + 1}${p.celular ? ' · ' + p.celular : ''}`, venc: r.fecha < hoy })
+  })
+  ;(data.pendientes || []).filter((x) => x.vendedor === email && x.estado === 'pendiente').forEach((x) => add(x.fecha_limite, { tipo: 'pd', txt: x.titulo, sub: 'Pendiente', venc: x.fecha_limite < hoy }))
+  ;(data.instalaciones || []).filter((x) => x.estado === 'agendada').forEach((x) => add(x.fecha, { tipo: 'in', txt: `Instalación${x.programa ? ': ' + x.programa : ''}`, sub: horaCorta ? horaCorta(x.hora) : x.hora }))
+  const cambiar = (d) => { const f = new Date(y, m - 1 + d, 1); setMes(f.getFullYear() + '-' + String(f.getMonth() + 1).padStart(2, '0')) }
+  const celdas = []
+  for (let i = 0; i < offset; i++) celdas.push(null)
+  for (let d = 1; d <= nd; d++) celdas.push(`${mes}-${String(d).padStart(2, '0')}`)
+  const sel = eventos[dia] || []
+  return (
+    <div className="calendario">
+      <div className="cal-head">
+        <button className="btn btn-line sm" onClick={() => cambiar(-1)} aria-label="Mes anterior">‹</button>
+        <b>{MESES[m - 1]} {y}</b>
+        <button className="btn btn-line sm" onClick={() => cambiar(1)} aria-label="Mes siguiente">›</button>
+      </div>
+      <div className="cal-grid">
+        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => <span key={i} className="cal-dow">{d}</span>)}
+        {celdas.map((f, i) => f === null ? <span key={'v' + i} /> : (
+          <button key={f} className={`cal-d ${f === hoy ? 'hoy' : ''} ${f === dia ? 'sel' : ''}`} onClick={() => setDia(f)} aria-label={`${Number(f.slice(8))} de ${MESES[m - 1]}`}>
+            {Number(f.slice(8))}
+            {eventos[f] && <i className={eventos[f].some((e) => e.venc) ? 'venc' : ''}>{eventos[f].length}</i>}
+          </button>
+        ))}
+      </div>
+      <h3 className="cal-tit">{fechaCorta(dia)}</h3>
+      {!sel.length && <p className="note">Nada agendado este día.</p>}
+      <ul className="cal-ev">
+        {sel.map((e, i) => <li key={i} className={`${e.tipo} ${e.venc ? 'venc' : ''}`}><b>{e.txt}</b><small>{e.sub}{e.venc ? ' · ⚠️ vencido' : ''}</small></li>)}
+      </ul>
+    </div>
+  )
+}
+
+function Agenda({ data, email, hacer }) {
+  const [sub, setSub] = useState('pendientes')
+  const [form, setForm] = useState(null)
+  const [nota, setNota] = useState(null)
+  const [borrandoN, setBorrandoN] = useState(null)
+  const mios = (data.pendientes || []).filter((x) => x.vendedor === email)
+  const abiertos = mios.filter((x) => x.estado === 'pendiente').sort((a, b) => (a.fecha_limite || '9999').localeCompare(b.fecha_limite || '9999'))
+  const hechos = mios.filter((x) => x.estado === 'realizado').sort((a, b) => String(b.realizado_en).localeCompare(String(a.realizado_en)))
+  const notas = (data.notas_agenda || []).filter((x) => !x.vendedor || x.vendedor === email)
+  const vencidos = (data.prospectos || []).filter((p) => (!p.vendedor || p.vendedor === email) && recontactoVencido(p))
+  return (
+    <>
+      <Seccion titulo="Mi agenda" ayuda="Tus pendientes, notas y el calendario con los clientes a los que tienes que volver a contactar.">
+        {sub === 'pendientes' && <button className="btn btn-teal" onClick={() => setForm({ titulo: '', detalle: '', fecha_limite: '' })}>+ Nuevo pendiente</button>}
+        {sub === 'notas' && <button className="btn btn-teal" onClick={() => setNota({ titulo: '', texto: '' })}>+ Nueva nota</button>}
+      </Seccion>
+      {data.pendientesError && hasBackend && <p className="banner">Falta pegar <b>crm.sql</b> en Supabase. Mensaje: {data.pendientesError}</p>}
+      {vencidos.length > 0 && <div className="alertas"><p className="alerta"><b>Se te pasó volver a contactar a:</b> {vencidos.map((p) => p.nombres).join(', ')}. Cada cliente sin respuesta es una venta que se puede perder.</p></div>}
+      <div className="tabs2" role="tablist">
+        {[['pendientes', `Pendientes (${abiertos.length})`], ['realizados', `Realizados (${hechos.length})`], ['notas', 'Notas'], ['calendario', 'Calendario']].map(([k, n]) => (
+          <button key={k} role="tab" aria-selected={sub === k} onClick={() => setSub(k)}>{n}</button>
+        ))}
+      </div>
+      {sub === 'pendientes' && <ListaPendientes lista={abiertos} email={email} hacer={hacer} onEditar={(x) => setForm(x)} />}
+      {sub === 'realizados' && <><p className="note">Los pendientes realizados quedan como registro: ya no se pueden editar ni borrar.</p><ListaPendientes lista={hechos} email={email} hacer={hacer} onEditar={() => {}} /></>}
+      {sub === 'calendario' && <Calendario data={data} email={email} />}
+      {sub === 'notas' && (
+        <div className="notas-grid">
+          {!notas.length && <div className="vacio"><p>Aún no tienes notas.</p></div>}
+          {notas.map((n) => (
+            <article key={n.id} className="nota">
+              <b>{n.titulo || 'Sin título'}</b>
+              <p>{n.texto}</p>
+              <span className="acc">
+                <button className="btn btn-line sm" onClick={() => setNota(n)}>Editar</button>
+                <button className="ib red" onClick={() => setBorrandoN(n)} aria-label="Borrar"><Icon n="trash" /></button>
+              </span>
+            </article>
+          ))}
+        </div>
+      )}
+      {form && <PendienteForm inicial={form} onClose={() => setForm(null)} onSave={(f) => hacer(async () => { await guardarPendiente(f); setForm(null) }, 'Pendiente guardado')} />}
+      {nota && (
+        <Drawer titulo={nota.id ? 'Editar nota' : 'Nueva nota'} onClose={() => setNota(null)}
+          pie={<><button className="btn btn-line" onClick={() => setNota(null)}>Cancelar</button><button className="btn btn-teal" onClick={() => hacer(async () => { await guardarNota(nota); setNota(null) }, 'Nota guardada')}>Guardar</button></>}>
+          <div className="fs">
+            <label>Título<input id="nt-tit" value={nota.titulo} onChange={(e) => setNota({ ...nota, titulo: e.target.value })} /></label>
+            <label>Nota<textarea id="nt-txt" rows={8} value={nota.texto} onChange={(e) => setNota({ ...nota, texto: e.target.value })} /></label>
+          </div>
+        </Drawer>
+      )}
+      {borrandoN && <Confirmar texto={`¿Borrar la nota «${borrandoN.titulo || 'sin título'}»?`} onNo={() => setBorrandoN(null)} onSi={() => { const x = borrandoN; setBorrandoN(null); hacer(() => borrarNota(x.id), 'Nota borrada') }} />}
+    </>
+  )
+}
+
+
+/* Gerente: reporte semanal automático de una vendedora */
+function ReporteSemanal({ data, email }) {
+  const [lunes, setLunes] = useState(() => lunesDe(new Date()))
+  const r = reporteSemana(data, email, lunes)
+  const mover = (n) => { const x = new Date(lunes); x.setDate(x.getDate() + 7 * n); setLunes(x) }
+  const dom = new Date(lunes); dom.setDate(dom.getDate() + 6)
+  const rango = `${lunes.getDate()} ${MESES[lunes.getMonth()].slice(0, 3)} – ${dom.getDate()} ${MESES[dom.getMonth()].slice(0, 3)} ${dom.getFullYear()}`
+  const ok = r.horas.total >= MINIMO_SEMANA_MIN
+  const fila = (txt, val, mal) => <li className={mal ? 'mal' : ''}><span>{txt}</span><b>{val}</b></li>
+  return (
+    <section className="reporte">
+      <div className="sec-h"><h3>Reporte semanal</h3>
+        <span className="rep-nav"><button className="btn btn-line sm" onClick={() => mover(-1)} aria-label="Semana anterior">‹</button><b>{rango}</b><button className="btn btn-line sm" onClick={() => mover(1)} aria-label="Semana siguiente">›</button></span>
+      </div>
+      <div className="rep-grid">
+        <div><h4>Ventas</h4><ul>
+          {fila('Inscritos (alumnos)', r.inscritos)}
+          {fila('Cupos / matrículas', r.matriculas)}
+          {fila('Total vendido', soles(r.vendido))}
+        </ul></div>
+        <div><h4>Atención</h4><ul>
+          {fila('Prospectos nuevos', r.prospectosNuevos)}
+          {fila('Interesados recibidos', r.interesados)}
+          {fila('Atendidos', r.atendidos)}
+          {fila('Sin atender', r.sinAtender, r.sinAtender > 0)}
+        </ul></div>
+        <div><h4>Volver a contactar</h4><ul>
+          {fila('Programados esta semana', r.programados)}
+          {fila('Se le pasaron (a hoy)', r.vencidos.length, r.vencidos.length > 0)}
+        </ul>
+          {r.vencidos.length > 0 && <small className="rep-det">{r.vencidos.map((p) => p.nombres).join(', ')}</small>}
+        </div>
+        <div><h4>Pendientes</h4><ul>
+          {fila('Vencían esta semana', `${r.pendientes.cumplidosDeEsos} de ${r.pendientes.vencenSemana} cumplidos`, r.pendientes.cumplidosDeEsos < r.pendientes.vencenSemana)}
+          {fila('Realizados en la semana', r.pendientes.hechosSemana)}
+          {fila('Asignados por gerencia', r.pendientes.asignadosSemana)}
+          {fila('Abiertos ahora', r.pendientes.abiertos)}
+          {fila('Vencidos sin hacer', r.pendientes.vencidos.length, r.pendientes.vencidos.length > 0)}
+        </ul></div>
+        <div><h4>Horas</h4><ul>
+          {fila('Trabajadas', `${fmtHM(r.horas.total)} / mín. 24 h`, !ok)}
+          {fila('Días con jornada', r.horas.dias.filter((d) => d > 0).length)}
+        </ul>
+          <small className="rep-det">{['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => `${d} ${fmtHM(r.horas.dias[i])}`).join(' · ')}</small>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* Gerente: pendientes de una vendedora (asignar y ver cumplimiento) */
+function PendientesDe({ data, email, hacer }) {
+  const [form, setForm] = useState(null)
+  const mios = (data.pendientes || []).filter((x) => x.vendedor === email)
+  const abiertos = mios.filter((x) => x.estado === 'pendiente')
+  const hechos = mios.filter((x) => x.estado === 'realizado')
+  return (
+    <section className="avance-sec">
+      <div className="sec-h"><h3>Pendientes de la vendedora</h3><button className="btn btn-teal sm" onClick={() => setForm({ titulo: '', detalle: '', fecha_limite: '', vendedor: email })}>+ Asignar pendiente</button></div>
+      <p className="note">{abiertos.length} por hacer · {hechos.length} realizados</p>
+      <ListaPendientes lista={[...abiertos, ...hechos]} email={email} hacer={hacer} gerente onEditar={(x) => setForm(x)} />
+      {form && <PendienteForm inicial={form} onClose={() => setForm(null)} onSave={(f) => hacer(async () => { await guardarPendiente(f); setForm(null) }, 'Pendiente guardado')} />}
+    </section>
+  )
+}
+
+
+/* ================= CONTRATOS Y FIRMA ================= */
+function VerDoc({ doc, onClose }) {
+  return (
+    <Drawer titulo={doc.titulo} onClose={onClose} pie={<button className="btn btn-line" onClick={onClose}>Cerrar</button>}>
+      <pre className="doc-txt">{doc.contenido}</pre>
+      {doc.estado === 'firmado'
+        ? <p className="firma-ok">✅ Firmado por <b>{doc.firmado_nombre}</b> el {fechaCorta(doc.firmado_en)} · {new Date(doc.firmado_en).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}<small>Huella: {doc.huella}</small></p>
+        : <p className="note">Enviado, aún sin firmar.</p>}
+    </Drawer>
+  )
+}
+
+function EnviarContrato({ t, data, onClose, hacer }) {
+  const hoy = new Date()
+  const ini0 = t.fecha_inicio && t.fecha_inicio > hoyISO() ? t.fecha_inicio : new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().slice(0, 10)
+  const fin0 = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().slice(0, 10)
+  const firmoConf = (data.documentos || []).some((d) => d.vendedor === t.email && d.tipo === 'confidencialidad' && d.estado === 'firmado')
+  const [f, setF] = useState({ inicio: ini0, fin: fin0, contrato: true, confidencialidad: !firmoConf })
+  const faltan = [!t.documento && 'DNI', !t.email && 'correo de acceso', !t.fecha_inicio && 'fecha de inicio', !(Number(t.sueldo_base) > 0) && 'sueldo'].filter(Boolean)
+  const vars = { nombre: t.nombre, documento: t.documento, email: t.email, sueldo: soles(t.sueldo_base), fecha_inicio: fechaLarga(f.inicio), fecha_fin: fechaLarga(f.fin), mes: nombreMes(f.inicio.slice(0, 7)), fecha_envio: fechaLarga(hoyISO()) }
+  const tipos = ['contrato', 'confidencialidad'].filter((k) => f[k])
+  const enviar = () => hacer(async () => {
+    if (!f.inicio || !f.fin || f.fin < f.inicio) throw new Error('Revisa las fechas: la de fin no puede ser antes que la de inicio.')
+    await enviarDocumentos(tipos.map((k) => { const pl = plantillaDe(data, k); return { vendedor: t.email, tipo: k, titulo: renderDoc(pl.titulo, vars), contenido: renderDoc(pl.contenido, vars), fecha_inicio: f.inicio, fecha_fin: f.fin } }))
+    onClose()
+  }, 'Enviado a ' + t.nombre)
+  return (
+    <Drawer titulo={`Enviar contrato a ${t.nombre}`} onClose={onClose}
+      pie={<><button className="btn btn-line" onClick={onClose}>Cancelar</button><button className="btn btn-teal" disabled={!tipos.length || faltan.length > 0} onClick={enviar}>Enviar</button></>}>
+      <div className="fs">
+        <div className="g2">
+          <label>Desde<input id="ec-ini" type="date" value={f.inicio} onChange={(e) => setF({ ...f, inicio: e.target.value })} /></label>
+          <label>Hasta<input id="ec-fin" type="date" value={f.fin} onChange={(e) => setF({ ...f, fin: e.target.value })} /></label>
+        </div>
+        <label className="chk"><input type="checkbox" checked={f.contrato} onChange={(e) => setF({ ...f, contrato: e.target.checked })} /> Contrato del periodo</label>
+        <label className="chk"><input type="checkbox" checked={f.confidencialidad} onChange={(e) => setF({ ...f, confidencialidad: e.target.checked })} /> Acuerdo de confidencialidad{firmoConf ? ' (ya lo firmó)' : ''}</label>
+        {faltan.length > 0
+          ? <p className="alerta rojo"><b>Aún no se puede enviar.</b> Faltan en su ficha: {faltan.join(', ')}. Mientras tanto puedes leer cómo quedará el contrato.</p>
+          : <p className="note ok">Datos completos. Lee la vista previa y, si todo está bien, pulsa Enviar.</p>}
+        <p className="note">Los textos salen de las plantillas de <b>Gerencia → Contratos</b> (ahí puedes editarlos). Aquí solo cambias las fechas.</p>
+        <h3>Vista previa</h3>
+        {tipos.map((k) => <div key={k}><b>{TIPOS_DOC[k]}</b><pre className="doc-txt">{renderDoc(plantillaDe(data, k).contenido, vars)}</pre></div>)}
+      </div>
+    </Drawer>
+  )
+}
+
+function DocumentosDe({ data, t, hacer }) {
+  const [ver, setVer] = useState(null)
+  const [env, setEnv] = useState(false)
+  const [borrando, setBorrando] = useState(null)
+  const docs = (data.documentos || []).filter((d) => d.vendedor === t.email)
+  return (
+    <section className="reporte">
+      <div className="sec-h"><h3>Contratos y firmas</h3><button className="btn btn-teal sm" onClick={() => setEnv(true)}>Vista previa y enviar</button></div>
+      {data.documentosError && hasBackend && <p className="banner">Falta pegar <b>crm.sql</b> en Supabase. {data.documentosError}</p>}
+      {!docs.length && <p className="note">Aún no le has enviado documentos.</p>}
+      <ul className="pend">
+        {docs.map((d) => (
+          <li key={d.id}>
+            <span>{d.estado === 'firmado' ? '✅' : '⏳'}</span>
+            <div><b>{d.titulo}</b><small>{d.fecha_inicio ? `${fechaCorta(d.fecha_inicio)} → ${d.fecha_fin ? fechaCorta(d.fecha_fin) : '…'} · ` : ''}{d.estado === 'firmado' ? `Firmado el ${fechaCorta(d.firmado_en)}` : 'Pendiente de firma'}</small></div>
+            <span className="acc"><button className="btn btn-line sm" onClick={() => setVer(d)}>Ver</button>{d.estado === 'enviado' && <button className="ib red" onClick={() => setBorrando(d)} aria-label="Borrar"><Icon n="trash" /></button>}</span>
+          </li>
+        ))}
+      </ul>
+      {env && <EnviarContrato t={t} data={data} hacer={hacer} onClose={() => setEnv(false)} />}
+      {ver && <VerDoc doc={ver} onClose={() => setVer(null)} />}
+      {borrando && <Confirmar texto={`¿Borrar «${borrando.titulo}»? Aún no está firmado.`} onNo={() => setBorrando(null)} onSi={() => { const x = borrando; setBorrando(null); hacer(() => borrarDocumento(x.id), 'Borrado') }} />}
+    </section>
+  )
+}
+
+function Contratos({ data, hacer }) {
+  const [ed, setEd] = useState(null)
+  const [ver, setVer] = useState(null)
+  const docs = data.documentos || []
+  const nombreDe = (email) => armarTrabajadores(data).find((t) => t.email === email)?.nombre || email
+  return (
+    <>
+      <Seccion titulo="Contratos" ayuda="Edita los textos base. Se envían desde la ficha de cada trabajador (botón «Enviar contrato»)." />
+      <div className="plant-grid">
+        {['contrato', 'confidencialidad', 'plan'].map((k) => {
+          const pl = plantillaDe(data, k)
+          return (
+            <article key={k} className="plant">
+              <h4>{TIPOS_DOC[k]}</h4>
+              <p>{pl.titulo}</p>
+              <small>{k === 'plan' ? 'Lo lee cada vendedora en «Plan de trabajo»' : 'Se firma desde «Firmar»'}{(data.plantillas || []).some((x) => x.tipo === k) ? ' · editada' : ' · texto base'}</small>
+              <button className="btn btn-teal sm" onClick={() => setEd({ tipo: k, titulo: pl.titulo, contenido: pl.contenido })}>Editar texto</button>
+            </article>
+          )
+        })}
+      </div>
+      <p className="note">Son borradores: hazlos revisar por tu contador o abogado antes de usarlos. Variables disponibles: {VARIABLES_DOC.join('  ')}</p>
+      <h3>Trabajadores</h3>
+      <div className="cons-wrap"><table className="cons-table">
+        <thead><tr><th>Nombre</th><th>Puesto</th><th>Sueldo</th><th>Contrato</th><th>Confidencialidad</th></tr></thead>
+        <tbody>{armarTrabajadores(data).filter((t) => t.puesto === 'vendedor').map((t) => {
+          const ult = (tipo) => docs.filter((d) => d.vendedor === t.email && d.tipo === tipo)[0]
+          const est = (d) => !d ? <span className="est-doc sin">Sin enviar</span> : d.estado === 'firmado' ? <button className="link" onClick={() => setVer(d)}>✅ Firmó el {fechaCorta(d.firmado_en)}</button> : <button className="link" onClick={() => setVer(d)}>⏳ Enviado, sin firmar</button>
+          return <tr key={t.id || t.email}><td><b>{t.nombre}</b></td><td>{t.cargo || 'Vendedora'}</td><td>{soles(t.sueldo_base)}</td><td>{est(ult('contrato'))}{ult('contrato')?.fecha_inicio && <small className="paq">{nombreMes(ult('contrato').fecha_inicio.slice(0, 7))}</small>}</td><td>{est(ult('confidencialidad'))}</td></tr>
+        })}</tbody>
+      </table></div>
+      <p className="note">Para enviar un contrato entra a la ficha del trabajador (Gerencia → Trabajadores) y pulsa «Vista previa y enviar».</p>
+      <h3>Historial de documentos enviados</h3>
+      {!docs.length && <div className="vacio"><p>Aún no se envió ningún documento.</p></div>}
+      {docs.length > 0 && (
+        <div className="cons-wrap"><table className="cons-table">
+          <thead><tr><th>Trabajador</th><th>Documento</th><th>Periodo</th><th>Estado</th><th /></tr></thead>
+          <tbody>{docs.map((d) => (
+            <tr key={d.id}><td>{nombreDe(d.vendedor)}</td><td>{TIPOS_DOC[d.tipo]}</td><td>{d.fecha_inicio ? `${fechaCorta(d.fecha_inicio)} → ${d.fecha_fin ? fechaCorta(d.fecha_fin) : '…'}` : '—'}</td>
+              <td>{d.estado === 'firmado' ? `✅ Firmado ${fechaCorta(d.firmado_en)}` : '⏳ Sin firmar'}</td>
+              <td className="acc"><button className="btn btn-line sm" onClick={() => setVer(d)}>Ver</button></td></tr>
+          ))}</tbody>
+        </table></div>
+      )}
+      {ed && (
+        <Drawer titulo={`Editar: ${TIPOS_DOC[ed.tipo]}`} onClose={() => setEd(null)}
+          pie={<><button className="btn btn-line" onClick={() => setEd(null)}>Cancelar</button><button className="btn btn-teal" onClick={() => hacer(async () => { await guardarPlantilla(ed.tipo, ed); setEd(null) }, 'Plantilla guardada')}>Guardar</button></>}>
+          <div className="fs">
+            <label>Título<input id="pl-tit" value={ed.titulo} onChange={(e) => setEd({ ...ed, titulo: e.target.value })} /></label>
+            <label>Texto<textarea id="pl-txt" rows={22} className="doc-edit" value={ed.contenido} onChange={(e) => setEd({ ...ed, contenido: e.target.value })} /></label>
+            <p className="note">Variables: {VARIABLES_DOC.join('  ')}. Lo que edites aplica a los documentos que envíes desde ahora; los ya enviados no cambian.</p>
+          </div>
+        </Drawer>
+      )}
+      {ver && <VerDoc doc={ver} onClose={() => setVer(null)} />}
+    </>
+  )
+}
+
+/* Vendedora: firmar documentos */
+function Firmar({ data, email, hacer }) {
+  const mios = (data.documentos || []).filter((d) => d.vendedor === email)
+  const pend = mios.filter((d) => d.estado === 'enviado')
+  const firmados = mios.filter((d) => d.estado === 'firmado')
+  const [ver, setVer] = useState(null)
+  return (
+    <>
+      <Seccion titulo="Firmar" ayuda="Aquí te llegan tu contrato y tu acuerdo de confidencialidad. Léelos completos y fírmalos." />
+      {data.documentosError && hasBackend && <p className="banner">Falta pegar <b>crm.sql</b> en Supabase. {data.documentosError}</p>}
+      {!pend.length && <div className="vacio"><p>No tienes documentos por firmar 🎉</p></div>}
+      {pend.map((d) => <FirmaCard key={d.id} d={d} hacer={hacer} />)}
+      {firmados.length > 0 && <>
+        <h3>Ya firmados</h3>
+        <ul className="pend">{firmados.map((d) => (
+          <li key={d.id}><span>✅</span><div><b>{d.titulo}</b><small>Firmado el {fechaCorta(d.firmado_en)}</small></div><span className="acc"><button className="btn btn-line sm" onClick={() => setVer(d)}>Ver</button></span></li>
+        ))}</ul>
+      </>}
+      {ver && <VerDoc doc={ver} onClose={() => setVer(null)} />}
+    </>
+  )
+}
+function FirmaCard({ d, hacer }) {
+  const [ok, setOk] = useState(false)
+  const [nombre, setNombre] = useState('')
+  return (
+    <article className="firma-card">
+      <h3>{d.titulo}</h3>
+      {d.fecha_inicio && <small>Periodo: {fechaCorta(d.fecha_inicio)} → {d.fecha_fin ? fechaCorta(d.fecha_fin) : '…'}</small>}
+      <pre className="doc-txt">{d.contenido}</pre>
+      <label className="chk"><input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} /> He leído el documento completo y acepto sus términos.</label>
+      <label>Escribe tu nombre completo para firmar<input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombres y apellidos" /></label>
+      <button className="btn btn-teal" disabled={!ok || nombre.trim().length < 5} onClick={() => hacer(() => firmarDocumento(d.id, nombre), 'Documento firmado ✅')}>Firmar</button>
+      <small>Quedan registrados tu nombre, la fecha y hora, y una huella digital del texto.</small>
+    </article>
+  )
+}
+
+/* Vendedora: plan de trabajo y funciones */
+function PlanTrabajo({ data, email }) {
+  const t = armarTrabajadores(data).find((x) => x.email === email) || { nombre: email }
+  const pl = plantillaDe(data, 'plan')
+  const vars = { nombre: t.nombre, documento: t.documento, email, sueldo: soles(t.sueldo_base), fecha_inicio: t.fecha_inicio ? fechaLarga(t.fecha_inicio) : '', mes: '', fecha_envio: '' }
+  return (
+    <>
+      <Seccion titulo="Plan de trabajo" ayuda="Tus funciones y reglas. Léelo cada vez que tengas dudas." />
+      <pre className="doc-txt plan">{renderDoc(pl.contenido, vars)}</pre>
+    </>
+  )
+}
+
+
+/* ================= ALERTAS DE VENTA ================= */
+function AlertasVenta({ data, email, gerente }) {
+  const { vacantes, gruposAdmin } = alertasVenta(data, gerente ? '' : email)
+  if (!vacantes.length && !gruposAdmin.length) return null
+  const etiqueta = { retirar: '🚫 Retirar', hoy: '⏰ Hoy', pronto: '📅 Pronto' }
+  return (
+    <div className="alertas">
+      {vacantes.map((v, i) => (
+        <p key={i} className={`alerta ${v.nivel === 'retirar' ? 'rojo' : ''}`}>
+          <b>{etiqueta[v.nivel]} · {v.alumno}</b> debe {soles(v.saldo)} ({v.grupo || 'curso'} empieza {fechaCorta(v.inicio)}). {v.txt}
+          {v.celular && <> <a href={wa(v.celular)} target="_blank" rel="noopener noreferrer">Escribirle</a></>}
+        </p>
+      ))}
+      {gruposAdmin.length > 0 && <p className="alerta"><b>🔒 Falta dejar en «solo admins»</b> el grupo de WhatsApp de: {gruposAdmin.map((g) => g.codigo).join(', ')}. Nadie debe escribir hasta antes del curso.</p>}
+    </div>
+  )
+}
+
+/* ================= QUEJAS Y RECLAMOS ================= */
+const TIPO_QUEJA = { queja: 'Queja', reclamo: 'Reclamo', problema: 'Problema de alumno' }
+function Quejas({ data, hacer, gerente, email }) {
+  const [form, setForm] = useState(null)
+  const [aviso, setAviso] = useState(null)
+  const [atender, setAtender] = useState(null)
+  const lista = (data.quejas || []).filter((q) => gerente || q.vendedor === email)
+  const msg = (q) => `🚨 ${TIPO_QUEJA[q.tipo] || 'Queja'} — aviso inmediato\nAlumno: ${q.alumno || 'sin nombre'}${q.celular ? ' (' + q.celular + ')' : ''}\n${q.detalle}\nReporta: ${(q.vendedor || email || '').split('@')[0]}`
+  const linkAviso = (q) => `https://wa.me/${String(numeroGerencia()).replace(/\D/g, '')}?text=${encodeURIComponent(msg(q))}`
+  return (
+    <>
+      <Seccion titulo="Quejas y reclamos" ayuda={gerente ? 'Lo que reporta tu equipo. Atiéndelo y márcalo como atendido.' : 'Si un alumno se queja o reclama, regístralo aquí Y avisa de inmediato a gerencia. Si es un problema de un alumno, consulta siempre con gerencia cómo solucionarlo.'}>
+        {!gerente && <button className="btn btn-teal" onClick={() => setForm({ tipo: 'queja', alumno: '', celular: '', detalle: '' })}>+ Reportar</button>}
+      </Seccion>
+      {data.quejasError && hasBackend && <p className="banner">Falta pegar <b>crm.sql</b> en Supabase. {data.quejasError}</p>}
+      {!lista.length && <div className="vacio"><p>No hay quejas ni reclamos registrados.</p></div>}
+      <ul className="pend">
+        {lista.map((q) => (
+          <li key={q.id} className={q.estado === 'nueva' ? 'vencido' : 'hecho'}>
+            <span>{q.estado === 'nueva' ? '🚨' : '✅'}</span>
+            <div>
+              <b>{TIPO_QUEJA[q.tipo]} · {q.alumno || 'sin nombre'}</b>
+              <small>{q.detalle}</small>
+              <small>{gerente && <>Reporta {(q.vendedor || '').split('@')[0]} · </>}{fechaCorta(q.creado)}{q.celular && <> · <a href={wa(q.celular)} target="_blank" rel="noopener noreferrer">{q.celular}</a></>}</small>
+              {q.nota_gerencia && <small><b>Gerencia:</b> {q.nota_gerencia}</small>}
+            </div>
+            <span className="acc">
+              {!gerente && q.estado === 'nueva' && <a className="btn btn-line sm" href={linkAviso(q)} target="_blank" rel="noopener noreferrer">Avisar a gerencia</a>}
+              {gerente && q.estado === 'nueva' && <button className="btn btn-teal sm" onClick={() => setAtender({ id: q.id, nota: '' })}>Atendido</button>}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {form && (
+        <Drawer titulo="Reportar queja o reclamo" onClose={() => setForm(null)}
+          pie={<><button className="btn btn-line" onClick={() => setForm(null)}>Cancelar</button><button className="btn btn-teal" onClick={() => hacer(async () => { const r = await guardarQueja(form); setForm(null); setAviso(r) }, 'Registrado. Ahora avisa a gerencia 👇')}>Registrar</button></>}>
+          <div className="fs">
+            <label>Tipo<select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })}>{Object.entries(TIPO_QUEJA).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+            <label>Alumno<input id="q-al" value={form.alumno} onChange={(e) => setForm({ ...form, alumno: e.target.value })} /></label>
+            <label>Celular<input value={form.celular} inputMode="tel" onChange={(e) => setForm({ ...form, celular: e.target.value })} /></label>
+            <label>¿Qué pasó?<textarea id="q-det" rows={5} value={form.detalle} onChange={(e) => setForm({ ...form, detalle: e.target.value })} /></label>
+            <p className="note">Al registrar te saldrá el botón para avisar a gerencia por WhatsApp. El aviso es obligatorio e inmediato.</p>
+          </div>
+        </Drawer>
+      )}
+      {aviso && (
+        <Drawer titulo="Avisa ahora a gerencia" onClose={() => setAviso(null)} pie={<button className="btn btn-line" onClick={() => setAviso(null)}>Ya avisé</button>}>
+          <p className="alerta rojo"><b>Falta un paso:</b> la queja ya quedó registrada, pero gerencia debe enterarse <b>de inmediato</b>.</p>
+          <a className="btn btn-teal" href={linkAviso(aviso)} target="_blank" rel="noopener noreferrer">Avisar por WhatsApp a gerencia</a>
+        </Drawer>
+      )}
+      {atender && (
+        <Drawer titulo="Marcar como atendido" onClose={() => setAtender(null)}
+          pie={<><button className="btn btn-line" onClick={() => setAtender(null)}>Cancelar</button><button className="btn btn-teal" onClick={() => hacer(async () => { await atenderQueja(atender.id, atender.nota); setAtender(null) }, 'Marcado como atendido')}>Guardar</button></>}>
+          <label>Nota (qué se hizo / qué debe hacer la vendedora)<textarea rows={4} value={atender.nota} onChange={(e) => setAtender({ ...atender, nota: e.target.value })} /></label>
+        </Drawer>
       )}
     </>
   )
@@ -926,7 +1439,7 @@ function Lightbox({ ruta, onClose }) {
   )
 }
 
-function InscripcionForm({ inicial, data, onSave, onClose }) {
+function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
   const grupos = data.grupos.filter((g) => g.estado !== 'cerrado' && g.activo !== false)
     .sort((a, b) => (a.inicio || '9999').localeCompare(b.inicio || '9999'))
   const cursoDe = (id) => data.cursos.find((c) => String(c.id) === String(id))
@@ -938,6 +1451,10 @@ function InscripcionForm({ inicial, data, onSave, onClose }) {
   const [fecha, setFecha] = useState(hoyISO())
   const [pago, setPago] = useState({ monto: '', metodo: 'Yape', fecha: hoyISO(), comprobante_url: '' })
   const [nota, setNota] = useState('')
+  const [terminos, setTerminos] = useState(false)
+  const [requisitos, setRequisitos] = useState(false)
+  const [descAut, setDescAut] = useState(false)
+  const [descMotivo, setDescMotivo] = useState('')
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const [encontrado, setEncontrado] = useState(false)
@@ -945,12 +1462,20 @@ function InscripcionForm({ inicial, data, onSave, onClose }) {
   const setA = (k, v) => setAl((x) => ({ ...x, [k]: v }))
 
   const elegidos = sel.map((id) => grupos.find((g) => String(g.id) === id)).filter(Boolean)
+  const pideReq = elegidos.some((g) => programaSugerido(cursoDe(g.curso_id)?.titulo || ''))
   const sugerido = elegidos.reduce((t, g) => t + Number(cursoDe(g.curso_id)?.precio || 0), 0)
   useEffect(() => { if (!precioManual) setPrecio(sugerido ? String(sugerido) : '') }, [sugerido, precioManual])
 
   function buscarAlumno(doc) {
     const x = data.alumnos.find((a) => a.tipo_doc === al.tipo_doc && a.documento === doc.trim())
     if (x) { setAl({ ...al, ...x, documento: x.documento }); setEncontrado(true) } else setEncontrado(false)
+  }
+  const esClubSel = paquete.trim().toLowerCase() === 'club ofimática'
+  const hacerClub = () => {
+    const buscar = (re) => grupos.find((g) => re.test(cursoDe(g.curso_id)?.titulo || ''))
+    const gs = [buscar(/word/i), buscar(/excel/i), buscar(/power\s*point/i)]
+    if (gs.some((g) => !g)) { setErr('Para el Club Ofimática tiene que haber un grupo abierto de Word, de Excel y de PowerPoint.'); return }
+    setErr(''); setSel(gs.map((g) => String(g.id))); setPaquete('Club Ofimática'); setPrecio('450'); setPrecioManual(true)
   }
   const alternar = (id) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
 
@@ -960,15 +1485,19 @@ function InscripcionForm({ inicial, data, onSave, onClose }) {
     if (al.tipo_doc === 'CE' && doc.length < 8) { setErr('Revisa el carné de extranjería.'); return }
     if (al.nombres.trim().length < 2 || al.apellido_paterno.trim().length < 2) { setErr('Faltan los nombres o el apellido paterno.'); return }
     if (!elegidos.length) { setErr('Elige al menos un curso (grupo).'); return }
+    if (!terminos) { setErr('Marca que enviaste los Términos y condiciones al alumno.'); return }
+    if (pideReq && !requisitos) { setErr('Marca que enviaste los requisitos mínimos de PC y que el alumno los cumple.'); return }
     const total = Number(precio)
     if (!(total >= 0) || precio === '') { setErr('Pon el precio acordado.'); return }
+    const conDescuento = sugerido > 0 && total < sugerido - 0.005 && !esClubSel
+    if (conDescuento && !gerente && (!descAut || descMotivo.trim().length < 3)) { setErr('Estás dando descuento: marca que gerencia lo autorizó y escribe quién y por qué.'); return }
     const monto = Number(pago.monto) || 0
     if (monto > total + 0.005) { setErr('El pago no puede ser mayor que el precio.'); return }
     if (monto > 0 && pago.metodo !== 'Efectivo' && !pago.comprobante_url) { setErr('Sube la foto del comprobante del pago.'); return }
     setBusy(true); setErr('')
     try {
       await onSave({
-        alumno: al, precioTotal: total, fecha, nota,
+        alumno: al, precioTotal: total, fecha, nota, terminos, descuentoAutorizado: conDescuento ? (gerente || descAut) : false, descuentoMotivo: conDescuento ? descMotivo.trim() : '', requisitos: pideReq ? requisitos : false,
         paquete: elegidos.length > 1 ? (paquete.trim() || 'Paquete') : '',
         grupos: elegidos.map((g) => ({ id: g.id, codigo: g.codigo || '', curso_id: g.curso_id, curso_titulo: cursoDe(g.curso_id)?.titulo || '' })),
         pago: monto > 0 ? { ...pago, monto } : null,
@@ -1022,13 +1551,21 @@ function InscripcionForm({ inicial, data, onSave, onClose }) {
             )
           })}
         </div>
+        <button type="button" className="btn btn-line sm" onClick={hacerClub}>🎓 Club Ofimática (Word + Excel + PowerPoint · S/ 450 · cuenta como 1 cupo)</button>
         {elegidos.length > 1 && (
           <label>Nombre del paquete<input id="i-paq" value={paquete} onChange={(e) => setPaquete(e.target.value)} placeholder="Ej.: Club Ofimática" /></label>
         )}
         <label>Precio acordado {elegidos.length > 1 ? 'por todo el paquete' : ''} (S/)
           <input id="i-precio" type="number" min="0" step="0.01" value={precio} onChange={(e) => { setPrecio(e.target.value); setPrecioManual(true) }} />
         </label>
-        {sugerido > 0 && Number(precio) !== sugerido && <p className="note">Precio de lista: {soles(sugerido)}. {Number(precio) < sugerido ? 'Estás dando descuento.' : ''}</p>}
+        {sugerido > 0 && Number(precio) !== sugerido && <p className="note">Precio de lista: {soles(sugerido)}. {Number(precio) < sugerido && !esClubSel ? 'Estás dando descuento.' : ''}</p>}
+        {sugerido > 0 && Number(precio) < sugerido - 0.005 && !esClubSel && (
+          <div className="fs descuento">
+            <p className="note"><b>El precio es fijo.</b> Un descuento solo se da con autorización previa de gerencia.</p>
+            {!gerente && <label className="chk"><input id="i-desc" type="checkbox" checked={descAut} onChange={(e) => setDescAut(e.target.checked)} /> Gerencia autorizó este descuento antes de cerrar la venta</label>}
+            <label>{gerente ? 'Motivo (opcional)' : 'Quién lo autorizó y por qué'}<input id="i-descm" value={descMotivo} onChange={(e) => setDescMotivo(e.target.value)} placeholder="Ej.: Diego, para cerrar la venta hoy" /></label>
+          </div>
+        )}
         <label>Fecha de inscripción<input id="i-fecha" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} /></label>
       </section>
 
@@ -1043,6 +1580,11 @@ function InscripcionForm({ inicial, data, onSave, onClose }) {
         <SubirComprobante ruta={pago.comprobante_url} onChange={(r) => setPago({ ...pago, comprobante_url: r })} />
       </section>
 
+      <section className="fs">
+        <h3>Antes de inscribir</h3>
+        <label className="chk"><input id="i-term" type="checkbox" checked={terminos} onChange={(e) => setTerminos(e.target.checked)} /> Le envié al alumno los Términos y condiciones</label>
+        {pideReq && <label className="chk"><input id="i-req" type="checkbox" checked={requisitos} onChange={(e) => setRequisitos(e.target.checked)} /> Le envié los requisitos mínimos de PC y confirmó que su equipo los cumple</label>}
+      </section>
       <section className="fs">
         <label>Nota (opcional)<textarea id="i-nota" rows={2} value={nota} onChange={(e) => setNota(e.target.value)} placeholder="Ej.: paga el saldo el 20 de nov" /></label>
       </section>
@@ -1119,6 +1661,7 @@ function Inscritos({ data, hacer, rol, nuevaInscripcion, registrarPago }) {
         <button className="btn btn-line" onClick={bajar} disabled={!lista.length}>Descargar Excel</button>
         <button className="btn btn-teal" onClick={() => nuevaInscripcion()}>+ Nueva inscripción</button>
       </Seccion>
+      <AlertasVenta data={data} email="" gerente />
       {data.crmError && hasBackend && <p className="banner">Falta pegar <b>crm.sql</b> en Supabase (SQL Editor). Mensaje: {data.crmError}</p>}
 
       <div className="filtros">
@@ -1370,6 +1913,319 @@ function Equipo({ data, hacer, email }) {
   )
 }
 
+/* ================= GERENCIA: HORAS TRABAJADAS (jornadas) ================= */
+const DIAS_ABR = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+const CIERRE_TXT = { manual: 'Terminó ella', tope: 'Llegó al tope', sin_senal: 'Sin señal', gerente: 'Corregida' }
+const aLocal = (iso) => { if (!iso) return ''; const d = new Date(iso); const p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}` }
+
+function JornadaForm({ j, onClose, onSave }) {
+  const [f, setF] = useState({ inicio: aLocal(j.inicio), fin: aLocal(j.fin || j.ultimo_pulso), nota: j.nota || '' })
+  const mal = !f.inicio || !f.fin || new Date(f.fin) <= new Date(f.inicio)
+  return (
+    <Drawer titulo="Corregir jornada" onClose={onClose}
+      pie={<><button className="btn btn-line" onClick={onClose}>Cancelar</button><button className="btn btn-teal" disabled={mal} onClick={() => onSave({ id: j.id, inicio: new Date(f.inicio).toISOString(), fin: new Date(f.fin).toISOString(), estado: 'cerrada', cierre: 'gerente', nota: f.nota })}>Guardar</button></>}>
+      <div className="fs">
+        <p className="note">{(j.vendedor || '').split('@')[0]} · solo tú puedes cambiar las horas.</p>
+        <label>Inicio<input type="datetime-local" value={f.inicio} onChange={(e) => setF({ ...f, inicio: e.target.value })} /></label>
+        <label>Fin<input type="datetime-local" value={f.fin} onChange={(e) => setF({ ...f, fin: e.target.value })} /></label>
+        {mal && <p className="err">El fin debe ser después del inicio.</p>}
+        <label>Motivo de la corrección<textarea rows={2} value={f.nota} onChange={(e) => setF({ ...f, nota: e.target.value })} /></label>
+      </div>
+    </Drawer>
+  )
+}
+
+function Horas({ data, hacer }) {
+  const [lunes, setLunes] = useState(() => lunesDe(new Date()))
+  const [edit, setEdit] = useState(null)
+  const [borrar, setBorrar] = useState(null)
+  const ahora = new Date()
+  const correos = [...new Set([...(data.equipo || []).filter((e) => e.rol === 'vendedora').map((e) => e.email), ...(data.jornadas || []).map((j) => j.vendedor)])]
+  const filas = correos.map((c) => ({ email: c, ...semanaHoras(data, c, lunes, ahora) }))
+  const todas = semanaHoras(data, null, lunes, ahora).jornadas
+  const mover = (n) => setLunes((l) => { const x = new Date(l); x.setDate(x.getDate() + n * 7); return x })
+  const dom = new Date(lunes); dom.setDate(dom.getDate() + 6)
+  const f = (d) => d.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })
+  const esActual = lunesDe(new Date()).getTime() === lunes.getTime()
+  const hora = (iso) => new Date(iso).toLocaleString('es-PE', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return (
+    <>
+      <Seccion titulo="Horas trabajadas" ayuda="Lo que registra cada vendedora con Iniciar y Terminar jornada. Mínimo: 24 horas por semana (4 h al día, lunes a sábado). Puede trabajar más.">
+        <button className="btn btn-line" onClick={() => mover(-1)} aria-label="Semana anterior">‹ Anterior</button>
+        <button className="btn btn-line" disabled={esActual} onClick={() => setLunes(lunesDe(new Date()))}>Esta semana</button>
+        <button className="btn btn-line" disabled={esActual} onClick={() => mover(1)} aria-label="Semana siguiente">Siguiente ›</button>
+      </Seccion>
+      {data.jornadasError && <p className="banner">Falta activar esta sección: pega de nuevo supabase/crm.sql en Supabase (SQL Editor). Detalle: {data.jornadasError}</p>}
+      <p className="note"><b>Semana del {f(lunes)} al {f(dom)}</b></p>
+      {filas.length === 0 ? <div className="vacio"><p>Aún no hay vendedoras.</p></div> : (
+        <div className="cons-wrap"><table className="cons-table insc">
+          <thead><tr><th>Vendedora</th>{DIAS_ABR.map((d) => <th key={d}>{d}</th>)}<th>Total</th><th>Mínimo (24 h)</th><th>Ahora</th></tr></thead>
+          <tbody>{filas.map((r) => {
+            const abierta = r.jornadas.find((j) => j.estado === 'abierta' && !j.fin)
+            const sin = abierta && jornadaSinSenal(abierta, ahora)
+            return (
+              <tr key={r.email}>
+                <td><b>{r.email.split('@')[0]}</b></td>
+                {r.dias.map((m, i) => <td key={i}>{m ? fmtHM(m).replace(' min', 'm').replace(' h ', 'h ') : '—'}</td>)}
+                <td><b>{fmtHM(r.total)}</b></td>
+                <td style={{ minWidth: 150 }}><div className="barra"><i style={{ width: `${Math.min(100, (r.total / MINIMO_SEMANA_MIN) * 100)}%` }} /></div><small>{Math.round((r.total / MINIMO_SEMANA_MIN) * 100)}% del mínimo{r.total >= MINIMO_SEMANA_MIN ? ' · cumplido' : ` · faltan ${fmtHM(MINIMO_SEMANA_MIN - r.total)}`}</small></td>
+                <td>{abierta ? (sin ? <span className="wa falta">Sin señal</span> : <span className="pill pagado">En jornada</span>) : '—'}</td>
+              </tr>
+            )
+          })}</tbody>
+        </table></div>
+      )}
+      <h3 className="subh">Detalle de jornadas</h3>
+      {todas.length === 0 ? <div className="vacio"><p>No hay jornadas esta semana.</p></div> : (
+        <div className="cons-wrap"><table className="cons-table insc">
+          <thead><tr><th>Vendedora</th><th>Inicio</th><th>Fin</th><th>Duración</th><th>Cierre</th><th>Equipo</th><th>Nota</th><th /></tr></thead>
+          <tbody>{todas.map((j) => {
+            const abierta = j.estado === 'abierta' && !j.fin
+            return (
+              <tr key={j.id}>
+                <td><b>{(j.vendedor || '').split('@')[0]}</b></td>
+                <td>{hora(j.inicio)}</td>
+                <td>{abierta ? (jornadaSinSenal(j, ahora) ? 'Sin señal' : 'En curso') : hora(j.fin)}</td>
+                <td>{fmtHM(minutosJornada(j, ahora))}</td>
+                <td>{abierta ? '—' : (CIERRE_TXT[j.cierre] || j.cierre || '—')}</td>
+                <td className="notas">{j.dispositivo || '—'}</td>
+                <td className="notas">{j.nota || '—'}</td>
+                <td className="acc"><button className="btn btn-line sm" onClick={() => setEdit(j)}>Corregir</button> <button className="ib red" aria-label="Borrar jornada" onClick={() => setBorrar(j)}><Icon n="trash" /></button></td>
+              </tr>
+            )
+          })}</tbody>
+        </table></div>
+      )}
+      <p className="note">Las 24 h son un mínimo: después puede seguir respondiendo WhatsApp y vendiendo (las ventas cuentan para su comisión). Las horas las registra el sistema, no ella. Una jornada sin señal por más de 15 minutos se cuenta solo hasta su último aviso. Esto es un registro, no una vigilancia: no sabemos qué hace en la laptop.</p>
+      {edit && <JornadaForm j={edit} onClose={() => setEdit(null)} onSave={async (fila) => { await hacer(() => save('jornadas', fila), 'Jornada corregida'); setEdit(null) }} />}
+      {borrar && <Confirmar texto="¿Borrar esta jornada? Sus horas dejarán de contar." onNo={() => setBorrar(null)} onSi={() => { const j = borrar; setBorrar(null); hacer(() => remove('jornadas', j.id), 'Jornada borrada') }} />}
+    </>
+  )
+}
+
+/* ================= GERENCIA: ACCESOS (solo gerente) ================= */
+function AccesoForm({ inicial, onCerrar, onGuardar }) {
+  const [f, setF] = useState(inicial || { servicio: '', categoria: CATEGORIAS_ACCESO[0], url: '', usuario: '', clave: '', notas: '' })
+  const [ver, setVer] = useState(false)
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
+  return (
+    <Drawer titulo={f.id ? 'Editar acceso' : 'Nuevo acceso'} onClose={onCerrar}
+      pie={<><button className="btn btn-line" onClick={onCerrar}>Cancelar</button><button className="btn btn-teal" disabled={!f.servicio.trim()} onClick={() => onGuardar({ ...f, servicio: f.servicio.trim() })}>Guardar</button></>}>
+      <div className="fs">
+        <div className="g2">
+          <label>Servicio<input id="ac-serv" value={f.servicio} onChange={set('servicio')} placeholder="Ej. Vercel" /></label>
+          <label>Categoría<select value={f.categoria} onChange={set('categoria')}>{CATEGORIAS_ACCESO.map((c) => <option key={c}>{c}</option>)}</select></label>
+        </div>
+        <label>Enlace de ingreso<input id="ac-url" value={f.url} onChange={set('url')} placeholder="https://…" /></label>
+        <label>Usuario o correo<input id="ac-user" value={f.usuario} onChange={set('usuario')} autoComplete="off" /></label>
+        <label>Contraseña<span className="fila-brochure"><input id="ac-clave" type={ver ? 'text' : 'password'} value={f.clave} onChange={set('clave')} autoComplete="new-password" /><button type="button" className="btn btn-line sm" onClick={() => setVer(!ver)}>{ver ? 'Ocultar' : 'Ver'}</button></span></label>
+        <label>Notas (códigos de recuperación, quién más tiene acceso…)<textarea rows={3} value={f.notas} onChange={set('notas')} /></label>
+      </div>
+    </Drawer>
+  )
+}
+
+function Accesos({ data, hacer }) {
+  const [q, setQ] = useState('')
+  const [cat, setCat] = useState('todas')
+  const [form, setForm] = useState(null)
+  const [visible, setVisible] = useState({})
+  const [borrar, setBorrar] = useState(null)
+  const lista = (data.accesos || []).filter((a) => (cat === 'todas' || a.categoria === cat) && `${a.servicio} ${a.usuario} ${a.notas}`.toLowerCase().includes(q.toLowerCase()))
+  const copiar = async (txt, msg) => { try { await navigator.clipboard.writeText(txt); hacer(async () => {}, msg) } catch { hacer(async () => { throw new Error('No se pudo copiar') }) } }
+  return (
+    <>
+      <Seccion titulo="Accesos" ayuda="Cuentas y contraseñas de CCN. Solo tú (gerente) puedes ver esta sección.">
+        <button className="btn btn-teal" onClick={() => setForm({})}>+ Nuevo acceso</button>
+      </Seccion>
+      {data.accesosError && <p className="banner">Falta activar esta sección: pega de nuevo supabase/crm.sql en Supabase (SQL Editor). Detalle: {data.accesosError}</p>}
+      <div className="filtros">
+        <input aria-label="Buscar acceso" placeholder="Buscar servicio o usuario…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <select aria-label="Categoría" value={cat} onChange={(e) => setCat(e.target.value)}><option value="todas">Todas las categorías</option>{CATEGORIAS_ACCESO.map((c) => <option key={c}>{c}</option>)}</select>
+      </div>
+      {lista.length === 0 ? <div className="vacio"><p>{(data.accesos || []).length ? 'Nada coincide con la búsqueda.' : 'Aún no guardas ningún acceso.'}</p></div> : (
+        <div className="cons-wrap"><table className="cons-table insc">
+          <thead><tr><th>Servicio</th><th>Usuario</th><th>Contraseña</th><th>Notas</th><th /></tr></thead>
+          <tbody>{lista.map((a) => (
+            <tr key={a.id}>
+              <td><b>{a.url ? <a href={a.url} target="_blank" rel="noopener noreferrer">{a.servicio}</a> : a.servicio}</b><small className="paq">{a.categoria}</small></td>
+              <td>{a.usuario ? <>{a.usuario} <button className="ib" aria-label={`Copiar usuario de ${a.servicio}`} onClick={() => copiar(a.usuario, 'Usuario copiado')}><Icon n="clip" /></button></> : '—'}</td>
+              <td>{a.clave ? <><span className="cod">{visible[a.id] ? a.clave : '••••••••'}</span> <button className="btn btn-line sm" onClick={() => setVisible({ ...visible, [a.id]: !visible[a.id] })}>{visible[a.id] ? 'Ocultar' : 'Ver'}</button> <button className="ib" aria-label={`Copiar contraseña de ${a.servicio}`} onClick={() => copiar(a.clave, 'Contraseña copiada')}><Icon n="clip" /></button></> : '—'}</td>
+              <td className="notas">{a.notas || '—'}</td>
+              <td className="acc"><button className="btn btn-line sm" onClick={() => setForm(a)}>Editar</button> <button className="ib red" aria-label="Borrar" onClick={() => setBorrar(a)}><Icon n="trash" /></button></td>
+            </tr>))}</tbody>
+        </table></div>
+      )}
+      <p className="note">Consejo: activa la verificación en dos pasos en tu cuenta de gerente, porque quien entre con ella ve todo esto. Para cuentas bancarias, mejor usa un gestor de contraseñas.</p>
+      {form && <AccesoForm inicial={form.id ? form : null} onCerrar={() => setForm(null)} onGuardar={async (f) => { await hacer(() => save('accesos', f), f.id ? 'Acceso actualizado' : 'Acceso guardado'); setForm(null) }} />}
+      {borrar && <Confirmar texto={`¿Borrar el acceso de ${borrar.servicio}?`} onNo={() => setBorrar(null)} onSi={() => { const a = borrar; setBorrar(null); hacer(() => remove('accesos', a.id), 'Acceso borrado') }} />}
+    </>
+  )
+}
+
+/* ================= GERENCIA: FICHA POR CURSO ================= */
+const TABS_CURSO = [['resumen', 'Resumen'], ['interesados', 'Interesados'], ['inscritos', 'Inscritos'], ['grupos', 'Grupos'], ['info', 'Información'], ['historial', 'Historial']]
+const ESTADO_PAGO = { pagado: 'Pagado', adelanto: 'Adelanto', pendiente: 'Sin pago', anulada: 'Anulada' }
+
+function FichaCurso({ data, curso, hacer, onVolver, abrirGrupo, editarGrupo, irWeb }) {
+  const [tab, setTab] = useState('resumen')
+  const [brochure, setBrochure] = useState(curso.brochure_url || '')
+  const m = useMemo(() => metricasCurso(data, curso.id), [data, curso.id])
+  const corto = (x) => new Date(x + '-01T00:00:00').toLocaleDateString('es-PE', { month: 'short' }).replace('.', '')
+  const cuando = (iso) => iso ? new Date(iso).toLocaleString('es-PE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''
+  const waDe = (g) => (data.gruposWa || []).find((w) => String(w.grupo_id) === String(g.id))
+  const profeDe = (g) => { const a = (data.asignaciones || []).find((x) => String(x.grupo_id) === String(g.id)); return a ? (data.trabajadores || []).find((t) => t.id === a.trabajador_id) : null }
+  const nGrupo = (id) => (data.grupos || []).find((g) => String(g.id) === String(id))?.codigo || ''
+  const fecha = (f) => f ? new Date(String(f).slice(0, 10) + 'T00:00:00').toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Sin fecha'
+
+  return (
+    <>
+      <button className="btn btn-line sm" onClick={onVolver}><Icon n="back" size={13} /> Cursos</button>
+      <Seccion titulo={curso.titulo} ayuda={`${curso.horas} h · ${curso.sesiones} sesiones · ${soles(curso.precio)}${curso.activo === false ? ' · oculto en la web' : ''}`}>
+        <button className="btn btn-line" onClick={() => abrirGrupo(curso.id)}>+ Abrir grupo</button>
+        <button className="btn btn-teal" onClick={irWeb}>Editar curso</button>
+      </Seccion>
+      <div className="tabs2" role="tablist" aria-label="Secciones del curso">
+        {TABS_CURSO.map(([k, n]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{n}{k === 'interesados' ? <em>{m.ints.length}</em> : k === 'inscritos' ? <em>{m.cupos}</em> : k === 'grupos' ? <em>{m.grupos.length}</em> : null}</button>)}
+      </div>
+
+      {tab === 'resumen' && (
+        <>
+          <div className="kpis">
+            <div><b>{m.abiertos}</b><span>grupos abiertos</span></div>
+            <div><b>{m.ints.length}</b><span>interesados</span></div>
+            <div><b>{m.cupos}</b><span>inscritos</span></div>
+            <div><b>{soles(m.vendido)}</b><span>vendido</span></div>
+            <div><b>{soles(m.cobrado)}</b><span>cobrado</span></div>
+            <div><b>{soles(m.porCobrar)}</b><span>por cobrar</span></div>
+            <div><b>{soles(m.ticket)}</b><span>ticket promedio</span></div>
+          </div>
+          <div className="av-grid">
+            <section><h3>Inscritos por mes</h3><Barras datos={m.serie.map((s) => ({ label: corto(s.mes), cupos: s.cupos }))} series={[{ key: 'cupos', nombre: 'Inscritos', color: 'var(--teal)' }]} /></section>
+            <section><h3>Vendido por mes</h3><Barras datos={m.serie.map((s) => ({ label: corto(s.mes), vendido: s.vendido }))} formato={soles} series={[{ key: 'vendido', nombre: 'Vendido', color: 'var(--navy-2, #3a5a94)' }]} /></section>
+            <section><h3>Interesado a inscrito</h3>
+              <Embudo pasos={[{ label: 'Interesados', valor: m.ints.length, color: '#3a5a94' }, { label: 'Contactados', valor: m.contactados, color: '#2b8cc4' }, { label: 'Inscritos', valor: m.cupos, color: '#0f9e8b' }]} />
+            </section>
+            <section><h3>Cupos por grupo</h3>
+              {m.grupos.length === 0 ? <p className="note">Aún no hay grupos.</p> : <Barras datos={m.grupos.map((g) => ({ label: g.codigo || '—', inscritos: g.inscritos || 0, minimo: g.minimo || 10 }))} series={[{ key: 'inscritos', nombre: 'Inscritos', color: 'var(--teal)' }, { key: 'minimo', nombre: 'Mínimo', color: '#B7C2D3' }]} />}
+            </section>
+          </div>
+        </>
+      )}
+
+      {tab === 'interesados' && (m.ints.length === 0 ? <div className="vacio"><p>Nadie se ha inscrito por la web a este curso todavía.</p></div> : (
+        <div className="cons-wrap"><table className="cons-table insc">
+          <thead><tr><th>Fecha</th><th>Interesado</th><th>Celular</th><th>Derivado a</th><th>Estado</th><th>¿Contestó?</th><th>Observación</th></tr></thead>
+          <tbody>{m.ints.map((x) => (
+            <tr key={x.id}>
+              <td>{cuando(x.creado).split(',')[0]}</td>
+              <td><b>{x.nombres} {x.apellido_paterno}</b>{x.lista_espera && <small className="paq">Lista de espera</small>}</td>
+              <td><a href={wa(x.celular)} target="_blank" rel="noopener noreferrer">{x.celular}</a></td>
+              <td>{(x.asignado_a || '').split('@')[0] || 'Sin derivar'}</td>
+              <td>{x.estado === 'nuevo' ? 'Pendiente' : `Atendido${x.contactado_por ? ' por ' + x.contactado_por.split('@')[0] : ''}`}</td>
+              <td>{x.contesto === true ? 'Sí' : x.contesto === false ? 'No' : '—'}</td>
+              <td className="notas">{x.observacion || '—'}</td>
+            </tr>))}</tbody>
+        </table></div>
+      ))}
+
+      {tab === 'inscritos' && (m.filas.length === 0 ? <div className="vacio"><p>Aún no hay inscritos en este curso.</p></div> : (
+        <div className="cons-wrap"><table className="cons-table insc">
+          <thead><tr><th>Fecha</th><th>Alumno</th><th>Grupo</th><th>Vendedor</th><th>Precio</th><th>Pagado</th><th>Saldo</th><th>Estado</th></tr></thead>
+          <tbody>{m.filas.map(({ m: x, a, pagado, saldo, estado }) => (
+            <tr key={x.id} className={estado === 'anulada' ? 'anulada' : ''}>
+              <td>{fecha(x.fecha_inscripcion)}</td>
+              <td><b>{a.nombres} {a.apellido_paterno}</b>{a.codigo && <small className="paq"><span className="cod">{a.codigo}</span></small>}</td>
+              <td><span className="cod">{x.grupo_codigo || '—'}</span></td>
+              <td>{(x.vendedor || x.creado_por || '').split('@')[0] || '—'}</td>
+              <td>{soles(x.precio)}</td><td>{soles(pagado)}</td><td>{saldo > 0 ? soles(saldo) : '—'}</td>
+              <td><span className={`pill ${estado}`}>{ESTADO_PAGO[estado]}</span></td>
+            </tr>))}</tbody>
+        </table></div>
+      ))}
+
+      {tab === 'grupos' && (m.grupos.length === 0 ? <div className="vacio"><p>Este curso aún no tiene grupos.</p><button className="btn btn-teal" onClick={() => abrirGrupo(curso.id)}>Abrir el primero</button></div> : (
+        <div className="cons-wrap"><table className="cons-table insc">
+          <thead><tr><th>Grupo</th><th>Inicio</th><th>Días y horario</th><th>Cupos</th><th>Estado</th><th>WhatsApp</th><th>Profesor</th><th /></tr></thead>
+          <tbody>{m.grupos.map((g) => { const w = waDe(g); const t = profeDe(g); return (
+            <tr key={g.id}>
+              <td><span className="cod">{g.codigo || '—'}</span></td>
+              <td>{fecha(g.inicio)}</td>
+              <td>{g.dias || '—'}<small className="paq">{g.horario || ''}</small></td>
+              <td><div className="barra" title={`${g.inscritos || 0} de ${g.minimo || 10} mínimo`}><i style={{ width: `${Math.min(100, ((g.inscritos || 0) / (g.minimo || 10)) * 100)}%` }} /></div><small>{g.inscritos || 0}/{g.minimo || 10} mín. · máx. {g.maximo || 20}</small></td>
+              <td>{g.estado === 'abierto' ? 'Abierto' : g.estado === 'lleno' ? 'Lleno' : 'Cerrado'}</td>
+              <td>{w ? <a href={w.enlace} target="_blank" rel="noopener noreferrer">{w.nombre}</a> : <span className="wa falta">Falta crear</span>}</td>
+              <td>{t ? t.nombre : <small>Sin asignar</small>}</td>
+              <td className="acc"><button className="btn btn-line sm" onClick={() => editarGrupo(g)}>Editar</button></td>
+            </tr>) })}</tbody>
+        </table></div>
+      ))}
+
+      {tab === 'info' && (
+        <div className="info-curso">
+          <section className="fs">
+            <h3>Datos del curso</h3>
+            <dl className="dl">
+              <dt>Duración</dt><dd>{curso.horas} h en {curso.sesiones} sesiones</dd>
+              <dt>Precio</dt><dd>{soles(curso.precio)}{curso.precio_antes ? <> <small>(antes {soles(curso.precio_antes)})</small></> : ''}</dd>
+              <dt>Visible en la web</dt><dd>{curso.activo === false ? 'No' : 'Sí'}{curso.destacado ? ' · destacado en inicio' : ''}</dd>
+              <dt>Programas</dt><dd>{curso.programas || '—'}</dd>
+              <dt>Descripción</dt><dd>{curso.descripcion || '—'}</dd>
+              {curso.extra && <><dt>Incluye también</dt><dd>{curso.extra}</dd></>}
+            </dl>
+          </section>
+          <section className="fs">
+            <h3>Temario</h3>
+            {(curso.temario || []).length === 0 ? <p className="note">Aún no tiene temario. Se agrega en Editar curso.</p> : <ol className="temario">{curso.temario.map((t, i) => <li key={i}>{t}</li>)}</ol>}
+          </section>
+          <section className="fs">
+            <h3>Brochure</h3>
+            <p className="note">Pega el enlace del brochure en PDF (Drive, Canva, etc.). Es solo para uso interno del equipo.</p>
+            <div className="fila-brochure">
+              <input id="br-url" value={brochure} onChange={(e) => setBrochure(e.target.value)} placeholder="https://…" />
+              <button className="btn btn-teal" onClick={() => hacer(() => save('cursos', { id: curso.id, brochure_url: brochure.trim() }), 'Brochure guardado')}>Guardar</button>
+              {curso.brochure_url && <a className="btn btn-line" href={curso.brochure_url} target="_blank" rel="noopener noreferrer">Abrir</a>}
+            </div>
+          </section>
+        </div>
+      )}
+
+      {tab === 'historial' && (m.historial.length === 0 ? <div className="vacio"><p>Aún no hay movimientos de este curso.</p></div> : (
+        <ul className="hist">{m.historial.slice(0, 80).map((h) => (
+          <li key={h.id}><span className="tag">{h.tipo}</span><div>{h.detalle}{h.grupo_id && nGrupo(h.grupo_id) ? ` · ${nGrupo(h.grupo_id)}` : ''}<small>{cuando(h.creado)}{h.usuario ? ` · ${h.usuario.split('@')[0]}` : ''}</small></div></li>
+        ))}</ul>
+      ))}
+    </>
+  )
+}
+
+function CursosGerencia({ data, hacer, abrirGrupo, editarGrupo, irWeb }) {
+  const [sel, setSel] = useState(null)
+  const curso = sel ? data.cursos.find((c) => String(c.id) === String(sel)) : null
+  if (curso) return <FichaCurso data={data} curso={curso} hacer={hacer} onVolver={() => setSel(null)} abrirGrupo={abrirGrupo} editarGrupo={editarGrupo} irWeb={irWeb} />
+  return (
+    <>
+      <Seccion titulo="Cursos" ayuda="Entra a cada curso para ver sus interesados, inscritos, grupos, gráficas, información e historial." />
+      <div className="cons-wrap">
+        <table className="cons-table insc selec">
+          <thead><tr><th>Curso</th><th>Grupos abiertos</th><th>Interesados</th><th>Inscritos</th><th>Vendido</th><th>Cobrado</th><th>Por cobrar</th></tr></thead>
+          <tbody>
+            {data.cursos.map((c) => {
+              const m = metricasCurso(data, c.id)
+              return (
+                <tr key={c.id} onClick={() => setSel(c.id)} tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setSel(c.id)}>
+                  <td><span className="sw-c" style={{ background: `var(--${c.color})` }} /><b>{c.titulo}</b><small className="paq">{c.horas} h · {soles(c.precio)}{c.activo === false ? ' · oculto' : ''}</small></td>
+                  <td>{m.abiertos}</td><td>{m.ints.length}</td><td>{m.cupos}</td><td>{soles(m.vendido)}</td><td>{soles(m.cobrado)}</td><td>{m.porCobrar > 0 ? soles(m.porCobrar) : '—'}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )
+}
+
 /* ================= GERENCIA: TRABAJADORES ================= */
 function armarTrabajadores(data) {
   const filas = [...(data.trabajadores || [])]
@@ -1380,9 +2236,10 @@ function armarTrabajadores(data) {
 }
 
 function TrabajadorForm({ inicial, equipo, cursos, onClose, onSave }) {
-  const [f, setF] = useState({ ...inicial, comision_tramos: tramosDe(inicial), cursos: (inicial.cursos || []).map(String) })
+  const [f, setF] = useState({ ...inicial, comision_tramos: tramosDe(inicial), metas: metasDe(inicial), cursos: (inicial.cursos || []).map(String) })
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }))
   const setT = (i, k, v) => set('comision_tramos', f.comision_tramos.map((t, j) => (j === i ? { ...t, [k]: v } : t)))
+  const setM = (i, k, v) => set('metas', f.metas.map((h, j) => (j === i ? { ...h, [k]: v } : h)))
   const vend = f.puesto === 'vendedor'
   const alt = (id) => set('cursos', f.cursos.includes(String(id)) ? f.cursos.filter((x) => x !== String(id)) : [...f.cursos, String(id)])
   return (
@@ -1402,6 +2259,7 @@ function TrabajadorForm({ inicial, equipo, cursos, onClose, onSave }) {
                 <option value="">Sin acceso</option>{(equipo || []).filter((e) => e.rol === 'vendedora').map((e) => <option key={e.email} value={e.email}>{e.email}</option>)}
               </select>
             </label>
+            <label>Fecha de inicio<input id="tr-ini" type="date" value={f.fecha_inicio || ''} onChange={(e) => set('fecha_inicio', e.target.value)} /></label>
             <label>Sueldo base mensual (S/)<input id="tr-sue" type="number" min="0" value={f.sueldo_base} onChange={(e) => set('sueldo_base', e.target.value)} /></label>
             <div>
               <b>Comisión por cupos cerrados en el mes</b>
@@ -1412,6 +2270,19 @@ function TrabajadorForm({ inicial, equipo, cursos, onClose, onSave }) {
                   <label>Comisión (%)<input type="number" min="0" step="0.5" value={t.pct} onChange={(e) => setT(i, 'pct', e.target.value)} /></label>
                 </div>
               ))}
+            </div>
+            <div>
+              <b>Metas (hitos acumulados desde su inicio)</b>
+              <p className="note">Cada fila: fecha límite, cupos acumulados que debe llevar y en cuántos cursos distintos. Se ven en su panel con barra de avance.</p>
+              {f.metas.map((h, i) => (
+                <div className="g3" key={i}>
+                  <label>Fecha<input type="date" value={h.fecha} onChange={(e) => setM(i, 'fecha', e.target.value)} /></label>
+                  <label>Cupos<input type="number" min="1" value={h.cupos} onChange={(e) => setM(i, 'cupos', e.target.value)} /></label>
+                  <label>Cursos<input type="number" min="1" value={h.cursos} onChange={(e) => setM(i, 'cursos', e.target.value)} /></label>
+                </div>
+              ))}
+              <button type="button" className="btn btn-line sm" onClick={() => set('metas', [...f.metas, { fecha: '', cupos: 1, cursos: 1 }])}>+ Agregar meta</button>
+              {f.metas.length > 0 && <button type="button" className="btn btn-line sm" onClick={() => set('metas', f.metas.slice(0, -1))}>Quitar la última</button>}
             </div>
           </>
         ) : (
@@ -1532,7 +2403,7 @@ function Trabajadores({ data, hacer }) {
   const [borrando, setBorrando] = useState(null)
   const lista = armarTrabajadores(data)
   const mes = new Date().toISOString().slice(0, 7)
-  const nuevo = (puesto) => setForm({ nombre: '', puesto, cargo: '', email: '', documento: '', celular: '', sueldo_base: puesto === 'vendedor' ? SUELDO_DEF : 0, tarifa_hora: 0, cursos: [], comision_tramos: null, activo: true, notas: '' })
+  const nuevo = (puesto) => setForm({ nombre: '', puesto, cargo: '', email: '', documento: '', celular: '', sueldo_base: puesto === 'vendedor' ? SUELDO_DEF : 0, fecha_inicio: '', tarifa_hora: 0, cursos: [], comision_tramos: null, activo: true, notas: '' })
   const guardar = (f) => hacer(async () => { await guardarTrabajador({ ...f, id: f.virtual ? undefined : f.id }); setForm(null); setSel(null) }, 'Guardado')
   const formEl = form && <TrabajadorForm inicial={form} equipo={data.equipo} cursos={data.cursos} onClose={() => setForm(null)} onSave={guardar} />
 
@@ -1546,7 +2417,10 @@ function Trabajadores({ data, hacer }) {
           {!t.virtual && <button className="btn btn-line" onClick={() => setBorrando(t)}>Borrar</button>}
         </Seccion>
         {t.notas && <p className="note">{t.notas}</p>}
-        {t.puesto === 'vendedor' && (t.email ? <AvanceVendedor data={data} email={t.email} trab={t} verPago /> : <div className="vacio"><p>Esta persona no tiene correo de acceso asignado. Edita sus datos para vincularla.</p></div>)}
+        {t.puesto === 'vendedor' && (t.email ? <AvanceVendedor data={data} email={t.email} trab={t} verPago historial={false} /> : <div className="vacio"><p>Esta persona no tiene correo de acceso asignado. Edita sus datos para vincularla.</p></div>)}
+        {t.puesto === 'vendedor' && t.email && <ReporteSemanal data={data} email={t.email} />}
+        {t.puesto === 'vendedor' && t.email && <DocumentosDe data={data} t={t} hacer={hacer} />}
+        {t.puesto === 'vendedor' && t.email && <PendientesDe data={data} email={t.email} hacer={hacer} />}
         {t.puesto === 'instructor' && <FichaProfesor data={data} t={t} hacer={hacer} />}
         {formEl}
         {borrando && <Confirmar texto={`¿Borrar la ficha de ${borrando.nombre}?`} onNo={() => setBorrando(null)} onSi={() => { const x = borrando; setBorrando(null); setSel(null); hacer(() => remove('trabajadores', x.id), 'Ficha borrada') }} />}
@@ -1585,7 +2459,7 @@ function Trabajadores({ data, hacer }) {
 }
 
 /* ================= VENTAS: MI AVANCE (vista de la vendedora) ================= */
-function MiAvance({ data, email }) {
+function MiAvance({ data, email, hacer }) {
   const t = armarTrabajadores(data).find((x) => x.email === email) || { sueldo_base: SUELDO_DEF, comision_tramos: null }
   return (
     <>
@@ -1593,16 +2467,18 @@ function MiAvance({ data, email }) {
       {gruposSinWhatsapp(data).length > 0 && (
         <div className="alertas"><p className="alerta"><b>Pendiente:</b> crear el grupo de WhatsApp de {gruposSinWhatsapp(data).map((g) => g.codigo).join(', ')} y registrarlo en la sección Grupos.</p></div>
       )}
-      <AvanceVendedor data={data} email={email} trab={t} verPago />
+      <AlertasVenta data={data} email={email} />
+      <JornadaCard data={data} email={email} hacer={hacer} />
+      <AvanceVendedor data={data} email={email} trab={t} verPago compacto />
     </>
   )
 }
 
 /* ================= PANEL (módulos) ================= */
 const MODULOS = {
-  ventas: { nombre: 'Ventas', icono: 'ventas', secciones: [['mi', 'Mi avance'], ['interesados', 'Interesados'], ['prospectos', 'Prospectos'], ['inscritos', 'Inscritos'], ['consultas', 'Consultas'], ['grupos', 'Grupos'], ['instalaciones', 'Instalaciones']] },
+  ventas: { nombre: 'Ventas', icono: 'ventas', secciones: [['mi', 'Mi avance'], ['agenda', 'Agenda'], ['firmar', 'Firmar'], ['plan', 'Plan de trabajo'], ['interesados', 'Interesados'], ['prospectos', 'Prospectos'], ['inscritos', 'Inscritos'], ['quejas', 'Quejas y reclamos'], ['consultas', 'Consultas'], ['grupos', 'Grupos'], ['instalaciones', 'Instalaciones']] },
   web: { nombre: 'Web', icono: 'web', secciones: [['cursos', 'Cursos'], ['grupos', 'Horarios'], ['enlaces', 'Enlaces'], ['ajustes', 'Ajustes']] },
-  gerencia: { nombre: 'Gerencia', icono: 'gerencia', secciones: [['resumen', 'Resumen'], ['trabajadores', 'Trabajadores'], ['equipo', 'Equipo']] },
+  gerencia: { nombre: 'Gerencia', icono: 'gerencia', secciones: [['resumen', 'Resumen'], ['fichas', 'Cursos'], ['trabajadores', 'Trabajadores'], ['contratos', 'Contratos'], ['horas', 'Horas trabajadas'], ['accesos', 'Accesos'], ['equipo', 'Equipo']] },
 }
 const POR_ROL = { gerente: ['gerencia', 'ventas', 'web'], vendedora: ['ventas'] }
 const ETIQUETA_ROL = { gerente: 'Gerente', vendedora: 'Vendedora' }
@@ -1612,7 +2488,7 @@ function Panel({ email, rol, onSalir }) {
   const modulos = POR_ROL[rol] || []
   const [modulo, setModulo] = useState(gerente ? 'gerencia' : (modulos[0] || 'ventas'))
   const [tab, setTab] = useState(gerente ? 'resumen' : 'mi')
-  const [data, setData] = useState({ cursos: [], grupos: [], enlaces: [], consultas: [], interesados: [], alumnos: [], matriculas: [], pagos: [], historial: [], prospectos: [], trabajadores: [], instalaciones: [], gruposWa: [], asignaciones: [], pagos_trabajador: [], equipo: [], ajustes: {} })
+  const [data, setData] = useState({ cursos: [], grupos: [], enlaces: [], consultas: [], interesados: [], alumnos: [], matriculas: [], pagos: [], historial: [], prospectos: [], pendientes: [], notas_agenda: [], plantillas: [], documentos: [], quejas: [], trabajadores: [], instalaciones: [], gruposWa: [], asignaciones: [], pagos_trabajador: [], equipo: [], ajustes: {} })
   const [grupoForm, setGrupoForm] = useState(null)
   const [inscForm, setInscForm] = useState(null)
   const [pagoForm, setPagoForm] = useState(null)
@@ -1632,16 +2508,16 @@ function Panel({ email, rol, onSalir }) {
   const hacer = async (fn, ok) => {
     try { await fn(); await recargar(); avisar(ok) } catch (e) { avisar(e.message || 'No se pudo guardar', true) }
   }
-  const ir = (m, t) => { setModulo(m); setTab(t || MODULOS[m].secciones.find(([k]) => k !== 'mi' || !gerente)[0]) }
+  const ir = (m, t) => { setModulo(m); setTab(t || MODULOS[m].secciones.find(([k]) => !['mi', 'agenda', 'firmar', 'plan'].includes(k) || !gerente)[0]) }
   const abrirGrupo = (cursoId) => setGrupoForm({ curso_id: cursoId })
   const abiertos = data.grupos.filter((g) => g.estado === 'abierto' && g.activo).length
   const nInscritos = new Set(data.matriculas.filter((m) => m.estado === 'activa').map((m) => m.paquete_id)).size
   const nuevosInt = (data.interesados || []).filter((x) => x.estado === 'nuevo').length
   const nProsp = (data.prospectos || []).filter((x) => !['inscrito', 'perdido'].includes(x.estado)).length
   const nuevosCon = (data.consultas || []).filter((x) => x.estado === 'nuevo').length
-  const cuenta = { prospectos: nProsp, inscritos: nInscritos, interesados: nuevosInt, consultas: nuevosCon, grupos: abiertos, cursos: data.cursos.length, enlaces: (data.enlaces || []).length, equipo: (data.equipo || []).length, trabajadores: armarTrabajadores(data).length, instalaciones: (data.instalaciones || []).filter((x) => x.estado === 'agendada' && x.fecha >= new Date().toISOString().slice(0, 10)).length }
+  const cuenta = { quejas: (data.quejas || []).filter((q) => q.estado === 'nueva').length, firmar: (data.documentos || []).filter((d) => d.vendedor === email && d.estado === 'enviado').length, agenda: (data.pendientes || []).filter((x) => x.vendedor === email && x.estado === 'pendiente').length + (data.prospectos || []).filter((p) => recontactoVencido(p)).length, prospectos: nProsp, inscritos: nInscritos, interesados: nuevosInt, consultas: nuevosCon, grupos: abiertos, cursos: data.cursos.length, enlaces: (data.enlaces || []).length, equipo: (data.equipo || []).length, trabajadores: armarTrabajadores(data).length, instalaciones: (data.instalaciones || []).filter((x) => x.estado === 'agendada' && x.fecha >= new Date().toISOString().slice(0, 10)).length }
   const nombreSec = (m, k, n) => n
-  const verSecciones = MODULOS[modulo].secciones.filter(([k]) => k !== 'mi' || !gerente)
+  const verSecciones = MODULOS[modulo].secciones.filter(([k]) => !['mi', 'agenda', 'firmar', 'plan'].includes(k) || !gerente)
 
   /* Pasar un interesado a inscrito: carga sus datos y el grupo de su curso */
   const inscribirDesde = (x) => {
@@ -1693,18 +2569,26 @@ function Panel({ email, rol, onSalir }) {
         {modulo === 'ventas' && tab === 'prospectos' && <Prospectos data={data} hacer={hacer} gerente={gerente} inicial={protoInicial} onCerrarInicial={() => setProtoInicial(null)} />}
         {modulo === 'ventas' && tab === 'inscritos' && <Inscritos data={data} hacer={hacer} rol={rol} nuevaInscripcion={() => setInscForm({})} registrarPago={setPagoForm} />}
         {modulo === 'ventas' && tab === 'instalaciones' && <Instalaciones data={data} hacer={hacer} gerente={gerente} />}
-        {modulo === 'ventas' && tab === 'mi' && <MiAvance data={data} email={email} />}
+        {modulo === 'ventas' && tab === 'quejas' && <Quejas data={data} hacer={hacer} gerente={gerente} email={email} />}
+        {modulo === 'ventas' && tab === 'firmar' && !gerente && <Firmar data={data} email={email} hacer={hacer} />}
+        {modulo === 'ventas' && tab === 'plan' && !gerente && <PlanTrabajo data={data} email={email} />}
+        {modulo === 'gerencia' && tab === 'contratos' && <Contratos data={data} hacer={hacer} />}
+        {modulo === 'ventas' && tab === 'agenda' && !gerente && <Agenda data={data} email={email} hacer={hacer} />}
+        {modulo === 'ventas' && tab === 'mi' && <MiAvance data={data} email={email} hacer={hacer} />}
         {modulo === 'gerencia' && tab === 'resumen' && <Resumen data={data} />}
+        {modulo === 'gerencia' && tab === 'fichas' && <CursosGerencia data={data} hacer={hacer} abrirGrupo={abrirGrupo} editarGrupo={setGrupoForm} irWeb={() => ir('web', 'cursos')} />}
         {modulo === 'gerencia' && tab === 'trabajadores' && <Trabajadores data={data} hacer={hacer} />}
+        {modulo === 'gerencia' && tab === 'horas' && <Horas data={data} hacer={hacer} />}
+        {modulo === 'gerencia' && tab === 'accesos' && <Accesos data={data} hacer={hacer} />}
         {modulo === 'gerencia' && tab === 'equipo' && <Equipo data={data} hacer={hacer} email={email} />}
       </main>
 
-      {modulo === 'web' && grupoForm && (
+      {grupoForm && (
         <GrupoForm inicial={grupoForm} cursos={data.cursos} onClose={() => setGrupoForm(null)}
-          onSave={async (row) => { await save('grupos', row); setGrupoForm(null); await hacer(async () => {}, grupoForm.id ? 'Grupo guardado' : 'Grupo publicado'); setTab('grupos') }} />
+          onSave={async (row) => { await save('grupos', row); setGrupoForm(null); await hacer(async () => {}, grupoForm.id ? 'Grupo guardado' : 'Grupo publicado'); if (modulo === 'web') setTab('grupos') }} />
       )}
       {inscForm && (
-        <InscripcionForm inicial={inscForm} data={data} onClose={() => setInscForm(null)}
+        <InscripcionForm inicial={inscForm} data={data} gerente={gerente} onClose={() => setInscForm(null)}
           onSave={async (datos) => {
             const codigo = await crearInscripcion(datos)
             if (inscForm.interesado && inscForm.interesado.estado === 'nuevo') await marcarConsulta(inscForm.interesado.id, 'atendida', 'interesados')
@@ -1760,11 +2644,11 @@ function Login({ onOk }) {
 }
 
 export default function Admin() {
-  const [estado, setEstado] = useState(hasBackend ? 'cargando' : 'ok')
+  const [estado, setEstado] = useState('cargando')
   const [email, setEmail] = useState('')
   const [rol, setRol] = useState('gerente')
   async function revisar() {
-    if (!hasBackend) return
+    if (!hasBackend) { const r = await getRol('demo@ccn.pe'); setRol(r || 'gerente'); if (r === 'vendedora') setEmail('demo@ccn.pe'); setEstado('ok'); return }
     const { data } = await supabase.auth.getSession()
     const mail = data.session?.user?.email
     if (!mail) { setEstado('login'); return }

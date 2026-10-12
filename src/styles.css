@@ -1131,3 +1131,131 @@ section{padding-block:64px}
 .shell .tag{min-width:92px}
 .shell .cons-table td small.paq a{font-variant-numeric:tabular-nums}
 .shell .cons-table.insc td:nth-child(4){min-width:150px}
+
+/* ---------- ficha por curso ---------- */
+.shell .cons-table.selec tbody tr{cursor:pointer}
+.shell .sw-c{display:inline-block;width:4px;height:26px;border-radius:2px;margin-right:10px;vertical-align:middle}
+.shell .cons-table.selec td:first-child b{display:inline-block;vertical-align:middle}
+.shell .cons-table.selec td:first-child small{margin-left:14px}
+.info-curso{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;align-items:start}
+.dl{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;margin:0;font-size:.86rem}
+.dl dt{color:var(--tx2);font-weight:600}.dl dd{margin:0}
+.temario{margin:0;padding-left:20px;display:grid;gap:3px;font-size:.88rem}
+.fila-brochure{display:flex;gap:8px;flex-wrap:wrap}.fila-brochure input{flex:1;min-width:200px}
+
+/* ---------- supervisión: KPIs como botones, detalle, metas, vista ---------- */
+.shell .kpis-btn button{all:unset;box-sizing:border-box;cursor:pointer;display:grid;gap:3px;padding:14px 16px;border-left:1px solid var(--line, #e3e8f0)}
+.shell .kpis-btn button:first-child{border-left:0}
+.shell .kpis-btn button b{font-size:1.25rem;color:var(--navy)}
+.shell .kpis-btn button span{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--tx2)}
+.shell .kpis-btn button:hover{background:#f3f6fb}
+.shell .kpis-btn button.on{background:#eaf7f5;box-shadow:inset 0 -2px 0 var(--teal)}
+.shell .kpis-btn button:focus-visible{outline:2px solid var(--teal);outline-offset:-2px}
+.shell .detalle{background:#fff;border:1px solid var(--line, #e3e8f0);border-radius:8px;padding:12px 14px;margin:12px 0}
+.shell .detalle-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.shell .detalle-h h3{margin:0;font-size:.9rem;text-transform:none}
+.shell .metas-lista{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.shell .meta-it{background:#fff;border:1px solid var(--line, #e3e8f0);border-radius:8px;padding:10px 12px;display:grid;gap:6px}
+.shell .meta-top{display:flex;justify-content:space-between;gap:8px;font-size:.84rem}
+.shell .meta-top span{color:var(--tx2);font-size:.75rem}
+.shell .meta-it.ok{border-color:#1FBFA8;background:#f2fbf9}
+.shell .meta-it.venc{border-color:#e0b4b4;background:#fdf6f6}
+.shell .meta-it small{color:var(--tx2);font-size:.74rem}
+.shell .vista{display:flex;width:fit-content;border:1px solid var(--line, #e3e8f0);border-radius:6px;overflow:hidden;margin:6px 0 10px;background:#fff}
+.shell .vista button{all:unset;cursor:pointer;padding:6px 16px;font-size:.8rem;font-weight:600;color:var(--tx2);border-left:1px solid var(--line, #e3e8f0)}
+.shell .vista button:first-child{border-left:0}
+.shell .vista button.on{background:var(--navy);color:#fff}
+.shell .vista button:focus-visible{outline:2px solid var(--teal);outline-offset:-2px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+
+.shell .metas{margin:4px 0}.shell .metas .subh{margin:0 0 8px}
+.shell .avance{gap:12px}.shell .avance>.subh{margin:6px 0 0}
+
+/* ---------- dashboard compacto de la vendedora ---------- */
+.shell .hero-din{background:linear-gradient(135deg,#0F2547 0%,#16386b 100%);color:#fff;border-radius:10px;padding:20px 22px;display:grid;gap:6px}
+.shell .hero-din small{text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;font-weight:700;color:#9fb4d6}
+.shell .hero-din .monto{font-size:2.6rem;line-height:1.05;color:#fff;letter-spacing:-.01em}
+.shell .hero-din>span{font-size:.9rem;color:#cdd9ee}
+.shell .hero-din>span b{color:#1FBFA8}
+.shell .hero-din .reto{display:flex;gap:10px;align-items:center;background:rgba(31,191,168,.14);border:1px solid rgba(31,191,168,.4);border-radius:8px;padding:10px 12px;margin-top:8px}
+.shell .hero-din .reto i{font-style:normal;font-size:1.3rem}
+.shell .hero-din .reto p{margin:0;font-size:.88rem;color:#e7f0ff}
+.shell .hero-din .reto b{color:#fff}
+.shell .hero-din .hito{margin-top:8px;display:grid;gap:6px}
+.shell .hero-din .hito .meta-top{color:#e7f0ff}
+.shell .hero-din .hito .meta-top span{color:#9fb4d6}
+.shell .hero-din .hito small{color:#9fb4d6}
+.shell .hero-din .barra{background:rgba(255,255,255,.18)}
+.shell .hero-din .barra i{background:#1FBFA8}
+
+/* ---------- jornada ---------- */
+.shell .jornada{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:#fff;border:1px solid var(--line, #e3e8f0);border-left:4px solid #B7C2D3;border-radius:10px;padding:16px 20px}
+.shell .jornada.on{border-left-color:var(--teal);background:#f2fbf9}
+.shell .jornada .j-izq{display:grid;gap:4px;min-width:260px;flex:1}
+.shell .jornada small{text-transform:uppercase;letter-spacing:.06em;font-size:.7rem;font-weight:700;color:var(--tx2)}
+.shell .jornada .j-tiempo{font-size:1.7rem;color:var(--navy)}
+.shell .jornada .j-izq>span{font-size:.84rem;color:var(--tx2)}
+.shell .jornada .j-der{display:grid;gap:6px;justify-items:end}
+.shell .jornada .j-go,.shell .jornada .j-stop{padding:12px 22px;font-size:.95rem}
+.shell .jornada .j-stop{background:#B42318;color:#fff;border:0}
+.shell .jornada .j-aviso{text-transform:none;letter-spacing:0;font-weight:500;max-width:260px;text-align:right}
+
+/* ---- Agenda ---- */
+.shell .pend{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.shell .pend li{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid #e3e8f0;border-radius:12px;padding:12px 14px}
+.shell .pend li>div{flex:1;display:flex;flex-direction:column;gap:2px}
+.shell .pend li small{color:#5b6b85}
+.shell .pend li.hecho b{text-decoration:line-through;color:#7a879c}
+.shell .pend li.vencido{border-color:#e8a0a0;background:#fff6f6}
+.shell .pend input[type=checkbox]{width:20px;height:20px;margin-top:2px;accent-color:#1FBFA8}
+.shell .tag{background:#0F2547;color:#fff;border-radius:999px;padding:1px 8px;font-size:11px}
+.shell .vencido{color:#c0392b;font-weight:600}
+.shell .contacto{border:1px solid #e3e8f0;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:10px;margin:0}
+.shell .contacto legend{font-weight:700;color:#0F2547;padding:0 6px}
+.shell .chk{flex-direction:row!important;align-items:center;gap:8px}
+.shell .calendario{background:#fff;border:1px solid #e3e8f0;border-radius:14px;padding:14px;max-width:520px}
+.shell .cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;text-transform:capitalize}
+.shell .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.shell .cal-dow{text-align:center;font-size:12px;color:#7a879c}
+.shell .cal-d{position:relative;aspect-ratio:1;border:1px solid #e3e8f0;border-radius:10px;background:#fff;cursor:pointer;font:inherit}
+.shell .cal-d.hoy{border-color:#1FBFA8;font-weight:700}
+.shell .cal-d.sel{background:#0F2547;color:#fff}
+.shell .cal-d i{position:absolute;right:3px;bottom:2px;font-style:normal;font-size:10px;background:#1FBFA8;color:#fff;border-radius:999px;min-width:16px;padding:0 3px}
+.shell .cal-d i.venc{background:#c0392b}
+.shell .cal-tit{margin:14px 0 6px;font-size:15px}
+.shell .cal-ev{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.shell .cal-ev li{border-left:4px solid #1FBFA8;background:#f4f8fb;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column}
+.shell .cal-ev li.pd{border-color:#0F2547}.shell .cal-ev li.in{border-color:#e0a21b}.shell .cal-ev li.venc{border-color:#c0392b}
+.shell .notas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.shell .nota{background:#fffbea;border:1px solid #f0e2a8;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.shell .nota p{white-space:pre-wrap;margin:0;font-size:14px}
+
+/* ---- Reporte semanal ---- */
+.shell .reporte{background:#fff;border:1px solid #e3e8f0;border-radius:14px;padding:14px 16px;margin:12px 0}
+.shell .sec-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.shell .sec-h h3{margin:0}
+.shell .rep-nav{display:flex;align-items:center;gap:8px}
+.shell .rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.shell .rep-grid h4{margin:0 0 6px;color:#0F2547;font-size:.9rem}
+.shell .rep-grid ul{list-style:none;margin:0;padding:0}
+.shell .rep-grid li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #eef1f6;font-size:.88rem}
+.shell .rep-grid li.mal b{color:#c0392b}
+.shell .rep-det{display:block;margin-top:6px;color:#5b6b85}
+
+/* ---- Contratos y firma ---- */
+.shell .doc-txt{white-space:pre-wrap;font:inherit;font-size:.9rem;line-height:1.55;background:#f7f9fc;border:1px solid #e3e8f0;border-radius:12px;padding:14px;max-height:380px;overflow:auto;margin:8px 0}
+.shell .doc-txt.plan{max-height:none;background:#fff}
+.shell .doc-edit{font-family:inherit;line-height:1.5}
+.shell .firma-card{background:#fff;border:1px solid #e3e8f0;border-radius:14px;padding:14px 16px;margin:12px 0;display:flex;flex-direction:column;gap:10px}
+.shell .firma-card h3{margin:0}
+.shell .firma-ok{color:#14795f}.shell .firma-ok small{display:block;word-break:break-all;color:#5b6b85}
+.shell .plant-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0}
+.shell .plant{background:#fff;border:1px solid #e3e8f0;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.shell .plant h4{margin:0;color:#0F2547}.shell .plant p{margin:0}.shell .plant small{color:#5b6b85}
+
+/* ---- reglas de venta ---- */
+.shell .alerta.rojo{border-color:#e8a0a0;background:#fff3f3}
+.shell .fs.descuento{border:1px dashed #e0a21b;border-radius:12px;padding:10px 12px;background:#fffbea}
+
+.shell .est-doc.sin{color:#7a879c}
+.shell button.link{background:none;border:0;padding:0;cursor:pointer;color:#0F2547;font:inherit;text-align:left;text-decoration:underline}

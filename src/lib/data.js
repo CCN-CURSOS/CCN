@@ -72,15 +72,7 @@ const SEED_CURSOS = [
     programas: 'VS Code, GitHub, Vercel, Chrome',
     temario: ['Cómo funciona la web', 'HTML: la estructura', 'CSS: el estilo', 'Diseño de una landing que convierte', 'JavaScript básico', 'Publicar en internet', 'Aparecer en Google y medir visitas', 'Proyecto y presentación'],
     extra: 'Git, rendimiento, seguridad y cómo cotizar una web' },
-  { id: 'c3', titulo: 'Meta Ads para vender', color: 'g3', horas: 16, sesiones: 8, precio: 299, orden: 3, activo: true, destacado: true, imagen_url: '', precio_antes: null,
-    descripcion: 'Creas, mides y mejoras anuncios en Facebook e Instagram. Terminas con una campaña lista.',
-    programas: 'Meta Business Suite, Administrador de anuncios, Canva',
-    temario: ['Presentación de la interfaz', 'Medición: píxel y eventos', 'Estrategia y públicos', 'Creativos que venden', 'Primera campaña', 'Optimización y escalado', 'Presentación de un proyecto'],
-    extra: 'rentabilidad, plan de pruebas y reporte semanal' },
-  { id: 'c4', titulo: 'Tienda online', color: 'g4', horas: 20, sesiones: 10, precio: 299, orden: 4, activo: true, destacado: true, imagen_url: '', precio_antes: null,
-    descripcion: 'Montas tu tienda en internet y la dejas lista para recibir pedidos por WhatsApp.',
-    programas: 'Plataforma por confirmar, Canva, WhatsApp Business', temario: [], extra: '' },
-  { id: 'c5', titulo: 'Notion para tu negocio', color: 'g5', horas: 12, sesiones: 4, precio: 299, orden: 5, activo: true, destacado: true, imagen_url: '', precio_antes: null,
+  { id: 'c5', titulo: 'Notion para tu negocio', color: 'g5', horas: 12, sesiones: 4, precio: 299, orden: 3, activo: true, destacado: true, imagen_url: '', precio_antes: null,
     descripcion: 'Ordenas clientes, tareas y ventas en un solo espacio de trabajo listo para usar.',
     programas: 'Notion (plan gratuito)', temario: [], extra: '' },
 ]
@@ -104,9 +96,9 @@ export const DEMO_USER = 'demo@ccn.pe'
 const demoRead = () => {
   try {
     const raw = localStorage.getItem(LS)
-    if (raw) { const d = JSON.parse(raw); if (!d.enlaces) d.enlaces = SEED_ENLACES; if (!d.consultas) d.consultas = []; if (!d.interesados) d.interesados = []; for (const k of ['alumnos', 'matriculas', 'pagos', 'historial', 'prospectos', 'trabajadores', 'gruposWa', 'asignaciones', 'pagos_trabajador', 'instalaciones']) if (!d[k]) d[k] = []; if (!d.equipo) d.equipo = [{ email: 'demo@ccn.pe', rol: 'gerente' }]; return d }
+    if (raw) { const d = JSON.parse(raw); if (!d.enlaces) d.enlaces = SEED_ENLACES; if (!d.consultas) d.consultas = []; if (!d.interesados) d.interesados = []; for (const k of ['alumnos', 'matriculas', 'pagos', 'historial', 'prospectos', 'trabajadores', 'gruposWa', 'asignaciones', 'pagos_trabajador', 'instalaciones', 'accesos', 'jornadas', 'pendientes', 'notas_agenda', 'plantillas', 'documentos', 'quejas']) if (!d[k]) d[k] = []; if (!d.equipo) d.equipo = [{ email: 'demo@ccn.pe', rol: 'gerente' }]; return d }
   } catch (e) { /* sin almacenamiento */ }
-  return { cursos: SEED_CURSOS, grupos: [], enlaces: SEED_ENLACES, consultas: [], interesados: [], alumnos: [], matriculas: [], pagos: [], historial: [], prospectos: [], trabajadores: [], gruposWa: [], asignaciones: [], pagos_trabajador: [], instalaciones: [], equipo: [{ email: 'demo@ccn.pe', rol: 'gerente' }], ajustes: { whatsapp: WA_ENV } }
+  return { cursos: SEED_CURSOS, grupos: [], enlaces: SEED_ENLACES, consultas: [], interesados: [], alumnos: [], matriculas: [], pagos: [], historial: [], prospectos: [], trabajadores: [], gruposWa: [], asignaciones: [], pagos_trabajador: [], instalaciones: [], accesos: [], jornadas: [], pendientes: [], notas_agenda: [], plantillas: [], documentos: [], quejas: [], equipo: [{ email: 'demo@ccn.pe', rol: 'gerente' }], ajustes: { whatsapp: WA_ENV } }
 }
 const demoWrite = (db) => { try { localStorage.setItem(LS, JSON.stringify(db)) } catch (e) { /* ignorar */ } }
 const uid = () => 'd' + Math.random().toString(36).slice(2, 10)
@@ -167,7 +159,7 @@ export async function contarClic(id) {
 /* ---------- Panel admin ---------- */
 export async function loadAll() {
   if (!hasBackend) { const db = demoRead(); return { ...db, ajustes: db.ajustes || { whatsapp: WA_ENV } } }
-  const [c, g, a, en, co, it, al, ma, pa, hi, eq, pr, tr, gw, asg, pt, ins] = await Promise.all([
+  const [c, g, a, en, co, it, al, ma, pa, hi, eq, pr, tr, gw, asg, pt, ins, acc, jor, pen, nta, pla, doc, que] = await Promise.all([
     supabase.from('cursos').select('*').order('orden'),
     supabase.from('grupos').select('*').order('inicio', { ascending: false }),
     supabase.from('ajustes').select('*'),
@@ -185,6 +177,13 @@ export async function loadAll() {
     supabase.from('asignaciones').select('*'),
     supabase.from('pagos_trabajador').select('*').order('fecha', { ascending: false }),
     supabase.from('instalaciones').select('*').order('fecha').order('hora'),
+    supabase.from('accesos').select('*').order('servicio'),
+    supabase.from('jornadas').select('*').order('inicio', { ascending: false }).limit(1500),
+    supabase.from('pendientes').select('*').order('creado', { ascending: false }),
+    supabase.from('notas_agenda').select('*').order('actualizado', { ascending: false }),
+    supabase.from('plantillas_doc').select('*'),
+    supabase.from('documentos_trab').select('*').order('creado', { ascending: false }),
+    supabase.from('quejas').select('*').order('creado', { ascending: false }),
   ])
   if (c.error) throw c.error
   if (g.error) throw g.error
@@ -196,7 +195,7 @@ export async function loadAll() {
     consultas: co.error ? [] : (co.data || []), consultasError: co.error ? co.error.message : '',
     interesados: it.error ? [] : (it.data || []), interesadosError: it.error ? it.error.message : '',
     alumnos: al.error ? [] : (al.data || []), matriculas: ma.error ? [] : (ma.data || []), pagos: pa.error ? [] : (pa.data || []),
-    historial: hi.error ? [] : (hi.data || []), equipo: eq.error ? [] : (eq.data || []), prospectos: pr.error ? [] : (pr.data || []), prospectosError: pr.error ? pr.error.message : '', trabajadores: tr.error ? [] : (tr.data || []), trabajadoresError: tr.error ? tr.error.message : '', gruposWa: gw.error ? [] : (gw.data || []), gruposWaError: gw.error ? gw.error.message : '', asignaciones: asg.error ? [] : (asg.data || []), pagos_trabajador: pt.error ? [] : (pt.data || []), profesoresError: asg.error ? asg.error.message : '', instalaciones: ins.error ? [] : (ins.data || []), instalacionesError: ins.error ? ins.error.message : '', crmError,
+    historial: hi.error ? [] : (hi.data || []), equipo: eq.error ? [] : (eq.data || []), prospectos: pr.error ? [] : (pr.data || []), prospectosError: pr.error ? pr.error.message : '', trabajadores: tr.error ? [] : (tr.data || []), trabajadoresError: tr.error ? tr.error.message : '', gruposWa: gw.error ? [] : (gw.data || []), gruposWaError: gw.error ? gw.error.message : '', asignaciones: asg.error ? [] : (asg.data || []), pagos_trabajador: pt.error ? [] : (pt.data || []), profesoresError: asg.error ? asg.error.message : '', instalaciones: ins.error ? [] : (ins.data || []), instalacionesError: ins.error ? ins.error.message : '', accesos: acc.error ? [] : (acc.data || []), accesosError: acc.error ? acc.error.message : '', jornadas: jor.error ? [] : (jor.data || []), jornadasError: jor.error ? jor.error.message : '', pendientes: pen.error ? [] : (pen.data || []), pendientesError: pen.error ? pen.error.message : '', notas_agenda: nta.error ? [] : (nta.data || []), notasError: nta.error ? nta.error.message : '', plantillas: pla.error ? [] : (pla.data || []), documentos: doc.error ? [] : (doc.data || []), documentosError: doc.error ? doc.error.message : '', quejas: que.error ? [] : (que.data || []), quejasError: que.error ? que.error.message : '', crmError,
     ajustes: { whatsapp: WA_ENV, ...ajustes },
   }
 }
@@ -331,7 +330,7 @@ export async function remove(tabla, id) {
 
 /* Rol de quien entra: 'gerente' (todo), 'vendedora' (prospectos, inscritos y pagos) o null (sin acceso) */
 export async function getRol(email) {
-  if (!hasBackend) return 'gerente'
+  if (!hasBackend) return (demoRead().equipo || []).find((x) => x.email === DEMO_USER)?.rol || 'gerente'
   const { data, error } = await supabase.from('admins').select('rol').eq('email', email).maybeSingle()
   if (!error) return data ? (data.rol || 'gerente') : null
   // Si la columna "rol" aún no existe (falta pegar crm.sql), quien está en admins sigue siendo gerente.
@@ -397,7 +396,7 @@ export async function urlComprobante(ruta) {
 }
 
 /* Crea (o actualiza) al alumno, lo matricula en 1 o más grupos y registra su primer pago */
-export async function crearInscripcion({ alumno, grupos, precioTotal, pago, paquete = '', nota = '', fecha }) {
+export async function crearInscripcion({ alumno, grupos, precioTotal, pago, paquete = '', nota = '', fecha, terminos = false, requisitos = false, descuentoAutorizado = false, descuentoMotivo = '' }) {
   const hoy = fecha || new Date().toISOString().slice(0, 10)
   const precios = repartir(precioTotal, grupos.map(() => 1))
   const paqueteId = crypto.randomUUID()
@@ -411,7 +410,7 @@ export async function crearInscripcion({ alumno, grupos, precioTotal, pago, paqu
     for (const g of grupos) {
       if (db.matriculas.some((m) => m.alumno_id === al.id && m.grupo_id === g.id && m.estado === 'activa')) throw new Error(`Este alumno ya está inscrito en ${g.codigo || 'ese grupo'}.`)
     }
-    const nuevas = grupos.map((g, i) => ({ id: uid(), creado: new Date().toISOString(), paquete_id: paqueteId, paquete, alumno_id: al.id, grupo_id: g.id, grupo_codigo: g.codigo || '', curso_id: g.curso_id, curso_titulo: g.curso_titulo, precio: precios[i], fecha_inscripcion: hoy, estado: 'activa', nota, vendedor: DEMO_USER }))
+    const nuevas = grupos.map((g, i) => ({ id: uid(), creado: new Date().toISOString(), paquete_id: paqueteId, paquete, alumno_id: al.id, grupo_id: g.id, grupo_codigo: g.codigo || '', curso_id: g.curso_id, curso_titulo: g.curso_titulo, precio: precios[i], fecha_inscripcion: hoy, estado: 'activa', nota, terminos_enviados: !!terminos, requisitos_enviados: !!requisitos, descuento_autorizado: !!descuentoAutorizado, descuento_motivo: descuentoMotivo || '', vendedor: DEMO_USER }))
     db.matriculas.unshift(...nuevas)
     if (pago && Number(pago.monto) > 0) {
       const partes = repartir(Number(pago.monto), precios)
@@ -439,7 +438,7 @@ export async function crearInscripcion({ alumno, grupos, precioTotal, pago, paqu
     alumnoId = data.id; alumnoCodigo = data.codigo
   }
   // 2) matrículas
-  const filas = grupos.map((g, i) => ({ paquete_id: paqueteId, paquete, alumno_id: alumnoId, grupo_id: String(g.id), grupo_codigo: g.codigo || '', curso_id: String(g.curso_id), curso_titulo: g.curso_titulo, precio: precios[i], fecha_inscripcion: hoy, nota }))
+  const filas = grupos.map((g, i) => ({ paquete_id: paqueteId, paquete, alumno_id: alumnoId, grupo_id: String(g.id), grupo_codigo: g.codigo || '', curso_id: String(g.curso_id), curso_titulo: g.curso_titulo, precio: precios[i], fecha_inscripcion: hoy, nota, terminos_enviados: !!terminos, requisitos_enviados: !!requisitos, descuento_autorizado: !!descuentoAutorizado, descuento_motivo: descuentoMotivo || '' }))
   const { data: mats, error: e2 } = await supabase.from('matriculas').insert(filas).select('id, precio')
   if (e2) throw e2
   // 3) primer pago (repartido entre las matrículas del paquete)
@@ -586,6 +585,21 @@ export const ESTADOS_PROSPECTO = { nuevo: 'Nuevo', contactado: 'Contactado', esp
 export const ORIGENES = ['WhatsApp', 'Instagram', 'Facebook', 'TikTok', 'Referido', 'Web', 'Otro']
 export async function guardarProspecto(p) {
   const fila = { nombres: String(p.nombres || '').trim(), celular: String(p.celular || '').trim(), curso: p.curso || '', origen: p.origen || 'WhatsApp', estado: p.estado || 'nuevo', seguimiento: p.seguimiento || null, notas: p.notas || '' }
+  // Contacto 1 y 2: solo se envían si el formulario los trae (así los cambios rápidos de estado no los pisan)
+  if ('contacto1_fecha' in p || 'recontactar1' in p || 'recontactar2' in p || 'contacto2_fecha' in p) {
+    const v = (x) => x || null
+    Object.assign(fila, {
+      contacto1_fecha: v(p.contacto1_fecha), contacto1_obs: p.contacto1_obs || '', recontactar1: p.recontactar1 || '', recontactar1_fecha: p.recontactar1 === 'si' ? v(p.recontactar1_fecha) : null,
+      contacto2_fecha: v(p.contacto2_fecha), contacto2_obs: p.contacto2_obs || '', recontactar2: p.recontactar2 || '', recontactar2_fecha: p.recontactar2 === 'si' ? v(p.recontactar2_fecha) : null,
+      recontacto2_hecho: !!p.recontacto2_hecho,
+    })
+    if (p.contacto1_fecha && !p.recontactar1) throw new Error('Contacto 1: elige si hay que volver a contactar (puede ser "No").')
+    if (p.recontactar1 === 'si' && !p.recontactar1_fecha) throw new Error('Contacto 1: pon la fecha para volver a contactar.')
+    if (p.contacto2_fecha && !p.recontactar2) throw new Error('Contacto 2: elige si hay que volver a contactar (puede ser "No").')
+    if (p.recontactar2 === 'si' && !p.recontactar2_fecha) throw new Error('Contacto 2: pon la fecha para volver a contactar.')
+    const prox = fila.recontactar1 === 'si' && !fila.contacto2_fecha ? fila.recontactar1_fecha : (fila.recontactar2 === 'si' && !fila.recontacto2_hecho ? fila.recontactar2_fecha : null)
+    fila.seguimiento = prox || ((fila.recontactar1 || fila.recontactar2) ? null : fila.seguimiento)
+  }
   if (fila.nombres.length < 2) throw new Error('Escribe el nombre del prospecto.')
   if (!hasBackend) {
     const db = demoRead()
@@ -617,16 +631,17 @@ export async function recibeInteresados(email, valor) {
 
 /* ---------- Trabajadores ---------- */
 export async function guardarTrabajador(t) {
-  const fila = { nombre: String(t.nombre || '').trim(), puesto: t.puesto || 'vendedor', cargo: t.cargo || '', email: t.email ? String(t.email).trim().toLowerCase() : null, sueldo_base: Number(t.sueldo_base) || 0, documento: t.documento || '', celular: t.celular || '', tarifa_hora: Number(t.tarifa_hora) || 0, cursos: Array.isArray(t.cursos) ? t.cursos.map(String) : [], comision_tramos: t.comision_tramos, activo: t.activo !== false, notas: t.notas || '' }
+  const fila = { nombre: String(t.nombre || '').trim(), puesto: t.puesto || 'vendedor', cargo: t.cargo || '', email: t.email ? String(t.email).trim().toLowerCase() : null, sueldo_base: Number(t.sueldo_base) || 0, fecha_inicio: t.fecha_inicio || null, documento: t.documento || '', celular: t.celular || '', tarifa_hora: Number(t.tarifa_hora) || 0, cursos: Array.isArray(t.cursos) ? t.cursos.map(String) : [], comision_tramos: t.comision_tramos, metas: t.metas || null, activo: t.activo !== false, notas: t.notas || '' }
   if (fila.nombre.length < 2) throw new Error('Escribe el nombre del trabajador.')
   if (!fila.comision_tramos) delete fila.comision_tramos
+  if (!fila.metas) delete fila.metas
   if (t.id) fila.id = t.id
   await save('trabajadores', fila)
 }
 
 /* ---------- Grupos de WhatsApp de cada curso ---------- */
-export async function guardarWhatsapp({ grupo_id, nombre, enlace }) {
-  const fila = { grupo_id: String(grupo_id), nombre: String(nombre || '').trim(), enlace: String(enlace || '').trim() }
+export async function guardarWhatsapp({ grupo_id, nombre, enlace, solo_admins }) {
+  const fila = { grupo_id: String(grupo_id), nombre: String(nombre || '').trim(), enlace: String(enlace || '').trim(), solo_admins: !!solo_admins }
   if (fila.nombre.length < 3) throw new Error('Escribe el nombre del grupo de WhatsApp.')
   if (!/^https:\/\/chat\.whatsapp\.com\//i.test(fila.enlace)) throw new Error('Pega el enlace de invitación (empieza con https://chat.whatsapp.com/).')
   if (!hasBackend) {
@@ -655,3 +670,134 @@ export async function guardarInstalacion(f) {
   if (!hasBackend && !f.id) fila.vendedor = DEMO_USER
   await save('instalaciones', fila)
 }
+
+export const CATEGORIAS_ACCESO = ['Web y hosting', 'Redes sociales', 'Correo', 'Pagos y bancos', 'Herramientas', 'Otros']
+
+
+/* ---------- Jornadas (reloj de trabajo de la vendedora) ---------- */
+export async function jornadaIniciar(dispositivo = '') {
+  if (!hasBackend) {
+    const db = demoRead()
+    if (db.jornadas.some((j) => j.vendedor === DEMO_USER && j.estado === 'abierta')) throw new Error('Ya tienes una jornada abierta.')
+    const ahora = new Date().toISOString()
+    db.jornadas.unshift({ id: uid(), creado: ahora, vendedor: DEMO_USER, inicio: ahora, fin: null, ultimo_pulso: ahora, estado: 'abierta', cierre: '', dispositivo, nota: '' })
+    demoWrite(db); return
+  }
+  const { data: u } = await supabase.auth.getUser()
+  const { error } = await supabase.from('jornadas').insert({ vendedor: u.user.email, dispositivo })
+  if (error) throw (error.code === '23505' ? new Error('Ya tienes una jornada abierta.') : error)
+}
+export async function jornadaPulso(id) {
+  if (!hasBackend) { const db = demoRead(); const j = db.jornadas.find((x) => x.id === id); if (j && j.estado === 'abierta') { j.ultimo_pulso = new Date().toISOString(); demoWrite(db) } return }
+  const { error } = await supabase.from('jornadas').update({ estado: 'abierta' }).eq('id', id)
+  if (error) throw error
+}
+/* estado: 'cerrada' (termina ahora) o 'interrumpida' (se cuenta hasta su último pulso) */
+export async function jornadaCerrar(id, estado = 'cerrada', cierre = 'manual') {
+  if (!hasBackend) {
+    const db = demoRead(); const j = db.jornadas.find((x) => x.id === id); if (!j) return
+    j.estado = estado; j.cierre = estado === 'interrumpida' ? 'sin_senal' : cierre
+    j.fin = estado === 'interrumpida' ? j.ultimo_pulso : new Date().toISOString(); demoWrite(db); return
+  }
+  const { error } = await supabase.from('jornadas').update({ estado, cierre }).eq('id', id)
+  if (error) throw error
+}
+
+
+/* ---------- Agenda: pendientes y notas ---------- */
+async function miCorreo() { if (!hasBackend) return DEMO_USER; const { data: u } = await supabase.auth.getUser(); return u.user.email }
+export async function guardarPendiente(p) {
+  const titulo = String(p.titulo || '').trim()
+  if (!titulo) throw new Error('Escribe el pendiente.')
+  const fila = { titulo, detalle: p.detalle || '', fecha_limite: p.fecha_limite || null }
+  if (!hasBackend) {
+    const db = demoRead()
+    if (p.id) {
+      const x = db.pendientes.find((y) => y.id === p.id); if (!x) return
+      if (x.estado === 'realizado') throw new Error('Un pendiente realizado ya no se puede editar.')
+      Object.assign(x, fila)
+    } else db.pendientes.unshift({ ...fila, id: uid(), creado: new Date().toISOString(), vendedor: p.vendedor || DEMO_USER, creado_por: DEMO_USER, estado: 'pendiente', realizado_en: null })
+    demoWrite(db); return
+  }
+  if (p.id) { const { error } = await supabase.from('pendientes').update(fila).eq('id', p.id); if (error) throw error; return }
+  const me = await miCorreo()
+  const { error } = await supabase.from('pendientes').insert({ ...fila, vendedor: p.vendedor || me, creado_por: me })
+  if (error) throw error
+}
+export async function marcarPendiente(id) {
+  if (!hasBackend) { const db = demoRead(); const x = db.pendientes.find((y) => y.id === id); if (x && x.estado === 'pendiente') { x.estado = 'realizado'; x.realizado_en = new Date().toISOString(); demoWrite(db) } return }
+  const { error } = await supabase.from('pendientes').update({ estado: 'realizado' }).eq('id', id)
+  if (error) throw error
+}
+export async function borrarPendiente(id) {
+  if (!hasBackend) { const db = demoRead(); const x = db.pendientes.find((y) => y.id === id); if (x?.estado === 'realizado') throw new Error('Un pendiente realizado ya no se puede borrar.'); db.pendientes = db.pendientes.filter((y) => y.id !== id); demoWrite(db); return }
+  const { error } = await supabase.from('pendientes').delete().eq('id', id)
+  if (error) throw error
+}
+export async function guardarNota(n) {
+  const fila = { titulo: String(n.titulo || '').trim(), texto: n.texto || '', actualizado: new Date().toISOString() }
+  if (!fila.titulo && !fila.texto.trim()) throw new Error('Escribe algo en la nota.')
+  if (!hasBackend) {
+    const db = demoRead()
+    if (n.id) { const x = db.notas_agenda.find((y) => y.id === n.id); if (x) Object.assign(x, fila) }
+    else db.notas_agenda.unshift({ ...fila, id: uid(), creado: fila.actualizado, vendedor: DEMO_USER })
+    demoWrite(db); return
+  }
+  const { error } = await (n.id ? supabase.from('notas_agenda').update(fila).eq('id', n.id) : supabase.from('notas_agenda').insert(fila))
+  if (error) throw error
+}
+export async function borrarNota(id) {
+  if (!hasBackend) { const db = demoRead(); db.notas_agenda = db.notas_agenda.filter((y) => y.id !== id); demoWrite(db); return }
+  const { error } = await supabase.from('notas_agenda').delete().eq('id', id)
+  if (error) throw error
+}
+
+
+/* ---------- Contratos y firma ---------- */
+export async function guardarPlantilla(tipo, { titulo, contenido }) {
+  if (!String(contenido || '').trim() || !String(titulo || '').trim()) throw new Error('El título y el texto no pueden quedar vacíos.')
+  const fila = { tipo, titulo: titulo.trim(), contenido, actualizado: new Date().toISOString() }
+  if (!hasBackend) { const db = demoRead(); db.plantillas = (db.plantillas || []).filter((x) => x.tipo !== tipo).concat(fila); demoWrite(db); return }
+  const { error } = await supabase.from('plantillas_doc').upsert(fila)
+  if (error) throw error
+}
+export async function enviarDocumentos(lista) {
+  if (!lista.length) throw new Error('Elige al menos un documento.')
+  if (!hasBackend) { const db = demoRead(); lista.forEach((d) => db.documentos.unshift({ ...d, id: uid(), creado: new Date().toISOString(), estado: 'enviado', firmado_nombre: '', firmado_en: null, huella: '', enviado_por: DEMO_USER })); demoWrite(db); return }
+  const { error } = await supabase.from('documentos_trab').insert(lista)
+  if (error) throw error
+}
+async function sha256Hex(t) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('') }
+export async function firmarDocumento(id, nombre) {
+  const n = String(nombre || '').trim()
+  if (n.length < 5) throw new Error('Escribe tu nombre completo para firmar.')
+  if (!hasBackend) {
+    const db = demoRead(); const d = db.documentos.find((x) => x.id === id); if (!d || d.estado === 'firmado') return
+    d.estado = 'firmado'; d.firmado_nombre = n; d.firmado_en = new Date().toISOString(); d.huella = await sha256Hex(`${d.contenido}|${n}|${d.firmado_en}|${d.vendedor}`); demoWrite(db); return
+  }
+  const { error } = await supabase.from('documentos_trab').update({ estado: 'firmado', firmado_nombre: n }).eq('id', id)
+  if (error) throw error
+}
+export async function borrarDocumento(id) {
+  if (!hasBackend) { const db = demoRead(); const d = db.documentos.find((x) => x.id === id); if (d?.estado === 'firmado') throw new Error('Un documento firmado no se puede borrar.'); db.documentos = db.documentos.filter((x) => x.id !== id); demoWrite(db); return }
+  const { error } = await supabase.from('documentos_trab').delete().eq('id', id)
+  if (error) throw error
+}
+
+
+/* ---------- Quejas y reclamos ---------- */
+export async function guardarQueja(q) {
+  const fila = { tipo: q.tipo || 'queja', alumno: String(q.alumno || '').trim(), celular: String(q.celular || '').trim(), detalle: String(q.detalle || '').trim() }
+  if (fila.detalle.length < 5) throw new Error('Cuenta qué pasó (mínimo una frase).')
+  if (!hasBackend) { const db = demoRead(); const r = { ...fila, id: uid(), creado: new Date().toISOString(), vendedor: DEMO_USER, estado: 'nueva', nota_gerencia: '', atendido_en: null }; db.quejas.unshift(r); demoWrite(db); return r }
+  const me = await miCorreo()
+  const { data, error } = await supabase.from('quejas').insert({ ...fila, vendedor: me }).select().single()
+  if (error) throw error
+  return data
+}
+export async function atenderQueja(id, nota) {
+  if (!hasBackend) { const db = demoRead(); const x = db.quejas.find((y) => y.id === id); if (x) { x.estado = 'atendida'; x.nota_gerencia = nota || ''; x.atendido_en = new Date().toISOString(); demoWrite(db) } return }
+  const { error } = await supabase.from('quejas').update({ estado: 'atendida', nota_gerencia: nota || '', atendido_en: new Date().toISOString() }).eq('id', id)
+  if (error) throw error
+}
+export const numeroGerencia = () => numero
