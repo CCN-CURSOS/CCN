@@ -805,3 +805,127 @@ section{padding-block:64px}
 .cc-ins:hover{color:#06231F;filter:brightness(.95)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cc-ins{color:#06231F}}
 :root[data-theme="dark"] .cc-ins{color:#06231F}
+
+/* ---------- v37 · CRM: inscritos, pagos, comprobantes ---------- */
+.cod{display:inline-block;background:var(--soft);border:1px solid var(--teal);color:var(--ink);border-radius:8px;padding:1px 8px;margin-right:6px;font-size:.78rem;font-weight:800;letter-spacing:.03em}
+.cupos{font-size:.92rem;white-space:nowrap}
+.cupos small{color:var(--muted)}
+.filtros{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;align-items:flex-end}
+.filtros label{display:grid;gap:4px;font-size:.78rem;font-weight:700;color:var(--muted)}
+.filtros select,.filtros input{min-width:150px}
+.filtros .buscar{flex:1;min-width:200px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.kpis div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;display:grid}
+.kpis b{font-size:1.4rem}
+.kpis span{color:var(--muted);font-size:.8rem}
+.cons-table.insc{min-width:860px}
+.cons-table.insc tr.anulada td{opacity:.5;text-decoration:line-through}
+.cons-table.insc td .paq{display:block;color:var(--muted)}
+.cons-table.insc td.pagos{min-width:170px}
+.cons-table.insc .pg{display:block;white-space:nowrap}
+.cons-table.insc .pg small{color:var(--muted)}
+.cons-table.insc td.acc{white-space:nowrap}
+.cons-table.insc td.acc .btn{margin-right:6px}
+.link{background:none;border:0;color:var(--teal);cursor:pointer;font:inherit;padding:0 4px;text-decoration:underline}
+.pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:.76rem;font-weight:800;border:1px solid var(--line)}
+.pill.pagado{background:#0EA5A433;border-color:var(--teal)}
+.pill.adelanto{background:#E0A10033;border-color:#E0A100}
+.pill.pendiente{background:#C0392B22;border-color:#C0392B}
+.pill.anulada{opacity:.6}
+.drop.comp{min-height:96px;background:var(--soft);border:2px dashed var(--teal);color:var(--ink);background-size:cover;background-position:center}
+.drop.comp span{background:rgba(6,35,31,.7);color:#fff;padding:4px 10px;border-radius:8px;font-size:.84rem}
+.note.ok{color:var(--teal);font-weight:700}
+.pick button small{display:block;color:var(--muted);font-weight:400}
+.dlg.foto{max-width:min(560px,94vw);display:grid;gap:14px}
+.dlg.foto img{max-width:100%;max-height:70vh;margin:auto;border-radius:10px}
+.dlg.foto .row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.fs textarea{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);resize:vertical}
+
+/* ---------- v38 · módulos del panel ---------- */
+.mods{display:grid;gap:6px;margin:6px 0 10px}
+.mods button{display:flex;align-items:center;gap:10px;text-align:left;border:1px solid rgba(255,255,255,.14);background:transparent;color:#fff;border-radius:12px;padding:10px 12px;font:inherit;font-weight:700;cursor:pointer}
+.mods button[aria-selected="true"]{background:var(--teal);border-color:var(--teal);color:#06231F}
+.modname{margin-top:4px}
+.mesel{display:grid;gap:4px;font-size:.78rem;font-weight:700;color:var(--muted)}
+.subh{font-size:1.1rem;margin:22px 0 10px}
+.alertas{display:grid;gap:8px;margin-bottom:8px}
+.alerta{margin:0;padding:10px 14px;border-radius:12px;background:#E0A10022;border:1px solid #E0A100;font-size:.9rem}
+.alerta.ok{background:#0EA5A422;border-color:var(--teal)}
+.barra{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:4px;min-width:120px}
+.barra i{display:block;height:100%;background:var(--teal)}
+
+/* ---------- v39 · módulo de vendedor ---------- */
+.cons-table input.obs{width:100%;min-width:170px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg,#fff);color:inherit}
+.cons-table select,.cons-table input[type="date"]{padding:6px 8px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg,#fff);color:inherit}
+.cons-table td.notas{max-width:220px;font-size:.85rem}
+.cons-table td.acc{white-space:nowrap}
+
+/* ---------- v40 · avance, gráficos y trabajadores ---------- */
+.avance{display:grid;gap:14px}
+.av-pago{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px;align-items:center;padding:18px;border-radius:16px;background:linear-gradient(135deg,#0F2547,#13405f);color:#fff}
+.av-pago small{display:block;opacity:.75}
+.av-pago .grande{display:block;font-size:2rem;line-height:1.1;margin:2px 0 4px;color:#1FBFA8}
+.av-pago span{font-size:.88rem;opacity:.9}
+.av-pago .tr{margin-top:8px;font-size:.75rem}
+.av-pago .barra{background:rgba(255,255,255,.2)}
+@media(max-width:760px){.av-pago{grid-template-columns:1fr}}
+.av-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.av-grid>section{border:1px solid var(--line);border-radius:16px;padding:14px 16px;background:var(--card,#fff)}
+.av-grid h3,.avance h3{font-size:.95rem;margin:0 0 10px}
+.chart{margin:0}
+.chart svg{width:100%;display:block}
+.chart .grid{stroke:var(--line);stroke-width:.2}
+.chart-x{display:flex}.chart-x span{flex:1;text-align:center;font-size:.72rem;color:var(--muted)}
+.chart-leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:.78rem}
+.chart-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.embudo{display:grid;gap:9px}
+.emb-fila{display:grid;grid-template-columns:110px 1fr 34px;gap:10px;align-items:center;font-size:.85rem}
+.emb-bar{height:14px;background:var(--line);border-radius:99px;overflow:hidden}
+.emb-bar i{display:block;height:100%;border-radius:99px;min-width:2px}
+.nota-ch{display:block;margin-top:8px;color:var(--muted);font-size:.78rem}
+.hist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.hist li{display:flex;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;font-size:.9rem}
+.hist small{display:block;color:var(--muted);font-size:.74rem}
+.puesto{margin-bottom:8px}
+.puesto h2 em{font-style:normal;font-size:.8rem;opacity:.6;margin-left:6px}
+.tcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.tcard{display:grid;gap:4px;text-align:left;padding:16px;border-radius:16px;border:1px solid var(--line);background:var(--card,#fff);font:inherit;color:inherit;cursor:pointer}
+.tcard:hover{border-color:var(--teal)}
+.tcard.off{opacity:.55}
+.tcard small{color:var(--muted)}
+.tcard span{font-size:.85rem}.tcard i{font-style:normal;font-weight:800}
+
+/* ---------- v41 · grupos de WhatsApp ---------- */
+.wa{display:block;margin-top:2px}
+.wa.ok{color:var(--teal-d,#0f9e8b)}
+.wa.falta{color:#b36b00;font-weight:700}
+.wa a{color:inherit;text-decoration:underline}
+
+/* ---------- v42 · profesores ---------- */
+.tabs2{display:flex;gap:8px;margin:4px 0 14px}
+.tabs2 button{border:1px solid var(--line);background:transparent;color:inherit;border-radius:99px;padding:8px 16px;font:inherit;font-weight:700;cursor:pointer}
+.tabs2 button[aria-selected="true"]{background:var(--teal);border-color:var(--teal);color:#06231F}
+.tabs2 em{font-style:normal;opacity:.7;margin-left:4px}
+.datos-prof{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.datos-prof span{border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-weight:700}
+.datos-prof small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}
+.curso-prof{border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:14px 0;background:var(--card,#fff)}
+.curso-prof header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.curso-prof header>div:nth-child(2){flex:1;min-width:160px}
+.curso-prof header small{display:block;color:var(--muted)}
+.curso-prof .tot{display:flex;gap:14px;flex-wrap:wrap;font-size:.82rem}
+.curso-prof .tot i{font-style:normal;font-weight:800}
+.curso-prof .sw{width:12px;height:36px;border-radius:6px}
+.cons-table input.num{width:74px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg,#fff);color:inherit}
+.cons-table tr.sinasig{opacity:.8;background:rgba(224,161,0,.07)}
+.chks{display:grid;gap:6px;margin-top:6px}
+
+/* ---------- v43 · instalaciones ---------- */
+.aviso-inst{background:#E0A10018;border-color:#E0A100;color:inherit}
+.err-inst{margin:0;padding:9px 12px;border-radius:10px;background:#d9363e18;border:1px solid #d9363e;font-size:.88rem}
+.alsel{display:grid;gap:2px;padding:12px;border:1px solid var(--teal);border-radius:12px}
+.alsel small{color:var(--muted)}
+.resbusq{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.resbusq button{display:block;width:100%;text-align:left;padding:10px 12px;border:0;border-bottom:1px solid var(--line);background:transparent;font:inherit;color:inherit;cursor:pointer}
+.resbusq button:hover{background:rgba(31,191,168,.12)}
+.resbusq small{display:block;color:var(--muted)}

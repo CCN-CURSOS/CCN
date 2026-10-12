@@ -93,12 +93,20 @@ const SEED_ENLACES = [
 ]
 
 const LS = 'ccn-demo-v1'
+/* Código único de alumno: AÑO-CORRELATIVO-MES-ÚLTIMOS 3 DEL DNI (ej. 2026-000-10-678). En Supabase lo pone la base de datos; aquí imita lo mismo. */
+export function demoCodigoAlumno(db, documento) {
+  const d = new Date(); const anio = String(d.getFullYear()); const mes = String(d.getMonth() + 1).padStart(2, '0')
+  const usados = db.alumnos.map((a) => String(a.codigo || '').split('-')).filter((x) => x[0] === anio && x[2] === mes).map((x) => Number(x[1]))
+  const n = usados.length ? Math.max(...usados) + 1 : 0
+  return `${anio}-${String(n).padStart(3, '0')}-${mes}-${String(documento || '').replace(/\D/g, '').padStart(3, '0').slice(-3)}`
+}
+export const DEMO_USER = 'demo@ccn.pe'
 const demoRead = () => {
   try {
     const raw = localStorage.getItem(LS)
-    if (raw) { const d = JSON.parse(raw); if (!d.enlaces) d.enlaces = SEED_ENLACES; if (!d.consultas) d.consultas = []; if (!d.interesados) d.interesados = []; return d }
+    if (raw) { const d = JSON.parse(raw); if (!d.enlaces) d.enlaces = SEED_ENLACES; if (!d.consultas) d.consultas = []; if (!d.interesados) d.interesados = []; for (const k of ['alumnos', 'matriculas', 'pagos', 'historial', 'prospectos', 'trabajadores', 'gruposWa', 'asignaciones', 'pagos_trabajador', 'instalaciones']) if (!d[k]) d[k] = []; if (!d.equipo) d.equipo = [{ email: 'demo@ccn.pe', rol: 'gerente' }]; return d }
   } catch (e) { /* sin almacenamiento */ }
-  return { cursos: SEED_CURSOS, grupos: [], enlaces: SEED_ENLACES, consultas: [], interesados: [], ajustes: { whatsapp: WA_ENV } }
+  return { cursos: SEED_CURSOS, grupos: [], enlaces: SEED_ENLACES, consultas: [], interesados: [], alumnos: [], matriculas: [], pagos: [], historial: [], prospectos: [], trabajadores: [], gruposWa: [], asignaciones: [], pagos_trabajador: [], instalaciones: [], equipo: [{ email: 'demo@ccn.pe', rol: 'gerente' }], ajustes: { whatsapp: WA_ENV } }
 }
 const demoWrite = (db) => { try { localStorage.setItem(LS, JSON.stringify(db)) } catch (e) { /* ignorar */ } }
 const uid = () => 'd' + Math.random().toString(36).slice(2, 10)
@@ -159,19 +167,38 @@ export async function contarClic(id) {
 /* ---------- Panel admin ---------- */
 export async function loadAll() {
   if (!hasBackend) { const db = demoRead(); return { ...db, ajustes: db.ajustes || { whatsapp: WA_ENV } } }
-  const [c, g, a, en, co, it] = await Promise.all([
+  const [c, g, a, en, co, it, al, ma, pa, hi, eq, pr, tr, gw, asg, pt, ins] = await Promise.all([
     supabase.from('cursos').select('*').order('orden'),
     supabase.from('grupos').select('*').order('inicio', { ascending: false }),
     supabase.from('ajustes').select('*'),
     supabase.from('enlaces').select('*').order('orden'),
     supabase.from('consultas').select('*').order('creado', { ascending: false }),
     supabase.from('interesados').select('*').order('creado', { ascending: false }),
+    supabase.from('alumnos').select('*').order('creado', { ascending: false }),
+    supabase.from('matriculas').select('*').order('creado', { ascending: false }),
+    supabase.from('pagos').select('*').order('creado', { ascending: false }),
+    supabase.from('historial').select('*').order('creado', { ascending: false }).limit(1000),
+    supabase.from('admins').select('*'),
+    supabase.from('prospectos').select('*').order('creado', { ascending: false }),
+    supabase.from('trabajadores').select('*').order('nombre'),
+    supabase.from('grupos_whatsapp').select('*'),
+    supabase.from('asignaciones').select('*'),
+    supabase.from('pagos_trabajador').select('*').order('fecha', { ascending: false }),
+    supabase.from('instalaciones').select('*').order('fecha').order('hora'),
   ])
   if (c.error) throw c.error
   if (g.error) throw g.error
   const ajustes = Object.fromEntries((a.data || []).map((x) => [x.clave, x.valor]))
-  // Si la tabla "consultas" aún no existe en Supabase, el panel sigue funcionando (solo sin esa sección).
-  return { cursos: c.data, grupos: g.data, enlaces: en.data || [], consultas: co.error ? [] : (co.data || []), consultasError: co.error ? co.error.message : '', interesados: it.error ? [] : (it.data || []), interesadosError: it.error ? it.error.message : '', ajustes: { whatsapp: WA_ENV, ...ajustes } }
+  const crmError = [al, ma, pa].find((x) => x.error)?.error?.message || ''
+  // Si alguna tabla aún no existe en Supabase (falta pegar su SQL), el panel sigue funcionando sin esa sección.
+  return {
+    cursos: c.data, grupos: g.data, enlaces: en.data || [],
+    consultas: co.error ? [] : (co.data || []), consultasError: co.error ? co.error.message : '',
+    interesados: it.error ? [] : (it.data || []), interesadosError: it.error ? it.error.message : '',
+    alumnos: al.error ? [] : (al.data || []), matriculas: ma.error ? [] : (ma.data || []), pagos: pa.error ? [] : (pa.data || []),
+    historial: hi.error ? [] : (hi.data || []), equipo: eq.error ? [] : (eq.data || []), prospectos: pr.error ? [] : (pr.data || []), prospectosError: pr.error ? pr.error.message : '', trabajadores: tr.error ? [] : (tr.data || []), trabajadoresError: tr.error ? tr.error.message : '', gruposWa: gw.error ? [] : (gw.data || []), gruposWaError: gw.error ? gw.error.message : '', asignaciones: asg.error ? [] : (asg.data || []), pagos_trabajador: pt.error ? [] : (pt.data || []), profesoresError: asg.error ? asg.error.message : '', instalaciones: ins.error ? [] : (ins.data || []), instalacionesError: ins.error ? ins.error.message : '', crmError,
+    ajustes: { whatsapp: WA_ENV, ...ajustes },
+  }
 }
 
 /* ---------- Solicitudes de información (formulario de la web) ---------- */
@@ -218,6 +245,12 @@ export function consultasCSV(lista) {
 }
 
 /* ---------- Interesados (formulario de inscripción de cada curso) ---------- */
+/* Demo: reparte al que lleva más tiempo sin recibir (igual que el automático de Supabase) */
+function demoElegirVendedora(db) {
+  const v = (db.equipo || []).filter((e) => e.rol === 'vendedora' && e.recibe_interesados !== false)
+  const ult = (m) => Math.max(0, ...db.interesados.filter((i) => i.asignado_a === m).map((i) => Date.parse(i.asignado_en) || 0))
+  return v.sort((a, b) => ult(a.email) - ult(b.email) || a.email.localeCompare(b.email))[0]?.email || null
+}
 export async function crearInteresado(c) {
   const fila = {
     curso_id: String(c.curso_id), curso: c.curso, lista_espera: Boolean(c.lista_espera), inicio: c.inicio || '',
@@ -227,7 +260,8 @@ export async function crearInteresado(c) {
   }
   if (!hasBackend) {
     const db = demoRead()
-    db.interesados.unshift({ ...fila, id: uid(), creado: new Date().toISOString() })
+    const quien = demoElegirVendedora(db)
+    db.interesados.unshift({ ...fila, id: uid(), creado: new Date().toISOString(), asignado_a: quien, asignado_en: quien ? new Date().toISOString() : null })
     demoWrite(db)
     return
   }
@@ -269,6 +303,7 @@ export async function save(tabla, row) {
       const i = lista.findIndex((x) => x.id === limpio.id)
       lista[i] = { ...lista[i], ...limpio }
     } else {
+      if (tabla === 'grupos' && !limpio.codigo) limpio.codigo = demoCodigo(db)
       lista.push({ ...limpio, id: uid() })
     }
     demoWrite(db)
@@ -283,7 +318,10 @@ export async function remove(tabla, id) {
   if (!hasBackend) {
     const db = demoRead()
     db[tabla] = db[tabla].filter((x) => x.id !== id)
+    if (tabla === 'trabajadores') { db.asignaciones = (db.asignaciones || []).filter((x) => x.trabajador_id !== id); db.pagos_trabajador = (db.pagos_trabajador || []).filter((x) => x.trabajador_id !== id) }
+    if (tabla === 'asignaciones') db.pagos_trabajador = (db.pagos_trabajador || []).map((x) => (x.asignacion_id === id ? { ...x, asignacion_id: null } : x))
     if (tabla === 'cursos') db.grupos = db.grupos.filter((g) => g.curso_id !== id)
+    if (tabla === 'alumnos') { const ms = db.matriculas.filter((m) => m.alumno_id === id).map((m) => m.id); db.matriculas = db.matriculas.filter((m) => m.alumno_id !== id); db.pagos = db.pagos.filter((p) => !ms.includes(p.matricula_id)); demoSync(db) }
     demoWrite(db)
     return
   }
@@ -291,11 +329,329 @@ export async function remove(tabla, id) {
   if (error) throw error
 }
 
-export async function esAdmin(email) {
-  if (!hasBackend) return true
-  const { data, error } = await supabase.from('admins').select('email').eq('email', email).maybeSingle()
-  return !error && Boolean(data)
+/* Rol de quien entra: 'gerente' (todo), 'vendedora' (prospectos, inscritos y pagos) o null (sin acceso) */
+export async function getRol(email) {
+  if (!hasBackend) return 'gerente'
+  const { data, error } = await supabase.from('admins').select('rol').eq('email', email).maybeSingle()
+  if (!error) return data ? (data.rol || 'gerente') : null
+  // Si la columna "rol" aún no existe (falta pegar crm.sql), quien está en admins sigue siendo gerente.
+  const r = await supabase.from('admins').select('email').eq('email', email).maybeSingle()
+  return !r.error && r.data ? 'gerente' : null
 }
+export async function esAdmin(email) { return Boolean(await getRol(email)) }
 
 export const fechaCorta = (iso) =>
   iso ? new Date(iso + 'T00:00:00').toLocaleDateString('es-PE', { day: 'numeric', month: 'long' }) : ''
+
+/* =====================================================================
+   CRM: alumnos, matrículas, pagos y comprobantes
+   ===================================================================== */
+const r2 = (n) => Math.round(Number(n) * 100) / 100
+const suma = (xs) => r2(xs.reduce((t, x) => t + Number(x || 0), 0))
+
+/* Reparte un monto entre n partes (la última lleva el resto, para que sume exacto) */
+export function repartir(total, pesos) {
+  const n = pesos.length
+  const base = pesos.reduce((t, p) => t + Number(p || 0), 0)
+  const out = []
+  let acum = 0
+  pesos.forEach((p, i) => {
+    if (i === n - 1) out.push(r2(total - acum))
+    else { const v = r2(base > 0 ? total * (Number(p) / base) : total / n); out.push(v); acum += v }
+  })
+  return out
+}
+
+const demoCodigo = (db) => {
+  const nums = db.grupos.map((g) => parseInt(String(g.codigo || '').replace(/\D/g, ''), 10)).filter(Boolean)
+  return 'G' + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(2, '0')
+}
+function demoSync(db) {
+  db.grupos.forEach((g) => {
+    const n = db.matriculas.filter((m) => m.grupo_id === g.id && m.estado === 'activa').length
+    g.inscritos = n
+    const mx = g.maximo || 20
+    if (g.estado !== 'cerrado') g.estado = n >= mx ? 'lleno' : (g.estado === 'lleno' ? 'abierto' : g.estado)
+  })
+}
+const demoLog = (db, grupo_id, curso_id, tipo, detalle) =>
+  db.historial.unshift({ id: uid(), creado: new Date().toISOString(), grupo_id: String(grupo_id || ''), curso_id: String(curso_id || ''), tipo, detalle, usuario: 'demo' })
+
+export async function subirComprobante(file) {
+  const blob = await reducirImagen(file, 1400)
+  if (!hasBackend) return new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(blob) })
+  const d = new Date()
+  const ruta = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}/${crypto.randomUUID()}.jpg`
+  const { error } = await supabase.storage.from('comprobantes').upload(ruta, blob, { contentType: 'image/jpeg' })
+  if (error) throw error
+  return ruta
+}
+
+export async function urlComprobante(ruta) {
+  if (!ruta) return ''
+  if (ruta.startsWith('data:')) return ruta
+  if (!hasBackend) return ''
+  const { data, error } = await supabase.storage.from('comprobantes').createSignedUrl(ruta, 3600)
+  if (error) throw error
+  return data.signedUrl
+}
+
+/* Crea (o actualiza) al alumno, lo matricula en 1 o más grupos y registra su primer pago */
+export async function crearInscripcion({ alumno, grupos, precioTotal, pago, paquete = '', nota = '', fecha }) {
+  const hoy = fecha || new Date().toISOString().slice(0, 10)
+  const precios = repartir(precioTotal, grupos.map(() => 1))
+  const paqueteId = crypto.randomUUID()
+  const aFila = { tipo_doc: alumno.tipo_doc, documento: alumno.documento.trim(), nombres: alumno.nombres.trim(), apellido_paterno: alumno.apellido_paterno.trim(), apellido_materno: (alumno.apellido_materno || '').trim(), email: (alumno.email || '').trim(), celular: (alumno.celular || '').trim() }
+
+  if (!hasBackend) {
+    const db = demoRead()
+    let al = db.alumnos.find((x) => x.tipo_doc === aFila.tipo_doc && x.documento === aFila.documento)
+    if (al) Object.assign(al, aFila)
+    else { al = { ...aFila, id: uid(), creado: new Date().toISOString(), notas: '', codigo: demoCodigoAlumno(db, aFila.documento) }; db.alumnos.unshift(al) }
+    for (const g of grupos) {
+      if (db.matriculas.some((m) => m.alumno_id === al.id && m.grupo_id === g.id && m.estado === 'activa')) throw new Error(`Este alumno ya está inscrito en ${g.codigo || 'ese grupo'}.`)
+    }
+    const nuevas = grupos.map((g, i) => ({ id: uid(), creado: new Date().toISOString(), paquete_id: paqueteId, paquete, alumno_id: al.id, grupo_id: g.id, grupo_codigo: g.codigo || '', curso_id: g.curso_id, curso_titulo: g.curso_titulo, precio: precios[i], fecha_inscripcion: hoy, estado: 'activa', nota, vendedor: DEMO_USER }))
+    db.matriculas.unshift(...nuevas)
+    if (pago && Number(pago.monto) > 0) {
+      const partes = repartir(Number(pago.monto), precios)
+      const lote = crypto.randomUUID()
+      nuevas.forEach((m, i) => { if (partes[i] > 0) db.pagos.unshift({ id: uid(), creado: new Date().toISOString(), matricula_id: m.id, numero: 1, monto: partes[i], fecha: pago.fecha || hoy, metodo: pago.metodo, comprobante_url: pago.comprobante_url || '', lote, nota: '' }) })
+    }
+    nuevas.forEach((m) => demoLog(db, m.grupo_id, m.curso_id, 'inscripcion', `Inscrito: ${al.nombres} ${al.apellido_paterno} en ${m.grupo_codigo} (S/ ${m.precio})`))
+    demoSync(db); demoWrite(db)
+    return al.codigo
+  }
+
+  // 1) alumno
+  const { data: ex, error: e0 } = await supabase.from('alumnos').select('id, codigo').eq('tipo_doc', aFila.tipo_doc).eq('documento', aFila.documento).maybeSingle()
+  if (e0) throw e0
+  let alumnoId = ex?.id
+  let alumnoCodigo = ex?.codigo || ''
+  if (alumnoId) {
+    const { error } = await supabase.from('alumnos').update(aFila).eq('id', alumnoId)
+    if (error) throw error
+    const { data: ya } = await supabase.from('matriculas').select('grupo_codigo').eq('alumno_id', alumnoId).eq('estado', 'activa').in('grupo_id', grupos.map((g) => String(g.id)))
+    if (ya?.length) throw new Error(`Este alumno ya está inscrito en ${ya.map((x) => x.grupo_codigo).join(', ')}.`)
+  } else {
+    const { data, error } = await supabase.from('alumnos').insert(aFila).select('id, codigo').single()
+    if (error) throw error
+    alumnoId = data.id; alumnoCodigo = data.codigo
+  }
+  // 2) matrículas
+  const filas = grupos.map((g, i) => ({ paquete_id: paqueteId, paquete, alumno_id: alumnoId, grupo_id: String(g.id), grupo_codigo: g.codigo || '', curso_id: String(g.curso_id), curso_titulo: g.curso_titulo, precio: precios[i], fecha_inscripcion: hoy, nota }))
+  const { data: mats, error: e2 } = await supabase.from('matriculas').insert(filas).select('id, precio')
+  if (e2) throw e2
+  // 3) primer pago (repartido entre las matrículas del paquete)
+  if (pago && Number(pago.monto) > 0) {
+    const partes = repartir(Number(pago.monto), mats.map((m) => m.precio))
+    const lote = crypto.randomUUID()
+    const pf = mats.map((m, i) => ({ matricula_id: m.id, numero: 1, monto: partes[i], fecha: pago.fecha || hoy, metodo: pago.metodo, comprobante_url: pago.comprobante_url || '', lote })).filter((x) => x.monto > 0)
+    const { error } = await supabase.from('pagos').insert(pf)
+    if (error) throw error
+  }
+  return alumnoCodigo
+}
+
+/* Agrega Pago 2, Pago 3… a una inscripción (todas las matrículas de un paquete) */
+export async function agregarPago({ matriculas, pago }) {
+  const partes = repartir(Number(pago.monto), matriculas.map((m) => m.precio))
+  const lote = crypto.randomUUID()
+  if (!hasBackend) {
+    const db = demoRead()
+    matriculas.forEach((m, i) => {
+      const num = Math.max(0, ...db.pagos.filter((p) => p.matricula_id === m.id).map((p) => p.numero)) + 1
+      if (partes[i] > 0) db.pagos.unshift({ id: uid(), creado: new Date().toISOString(), matricula_id: m.id, numero: num, monto: partes[i], fecha: pago.fecha, metodo: pago.metodo, comprobante_url: pago.comprobante_url || '', lote, nota: pago.nota || '' })
+      demoLog(db, m.grupo_id, m.curso_id, 'pago', `Pago ${num}: S/ ${partes[i]} (${pago.metodo}) en ${m.grupo_codigo}`)
+    })
+    demoWrite(db)
+    return
+  }
+  const ids = matriculas.map((m) => m.id)
+  const { data: prev, error: e0 } = await supabase.from('pagos').select('matricula_id, numero').in('matricula_id', ids)
+  if (e0) throw e0
+  const filas = matriculas.map((m, i) => ({
+    matricula_id: m.id, numero: Math.max(0, ...(prev || []).filter((p) => p.matricula_id === m.id).map((p) => p.numero)) + 1,
+    monto: partes[i], fecha: pago.fecha, metodo: pago.metodo, comprobante_url: pago.comprobante_url || '', lote, nota: pago.nota || '',
+  })).filter((x) => x.monto > 0)
+  const { error } = await supabase.from('pagos').insert(filas)
+  if (error) throw error
+}
+
+/* Anular / reactivar / borrar una inscripción completa (todas sus matrículas) */
+export async function estadoInscripcion(paqueteId, estado) {
+  if (!hasBackend) {
+    const db = demoRead(); db.matriculas.filter((m) => m.paquete_id === paqueteId).forEach((m) => { m.estado = estado; demoLog(db, m.grupo_id, m.curso_id, 'matricula', `Matrícula ${estado} en ${m.grupo_codigo}`) })
+    demoSync(db); demoWrite(db); return
+  }
+  const { error } = await supabase.from('matriculas').update({ estado }).eq('paquete_id', paqueteId)
+  if (error) throw error
+}
+export async function borrarInscripcion(paqueteId) {
+  if (!hasBackend) {
+    const db = demoRead(); const ids = db.matriculas.filter((m) => m.paquete_id === paqueteId).map((m) => m.id)
+    db.matriculas = db.matriculas.filter((m) => m.paquete_id !== paqueteId); db.pagos = db.pagos.filter((p) => !ids.includes(p.matricula_id))
+    demoSync(db); demoWrite(db); return
+  }
+  const { error } = await supabase.from('matriculas').delete().eq('paquete_id', paqueteId)
+  if (error) throw error
+}
+
+/* Une alumno + matrículas + pagos en filas fáciles de leer (una por inscripción) */
+export function armarInscripciones({ alumnos = [], matriculas = [], pagos = [] }) {
+  const alum = new Map(alumnos.map((a) => [a.id, a]))
+  const pagosPor = new Map()
+  pagos.forEach((p) => { if (!pagosPor.has(p.matricula_id)) pagosPor.set(p.matricula_id, []); pagosPor.get(p.matricula_id).push(p) })
+  const porPaq = new Map()
+  matriculas.forEach((m) => {
+    if (!porPaq.has(m.paquete_id)) porPaq.set(m.paquete_id, { id: m.paquete_id, alumno: alum.get(m.alumno_id) || null, matriculas: [], creado: m.creado, fecha: m.fecha_inscripcion, paquete: m.paquete, vendedor: m.vendedor || m.creado_por || '' })
+    porPaq.get(m.paquete_id).matriculas.push(m)
+  })
+  return [...porPaq.values()].map((x) => {
+    const activas = x.matriculas.filter((m) => m.estado === 'activa')
+    const pg = x.matriculas.flatMap((m) => pagosPor.get(m.id) || [])
+    const precio = suma(activas.map((m) => m.precio))
+    const pagado = suma(pg.filter((p) => activas.some((m) => m.id === p.matricula_id)).map((p) => p.monto))
+    const lotes = new Map()
+    pg.forEach((p) => {
+      const k = p.lote || p.id
+      if (!lotes.has(k)) lotes.set(k, { numero: p.numero, monto: 0, fecha: p.fecha, metodo: p.metodo, comprobante_url: p.comprobante_url, nota: p.nota })
+      lotes.get(k).monto = r2(lotes.get(k).monto + Number(p.monto))
+    })
+    const lista = [...lotes.values()].sort((a, b) => a.numero - b.numero || String(a.fecha).localeCompare(String(b.fecha)))
+    const anulada = activas.length === 0
+    const estado = anulada ? 'anulada' : pagado >= precio - 0.005 ? 'pagado' : pagado > 0 ? 'adelanto' : 'pendiente'
+    return { ...x, activas, precio, pagado, saldo: r2(Math.max(0, precio - pagado)), pagosLista: lista, estado, codigos: x.matriculas.map((m) => m.grupo_codigo).filter(Boolean), mes: String(x.fecha || x.creado || '').slice(0, 7) }
+  }).sort((a, b) => String(b.creado).localeCompare(String(a.creado)))
+}
+
+export function inscritosCSV(lista) {
+  const cab = ['Fecha de inscripción', 'Código alumno', 'Alumno', 'Documento', 'Celular', 'Email', 'Cursos', 'Códigos', 'Precio', 'Pagado', 'Saldo', 'Estado', 'Pago 1', 'Pago 2', 'Pago 3']
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+  const filas = lista.map((x) => {
+    const a = x.alumno || {}
+    const pg = (i) => (x.pagosLista[i] ? `S/ ${x.pagosLista[i].monto} · ${x.pagosLista[i].metodo} · ${x.pagosLista[i].fecha}` : '')
+    return [x.fecha, a.codigo || '', `${a.nombres || ''} ${a.apellido_paterno || ''} ${a.apellido_materno || ''}`.trim(), `${a.tipo_doc || ''} ${a.documento || ''}`, a.celular, a.email,
+      x.matriculas.map((m) => m.curso_titulo).join(' + '), x.codigos.join(' + '), x.precio, x.pagado, x.saldo, x.estado, pg(0), pg(1), pg(2)]
+  })
+  return '\ufeffsep=,\r\n' + [cab, ...filas].map((f) => f.map(esc).join(',')).join('\r\n')
+}
+
+/* ---------- Equipo: quién entra al panel y con qué rol ---------- */
+export const ROLES = {
+  gerente: { nombre: 'Gerente', ayuda: 'Ve y maneja todo: gerencia, ventas y web.' },
+  vendedora: { nombre: 'Vendedora', ayuda: 'Módulo de ventas: prospectos, inscritos, pagos y grupos.' },
+}
+export async function guardarMiembro({ email, rol }) {
+  const mail = String(email).trim().toLowerCase()
+  if (!/^\S+@\S+\.\S+$/.test(mail)) throw new Error('Escribe un correo válido.')
+  if (!hasBackend) {
+    const db = demoRead(); const x = db.equipo.find((y) => y.email === mail)
+    if (x) x.rol = rol; else db.equipo.push({ email: mail, rol })
+    demoWrite(db); return
+  }
+  const { error } = await supabase.from('admins').upsert({ email: mail, rol })
+  if (error) throw error
+}
+export async function quitarMiembro(email) {
+  if (!hasBackend) { const db = demoRead(); db.equipo = db.equipo.filter((y) => y.email !== email); demoWrite(db); return }
+  const { error } = await supabase.from('admins').delete().eq('email', email)
+  if (error) throw error
+}
+
+
+/* ---------- Seguimiento de interesados (contactó / contestó / observación) ---------- */
+export async function seguimientoInteresado(id, cambios) {
+  const patch = { ...cambios }
+  if ('contactado' in patch) {
+    patch.estado = patch.contactado ? 'atendida' : 'nuevo'
+    delete patch.contactado
+    let quien = DEMO_USER
+    if (hasBackend) { const { data } = await supabase.auth.getSession(); quien = data?.session?.user?.email || '' }
+    patch.contactado_por = patch.estado === 'atendida' ? quien : null
+    patch.contactado_en = patch.estado === 'atendida' ? new Date().toISOString() : null
+    if (patch.estado === 'nuevo') patch.contesto = null
+  }
+  if (!hasBackend) {
+    const db = demoRead(); const x = db.interesados.find((y) => y.id === id)
+    if (x) { Object.assign(x, patch); demoWrite(db) }
+    return
+  }
+  const { error } = await supabase.from('interesados').update(patch).eq('id', id)
+  if (error) throw error
+}
+
+/* ---------- Prospectos (base propia de cada vendedor) ---------- */
+export const ESTADOS_PROSPECTO = { nuevo: 'Nuevo', contactado: 'Contactado', esperando_pago: 'Esperando pago', inscrito: 'Inscrito', perdido: 'Perdido' }
+export const ORIGENES = ['WhatsApp', 'Instagram', 'Facebook', 'TikTok', 'Referido', 'Web', 'Otro']
+export async function guardarProspecto(p) {
+  const fila = { nombres: String(p.nombres || '').trim(), celular: String(p.celular || '').trim(), curso: p.curso || '', origen: p.origen || 'WhatsApp', estado: p.estado || 'nuevo', seguimiento: p.seguimiento || null, notas: p.notas || '' }
+  if (fila.nombres.length < 2) throw new Error('Escribe el nombre del prospecto.')
+  if (!hasBackend) {
+    const db = demoRead()
+    if (p.id) { const x = db.prospectos.find((y) => y.id === p.id); if (x) Object.assign(x, fila) }
+    else db.prospectos.unshift({ ...fila, id: uid(), creado: new Date().toISOString(), vendedor: DEMO_USER })
+    demoWrite(db); return
+  }
+  const q = p.id ? supabase.from('prospectos').update(fila).eq('id', p.id) : supabase.from('prospectos').insert(fila)
+  const { error } = await q
+  if (error) throw error
+}
+export async function borrarProspecto(id) {
+  if (!hasBackend) { const db = demoRead(); db.prospectos = db.prospectos.filter((y) => y.id !== id); demoWrite(db); return }
+  const { error } = await supabase.from('prospectos').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function reasignarInteresado(id, email) {
+  const patch = { asignado_a: email || null, asignado_en: email ? new Date().toISOString() : null }
+  if (!hasBackend) { const db = demoRead(); const x = db.interesados.find((y) => y.id === id); if (x) { Object.assign(x, patch); demoWrite(db) } return }
+  const { error } = await supabase.from('interesados').update(patch).eq('id', id)
+  if (error) throw error
+}
+export async function recibeInteresados(email, valor) {
+  if (!hasBackend) { const db = demoRead(); const x = db.equipo.find((y) => y.email === email); if (x) { x.recibe_interesados = valor; demoWrite(db) } return }
+  const { error } = await supabase.from('admins').update({ recibe_interesados: valor }).eq('email', email)
+  if (error) throw error
+}
+
+/* ---------- Trabajadores ---------- */
+export async function guardarTrabajador(t) {
+  const fila = { nombre: String(t.nombre || '').trim(), puesto: t.puesto || 'vendedor', cargo: t.cargo || '', email: t.email ? String(t.email).trim().toLowerCase() : null, sueldo_base: Number(t.sueldo_base) || 0, documento: t.documento || '', celular: t.celular || '', tarifa_hora: Number(t.tarifa_hora) || 0, cursos: Array.isArray(t.cursos) ? t.cursos.map(String) : [], comision_tramos: t.comision_tramos, activo: t.activo !== false, notas: t.notas || '' }
+  if (fila.nombre.length < 2) throw new Error('Escribe el nombre del trabajador.')
+  if (!fila.comision_tramos) delete fila.comision_tramos
+  if (t.id) fila.id = t.id
+  await save('trabajadores', fila)
+}
+
+/* ---------- Grupos de WhatsApp de cada curso ---------- */
+export async function guardarWhatsapp({ grupo_id, nombre, enlace }) {
+  const fila = { grupo_id: String(grupo_id), nombre: String(nombre || '').trim(), enlace: String(enlace || '').trim() }
+  if (fila.nombre.length < 3) throw new Error('Escribe el nombre del grupo de WhatsApp.')
+  if (!/^https:\/\/chat\.whatsapp\.com\//i.test(fila.enlace)) throw new Error('Pega el enlace de invitación (empieza con https://chat.whatsapp.com/).')
+  if (!hasBackend) {
+    const db = demoRead(); const i = db.gruposWa.findIndex((x) => String(x.grupo_id) === fila.grupo_id)
+    const reg = { ...fila, creado_por: DEMO_USER, creado: new Date().toISOString() }
+    if (i >= 0) db.gruposWa[i] = { ...db.gruposWa[i], ...fila }; else db.gruposWa.push(reg)
+    demoWrite(db); return
+  }
+  const { error } = await supabase.from('grupos_whatsapp').upsert(fila, { onConflict: 'grupo_id' })
+  if (error) throw error
+}
+
+export async function asignarGrupo({ grupo_id, trabajador_id, horas, tarifa_hora }) {
+  await save('asignaciones', { grupo_id: String(grupo_id), trabajador_id, horas: Number(horas) || 0, horas_dictadas: 0, tarifa_hora: Number(tarifa_hora) || 0 })
+}
+export async function pagarTrabajador({ trabajador_id, asignacion_id, monto, fecha, metodo, nota }) {
+  const m = Number(monto)
+  if (!(m > 0)) throw new Error('Escribe el monto pagado.')
+  await save('pagos_trabajador', { trabajador_id, asignacion_id: asignacion_id || null, monto: m, fecha: fecha || new Date().toISOString().slice(0, 10), metodo: metodo || '', nota: nota || '' })
+}
+
+/* ---------- Instalaciones remotas ---------- */
+export async function guardarInstalacion(f) {
+  const fila = { alumno_id: f.alumno_id, grupo_id: String(f.grupo_id || ''), grupo_codigo: f.grupo_codigo || '', curso_titulo: f.curso_titulo || '', programa: f.programa || '', fecha: f.fecha, hora: String(f.hora).slice(0, 5), estado: f.estado || 'agendada', nota: f.nota || '' }
+  if (f.id) fila.id = f.id
+  if (!hasBackend && !f.id) fila.vendedor = DEMO_USER
+  await save('instalaciones', fila)
+}
