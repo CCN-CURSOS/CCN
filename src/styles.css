@@ -9,6 +9,12 @@
   --g3:linear-gradient(135deg,#C026D3,#7C3AED);
   --g4:linear-gradient(135deg,#0EA5A4,#2563EB);
   --g5:linear-gradient(135deg,#6366F1,#A78BFA);
+  --g6:linear-gradient(135deg,#DB2777,#7C3AED);
+  --g7:linear-gradient(135deg,#06B6D4,#10B981);
+  --g8:linear-gradient(135deg,#4338CA,#0EA5E9);
+  --g9:linear-gradient(135deg,#F97316,#DB2777);
+  --g10:linear-gradient(135deg,#059669,#0EA5A4);
+  --g11:linear-gradient(135deg,#1E3A8A,#7C3AED);
   --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
   --f-body:'DM Sans','Segoe UI',system-ui,sans-serif;
   --f-logo:'Fraunces',Georgia,serif;
@@ -1259,3 +1265,7 @@ section{padding-block:64px}
 
 .shell .est-doc.sin{color:#7a879c}
 .shell button.link{background:none;border:0;padding:0;cursor:pointer;color:#0F2547;font:inherit;text-align:left;text-decoration:underline}
+
+.shell .plant-grid+.note,.shell .cons-wrap+.note{margin:12px 0 4px}
+.shell .plant-grid~h3,.shell .cons-wrap+.note+h3{margin:22px 0 10px}
+.shell .cons-wrap{margin-bottom:6px}

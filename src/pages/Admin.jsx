@@ -1203,7 +1203,7 @@ function Contratos({ data, hacer }) {
   const nombreDe = (email) => armarTrabajadores(data).find((t) => t.email === email)?.nombre || email
   return (
     <>
-      <Seccion titulo="Contratos" ayuda="Edita los textos base. Se envían desde la ficha de cada trabajador (botón «Enviar contrato»)." />
+      <Seccion titulo="Contratos" ayuda="Edita los textos base. Se envían desde la ficha de cada trabajador (botón «Vista previa y enviar»)." />
       <div className="plant-grid">
         {['contrato', 'confidencialidad', 'plan'].map((k) => {
           const pl = plantillaDe(data, k)

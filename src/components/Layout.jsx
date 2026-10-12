@@ -65,7 +65,7 @@ export function Footer() {
         <div className="ft">
           <div className="ft-marca">
             <Link className="logo" to="/" aria-label="CCN Centro de Capacitación y Negocios"><Logo fijo="oscuro" completo /></Link>
-            <p>Capacitaciones, cursos online y presenciales en IA, web, ventas digitales y más.</p>
+            <p>Capacitaciones, cursos online y presenciales en IA, web, diseño y más.</p>
           </div>
           <nav className="ft-col" aria-label="Explora">
             <h4>Explora</h4>
