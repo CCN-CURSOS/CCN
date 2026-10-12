@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import AvanceVendedor from './AvanceVendedor'
+import Icon from '../components/Icons'
 import { PUESTOS, SUELDO_DEF, TARIFA_HORA_DEF, TRAMOS_DEF, tramosDe, metricasVendedor, metricasProfesor, nombreGrupoWa, gruposSinWhatsapp, AVISO_INSTALACION, PROGRAMAS, ESTADOS_INSTALACION, programaSugerido, errorHorarioInstalacion, choqueInstalacion, horaCorta, hora12 } from '../lib/ventas'
 import { Link } from 'react-router-dom'
 import { Logo } from '../components/Layout.jsx'
@@ -152,8 +153,8 @@ function CursoForm({ inicial, total, enInicio, onSave, onClose }) {
           <div className="trow" key={i}>
             <span className="n">{i + 1}</span>
             <input value={t} onChange={(e) => setTem(i, e.target.value)} placeholder="Nombre del módulo" aria-label={`Módulo ${i + 1}`} />
-            <button type="button" className="ib" onClick={() => mover(i, -1)} disabled={i === 0} aria-label="Subir">↑</button>
-            <button type="button" className="ib" onClick={() => mover(i, 1)} disabled={i === f.temario.length - 1} aria-label="Bajar">↓</button>
+            <button type="button" className="ib" onClick={() => mover(i, -1)} disabled={i === 0} aria-label="Subir"><Icon n="up" /></button>
+            <button type="button" className="ib" onClick={() => mover(i, 1)} disabled={i === f.temario.length - 1} aria-label="Bajar"><Icon n="down" /></button>
             <button type="button" className="ib red" onClick={() => set('temario', f.temario.filter((_, j) => j !== i))} aria-label="Quitar">×</button>
           </div>
         ))}
@@ -227,16 +228,16 @@ function Cursos({ data, hacer, abrirGrupo }) {
                     title={!c.destacado && enInicio >= MAX_INICIO ? `Ya hay ${MAX_INICIO} en el inicio` : ''}
                     disabled={!c.destacado && enInicio >= MAX_INICIO}
                     onClick={() => hacer(() => save('cursos', { id: c.id, destacado: !c.destacado }), c.destacado ? 'Quitado de la principal' : 'Ahora sale en la principal')}>
-                    {c.destacado ? '★' : '☆'}
+                    <Icon n="star" size={17} fill={Boolean(c.destacado)} />
                   </button>
                 </div>
                 <div data-l="Visible"><Switch on={c.activo} label={`Visible: ${c.titulo}`} onChange={(v) => hacer(() => save('cursos', { id: c.id, activo: v }), v ? 'Curso visible' : 'Curso oculto')} /></div>
                 <div className="acts2">
                   <button className="btn btn-teal sm" onClick={() => abrirGrupo(c.id)}>Abrir grupo</button>
                   <button className="btn btn-line sm" onClick={() => setEditando(c)}>Editar</button>
-                  <button className="ib" onClick={() => mover(i, -1)} disabled={i === 0} aria-label="Subir">↑</button>
-                  <button className="ib" onClick={() => mover(i, 1)} disabled={i === data.cursos.length - 1} aria-label="Bajar">↓</button>
-                  <button className="ib red" onClick={() => setBorrando(c)} aria-label="Borrar">🗑</button>
+                  <button className="ib" onClick={() => mover(i, -1)} disabled={i === 0} aria-label="Subir"><Icon n="up" /></button>
+                  <button className="ib" onClick={() => mover(i, 1)} disabled={i === data.cursos.length - 1} aria-label="Bajar"><Icon n="down" /></button>
+                  <button className="ib red" onClick={() => setBorrando(c)} aria-label="Borrar"><Icon n="trash" /></button>
                 </div>
               </div>
             )
@@ -372,7 +373,7 @@ function InstalacionForm({ data, inicial, onClose, onSave }) {
     <Drawer titulo={f.id ? 'Editar instalación' : 'Nueva instalación'} onClose={onClose}
       pie={<><button className="btn btn-line" onClick={onClose}>Cancelar</button><button className="btn btn-teal" onClick={guardar}>Guardar</button></>}>
       <div className="fs">
-        <p className="banner aviso-inst">🕖 <b>Horarios disponibles:</b> {AVISO_INSTALACION}</p>
+        <p className="banner aviso-inst"><b>Horarios disponibles:</b> {AVISO_INSTALACION}</p>
         {al ? (
           <div className="alsel"><b>{al.nombres} {al.apellido_paterno} {al.apellido_materno}</b><small>{al.codigo || al.documento} · {f.grupo_codigo} · {f.curso_titulo}</small>
             {!f.id && <button type="button" className="link" onClick={() => setF({ ...f, alumno_id: '', grupo_id: '', grupo_codigo: '', curso_titulo: '' })}>Cambiar alumno</button>}</div>
@@ -394,9 +395,9 @@ function InstalacionForm({ data, inicial, onClose, onSave }) {
           <label>Fecha<input id="in-fecha" type="date" value={f.fecha} onChange={(e) => { setErr(''); setF({ ...f, fecha: e.target.value }) }} /></label>
           <label>Hora de inicio<input id="in-hora" type="time" step="900" value={f.hora} onChange={(e) => { setErr(''); setF({ ...f, hora: e.target.value }) }} /></label>
         </div>
-        {errHora && <p className="err-inst">⚠ {errHora}</p>}
-        {choque && <p className="err-inst">⚠ Ya hay otra instalación a las {hora12(choque.hora)} ese día.</p>}
-        {grupo?.inicio && <p className={tarde ? 'err-inst' : 'note'}>{tarde ? '⚠ ' : ''}El curso empieza el {fechaCorta(grupo.inicio)}. Lo ideal es dejar todo instalado hasta 3 días antes ({fechaCorta(limite)}).</p>}
+        {errHora && <p className="err-inst">{errHora}</p>}
+        {choque && <p className="err-inst">Ya hay otra instalación a las {hora12(choque.hora)} ese día.</p>}
+        {grupo?.inicio && <p className={tarde ? 'err-inst' : 'note'}>El curso empieza el {fechaCorta(grupo.inicio)}. Lo ideal es dejar todo instalado hasta 3 días antes ({fechaCorta(limite)}).</p>}
         <label>Nota<input value={f.nota || ''} onChange={(e) => setF({ ...f, nota: e.target.value })} placeholder="Ej. Pidió AnyDesk, tiene Windows 11" /></label>
         {err && <p className="err-inst" role="alert">{err}</p>}
       </div>
@@ -420,7 +421,7 @@ function Instalaciones({ data, hacer, gerente }) {
       <Seccion titulo="Instalaciones" ayuda="Agenda de las instalaciones remotas de programas (Photoshop, Illustrator, Office). Se hacen después de la inscripción.">
         <button className="btn btn-teal" onClick={() => setForm({})}>+ Nueva instalación</button>
       </Seccion>
-      <p className="banner aviso-inst">🕖 <b>Las instalaciones solo se programan en estos horarios:</b> {AVISO_INSTALACION}</p>
+      <p className="banner aviso-inst"><b>Las instalaciones solo se programan en estos horarios:</b> {AVISO_INSTALACION}</p>
       {data.instalacionesError && hasBackend && <p className="banner">Falta pegar <b>crm.sql</b> en Supabase. Mensaje: {data.instalacionesError}</p>}
       <div className="kpis">
         <div><b>{prox}</b><span>próximas agendadas</span></div>
@@ -454,7 +455,7 @@ function Instalaciones({ data, hacer, gerente }) {
                     <td className="notas">{x.nota || '—'}</td>
                     <td className="acc">
                       <button className="btn btn-line sm" onClick={() => setForm(x)}>Editar</button>
-                      <button className="ib red" onClick={() => setBorrando(x)} aria-label="Borrar">🗑</button>
+                      <button className="ib red" onClick={() => setBorrando(x)} aria-label="Borrar"><Icon n="trash" /></button>
                     </td>
                   </tr>
                 )
@@ -505,7 +506,7 @@ function Grupos({ data, hacer, abrirGrupo, editarGrupo, soloLeer }) {
       </Seccion>
       {faltan.length > 0 && (
         <div className="alertas">
-          <p className="alerta">⚠ <b>{faltan.length} grupo{faltan.length === 1 ? '' : 's'} sin grupo de WhatsApp.</b> Hay que crearlo y registrarlo aquí apenas se abre el curso: {faltan.map((g) => g.codigo).join(', ')}.</p>
+          <p className="alerta"><b>{faltan.length} grupo{faltan.length === 1 ? '' : 's'} sin grupo de WhatsApp.</b> Hay que crearlo y registrarlo aquí apenas se abre el curso: {faltan.map((g) => g.codigo).join(', ')}.</p>
         </div>
       )}
       {data.gruposWaError && hasBackend && <p className="banner">Falta pegar <b>crm.sql</b> en Supabase (sección de WhatsApp). Mensaje: {data.gruposWaError}</p>}
@@ -522,8 +523,8 @@ function Grupos({ data, hacer, abrirGrupo, editarGrupo, soloLeer }) {
                   <b>{g.codigo && <span className="cod">{g.codigo}</span>}{c?.titulo || 'Curso eliminado'}</b>
                   <small>{g.inicio ? fechaCorta(g.inicio) : 'Sin fecha'} · {g.dias || 'días por definir'} · {g.horario || 'horario por definir'}</small>
                   {g.codigo && (waDe(g)
-                    ? <small className="wa ok">✓ WhatsApp: <a href={waDe(g).enlace} target="_blank" rel="noopener noreferrer">{waDe(g).nombre}</a>{waDe(g).creado_por && <> · {waDe(g).creado_por.split('@')[0]}</>}</small>
-                    : <small className="wa falta">⚠ Falta crear el grupo de WhatsApp</small>)}
+                    ? <small className="wa ok">WhatsApp: <a href={waDe(g).enlace} target="_blank" rel="noopener noreferrer">{waDe(g).nombre}</a>{waDe(g).creado_por && <> · {waDe(g).creado_por.split('@')[0]}</>}</small>
+                    : <small className="wa falta">Falta crear el grupo de WhatsApp</small>)}
                 </div>
               </div>
               <div className="btns">
@@ -534,7 +535,7 @@ function Grupos({ data, hacer, abrirGrupo, editarGrupo, soloLeer }) {
                   <option value="abierto">Abierto</option><option value="lleno">Lleno</option><option value="cerrado">Cerrado</option>
                 </select>
                 <button className="btn btn-line sm" onClick={() => editarGrupo(g)}>Editar</button>
-                <button className="ib red" onClick={() => setBorrando(g)} aria-label="Borrar">🗑</button></>}
+                <button className="ib red" onClick={() => setBorrando(g)} aria-label="Borrar"><Icon n="trash" /></button></>}
               </div>
             </div>
           )
@@ -607,14 +608,14 @@ function Enlaces({ data, hacer }) {
         {lista.map((e, i) => (
           <div className={`lk-row ${e.activo ? '' : 'off'}`} key={e.id}>
             <div className="nm">
-              <b>{e.destacado && '★ '}{e.titulo}</b>
+              <b>{e.destacado && <Icon n="star" size={13} fill />} {e.titulo}</b>
               <small>{e.tipo === 'whatsapp' ? 'WhatsApp de CCN' : e.url} · {e.clics || 0} clics</small>
             </div>
             <Switch on={e.activo} label={`Visible: ${e.titulo}`} onChange={(v) => hacer(() => save('enlaces', { id: e.id, activo: v }), v ? 'Enlace visible' : 'Enlace oculto')} />
             <button className="btn btn-line sm" onClick={() => setEditando(e)}>Editar</button>
-            <button className="ib" onClick={() => mover(i, -1)} disabled={i === 0} aria-label="Subir">↑</button>
-            <button className="ib" onClick={() => mover(i, 1)} disabled={i === lista.length - 1} aria-label="Bajar">↓</button>
-            <button className="ib red" onClick={() => setBorrando(e)} aria-label="Borrar">🗑</button>
+            <button className="ib" onClick={() => mover(i, -1)} disabled={i === 0} aria-label="Subir"><Icon n="up" /></button>
+            <button className="ib" onClick={() => mover(i, 1)} disabled={i === lista.length - 1} aria-label="Bajar"><Icon n="down" /></button>
+            <button className="ib red" onClick={() => setBorrando(e)} aria-label="Borrar"><Icon n="trash" /></button>
           </div>
         ))}
       </div>
@@ -674,7 +675,7 @@ function Consultas({ data, hacer, tabla = 'consultas', onInscribir, rolG = true 
                   <td>{esInt ? <>{x.curso}{x.lista_espera && <> <b>(lista de espera)</b></>}</> : (x.curso === 'Otro' ? `Otro: ${x.otro_tema}` : x.curso)}</td>
                   <td><Switch on={x.estado !== 'nuevo'} label={`Atendida: ${x.nombres}`} onChange={(v) => hacer(() => marcarConsulta(x.id, v ? 'atendida' : 'nuevo', tabla), v ? 'Marcado como atendido' : 'Marcado como nuevo')} /></td>
                   {esInt && onInscribir && <td><button className="btn btn-line sm" onClick={() => onInscribir(x)}>Inscribir</button></td>}
-                  <td>{rolG && <button className="ib red" onClick={() => setBorrando(x)} aria-label="Borrar">🗑</button>}</td>
+                  <td>{rolG && <button className="ib red" onClick={() => setBorrando(x)} aria-label="Borrar"><Icon n="trash" /></button>}</td>
                 </tr>
               ))}
             </tbody>
@@ -708,23 +709,23 @@ function FilaInteresado({ x, hacer, onInscribir, onProspecto, gerente, onBorrar,
             <option value="">Sin asignar</option>
             {vendedoras.map((v) => <option key={v} value={v}>{v.split('@')[0]}</option>)}
           </select>
-          <small className="paq">{x.estado === 'nuevo' ? (x.asignado_a ? 'Derivado · pendiente' : 'Sin derivar') : `Atendido por ${(x.contactado_por || '').split('@')[0]}`}</small>
+          <small className="paq">{x.estado === 'nuevo' ? (x.asignado_a ? 'Pendiente' : 'Sin derivar') : 'Atendido'}</small>
         </td>
       )}
       <td><Switch on={cont} label={`Contactado: ${x.nombres}`} onChange={(v) => hacer(() => seguimientoInteresado(x.id, { contactado: v }), v ? 'Marcado como contactado' : 'Marcado sin contactar')} />
-        {cont && x.contactado_por && <small className="paq">{x.contactado_por.split('@')[0]} · {cuando(x.contactado_en)}</small>}</td>
+        {cont && x.contactado_por && <small className="paq">{x.contactado_por.split('@')[0]}, {cuando(x.contactado_en)}</small>}</td>
       <td>
         <select aria-label={`¿Contestó? ${x.nombres}`} disabled={!cont} value={x.contesto === true ? 'si' : x.contesto === false ? 'no' : ''}
           onChange={(e) => hacer(() => seguimientoInteresado(x.id, { contesto: e.target.value === '' ? null : e.target.value === 'si' }), 'Guardado')}>
-          <option value="">—</option><option value="si">Sí contestó</option><option value="no">No contestó</option>
+          <option value="">—</option><option value="si">Sí</option><option value="no">No</option>
         </select>
       </td>
       <td><input className="obs" aria-label={`Observación ${x.nombres}`} value={obs} placeholder="Observación…" disabled={!cont}
         onChange={(e) => setObs(e.target.value)} onBlur={() => obs !== (x.observacion || '') && hacer(() => seguimientoInteresado(x.id, { observacion: obs }), 'Observación guardada')} /></td>
       <td className="acc">
         <button className="btn btn-line sm" onClick={() => onInscribir(x)}>Inscribir</button>
-        <button className="btn btn-line sm" onClick={() => onProspecto(x)}>→ Prospecto</button>
-        {gerente && <button className="ib red" onClick={() => onBorrar(x)} aria-label="Borrar">🗑</button>}
+        <button className="btn btn-line sm" onClick={() => onProspecto(x)}>A prospectos</button>
+        {gerente && <button className="ib red" onClick={() => onBorrar(x)} aria-label="Borrar"><Icon n="trash" /></button>}
       </td>
     </tr>
   )
@@ -835,7 +836,7 @@ function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial }) {
                   <td className="notas">{p.notas || '—'}</td>
                   <td className="acc">
                     <button className="btn btn-line sm" onClick={() => setForm(p)}>Editar</button>
-                    <button className="ib red" onClick={() => setBorrando(p)} aria-label="Borrar">🗑</button>
+                    <button className="ib red" onClick={() => setBorrando(p)} aria-label="Borrar"><Icon n="trash" /></button>
                   </td>
                 </tr>
               ))}
@@ -995,7 +996,7 @@ function InscripcionForm({ inicial, data, onSave, onClose }) {
             <input id="i-doc" inputMode="numeric" value={al.documento} onChange={(e) => { setA('documento', e.target.value.replace(/\D/g, '')); setEncontrado(false) }} onBlur={(e) => buscarAlumno(e.target.value)} maxLength={12} />
           </label>
         </div>
-        {encontrado ? <p className="note ok">✓ Este alumno ya estaba registrado{al.codigo ? <> (código <b>{al.codigo}</b>)</> : ''}: se cargaron sus datos.</p> : <p className="note">Si es un alumno nuevo, el sistema le asigna un código único al guardar.</p>}
+        {encontrado ? <p className="note ok">Este alumno ya estaba registrado{al.codigo ? <> (código <b>{al.codigo}</b>)</> : ''}: se cargaron sus datos.</p> : <p className="note">Si es un alumno nuevo, el sistema le asigna un código único al guardar.</p>}
         <label>Nombres<input id="i-nom" value={al.nombres} onChange={(e) => setA('nombres', e.target.value)} /></label>
         <div className="g2">
           <label>Apellido paterno<input id="i-ap" value={al.apellido_paterno} onChange={(e) => setA('apellido_paterno', e.target.value)} /></label>
@@ -1168,7 +1169,7 @@ function Inscritos({ data, hacer, rol, nuevaInscripcion, registrarPago }) {
                       {x.pagosLista.map((p, i) => (
                         <span key={i} className="pg">
                           <b>P{p.numero}</b> {soles(p.monto)} <small>{p.metodo}</small>
-                          {p.comprobante_url && <button type="button" className="link" onClick={() => setFoto(p.comprobante_url)} aria-label={`Ver comprobante del pago ${p.numero}`}>📎</button>}
+                          {p.comprobante_url && <button type="button" className="link" onClick={() => setFoto(p.comprobante_url)} aria-label={`Ver comprobante del pago ${p.numero}`}><Icon n="clip" size={14} /></button>}
                         </span>
                       ))}
                     </td>
@@ -1179,7 +1180,7 @@ function Inscritos({ data, hacer, rol, nuevaInscripcion, registrarPago }) {
                       {gerente && (x.estado === 'anulada'
                         ? <button className="btn btn-line sm" onClick={() => hacer(() => estadoInscripcion(x.id, 'activa'), 'Inscripción reactivada')}>Reactivar</button>
                         : <button className="btn btn-line sm" onClick={() => hacer(() => estadoInscripcion(x.id, 'anulada'), 'Inscripción anulada')}>Anular</button>)}
-                      {gerente && <button className="ib red" onClick={() => setBorrando(x)} aria-label="Borrar">🗑</button>}
+                      {gerente && <button className="ib red" onClick={() => setBorrando(x)} aria-label="Borrar"><Icon n="trash" /></button>}
                     </td>
                   </tr>
                 )
@@ -1296,9 +1297,9 @@ function Resumen({ data }) {
       )}
       {(alertas.length > 0 || llenos.length > 0 || sinWa.length > 0) && (
         <div className="alertas">
-          {sinWa.map((g) => <p key={'w' + g.id} className="alerta">⚠ <b>{g.codigo}</b> {cursoDe(g.curso_id)?.titulo} aún no tiene grupo de WhatsApp.</p>)}
-          {alertas.map((g) => <p key={g.id} className="alerta">⚠ <b>{g.codigo}</b> {cursoDe(g.curso_id)?.titulo} empieza el {fechaCorta(g.inicio)} con {g.inscritos || 0} de {g.minimo || 10} inscritos.</p>)}
-          {llenos.map((g) => <p key={g.id} className="alerta ok">✓ <b>{g.codigo}</b> {cursoDe(g.curso_id)?.titulo} está lleno.</p>)}
+          {sinWa.map((g) => <p key={'w' + g.id} className="alerta"><b>{g.codigo}</b> {cursoDe(g.curso_id)?.titulo} aún no tiene grupo de WhatsApp.</p>)}
+          {alertas.map((g) => <p key={g.id} className="alerta"><b>{g.codigo}</b> {cursoDe(g.curso_id)?.titulo} empieza el {fechaCorta(g.inicio)} con {g.inscritos || 0} de {g.minimo || 10} inscritos.</p>)}
+          {llenos.map((g) => <p key={g.id} className="alerta ok"><b>{g.codigo}</b> {cursoDe(g.curso_id)?.titulo} está lleno.</p>)}
         </div>
       )}
       <h2 className="subh">Por grupo</h2>
@@ -1346,7 +1347,7 @@ function Equipo({ data, hacer, email }) {
                   </select>
                 </td>
                 <td>{a.rol === 'vendedora' ? <Switch on={a.recibe_interesados !== false} label={`Recibe interesados: ${a.email}`} onChange={(v) => hacer(() => recibeInteresados(a.email, v), v ? 'Recibirá interesados' : 'Ya no recibirá interesados')} /> : '—'}</td>
-                <td>{a.email !== email && <button className="ib red" onClick={() => setQuitando(a)} aria-label="Quitar">🗑</button>}</td>
+                <td>{a.email !== email && <button className="ib red" onClick={() => setQuitando(a)} aria-label="Quitar"><Icon n="trash" /></button>}</td>
               </tr>
             ))}
           </tbody>
@@ -1494,7 +1495,7 @@ function FichaProfesor({ data, t, hacer }) {
                       <td>{soles(d)}</td><td>{soles(pg)}</td><td><b>{saldo > 0 ? soles(saldo) : '—'}</b></td>
                       <td className="acc">
                         {saldo > 0 && <button className="btn btn-line sm" onClick={() => setPago({ g, a, debe: d, pagado: pg, saldo })}>+ Pago</button>}
-                        <button className="ib red" aria-label="Quitar del grupo" title="Quitar a este profesor del grupo" onClick={() => hacer(() => remove('asignaciones', a.id), 'Grupo desasignado')}>✕</button>
+                        <button className="ib red" aria-label="Quitar del grupo" title="Quitar a este profesor del grupo" onClick={() => hacer(() => remove('asignaciones', a.id), 'Grupo desasignado')}><Icon n="x" size={13} /></button>
                       </td>
                     </tr>
                   ) : (
@@ -1516,7 +1517,7 @@ function FichaProfesor({ data, t, hacer }) {
         <ul className="hist">{m.pagos.map((p) => {
           const a = (data.asignaciones || []).find((x) => x.id === p.asignacion_id)
           const g = a && data.grupos.find((x) => String(x.id) === String(a.grupo_id))
-          return <li key={p.id}><span aria-hidden="true">💵</span><div>{soles(p.monto)} · {p.metodo || 'sin método'}{g ? ` · ${g.codigo}` : ''}{p.nota ? ` — ${p.nota}` : ''}<small>{cuando(p.fecha)}</small></div></li>
+          return <li key={p.id}><span className="tag">Pago</span><div>{soles(p.monto)} · {p.metodo || 'sin método'}{g ? ` · ${g.codigo}` : ''}{p.nota ? ` — ${p.nota}` : ''}<small>{cuando(p.fecha)}</small></div></li>
         })}</ul>
       )}
       {pago && <PagoProfesorForm t={t} fila={pago} onClose={() => setPago(null)} onSave={(f) => hacer(async () => { await pagarTrabajador(f); setPago(null) }, 'Pago registrado')} />}
@@ -1539,7 +1540,7 @@ function Trabajadores({ data, hacer }) {
   if (t) {
     return (
       <>
-        <button className="btn btn-line sm" onClick={() => setSel(null)}>← {PUESTOS[t.puesto] || 'Trabajadores'}</button>
+        <button className="btn btn-line sm" onClick={() => setSel(null)}><Icon n="back" size={13} /> {PUESTOS[t.puesto] || 'Trabajadores'}</button>
         <Seccion titulo={t.nombre} ayuda={`${t.cargo || (t.puesto === 'instructor' ? 'Profesor' : 'Vendedor')}${t.puesto === 'vendedor' ? ` · sueldo base ${soles(t.sueldo_base)}` : ''}${t.activo === false ? ' · inactivo' : ''}`}>
           <button className="btn btn-teal" onClick={() => setForm(t)}>Editar datos</button>
           {!t.virtual && <button className="btn btn-line" onClick={() => setBorrando(t)}>Borrar</button>}
@@ -1590,7 +1591,7 @@ function MiAvance({ data, email }) {
     <>
       <Seccion titulo="Mi avance" ayuda="Cómo vas este mes: prospectos, interesados, ventas y cuánto llevas ganado." />
       {gruposSinWhatsapp(data).length > 0 && (
-        <div className="alertas"><p className="alerta">⚠ <b>Pendiente:</b> crear el grupo de WhatsApp de {gruposSinWhatsapp(data).map((g) => g.codigo).join(', ')} y registrarlo en la sección Grupos.</p></div>
+        <div className="alertas"><p className="alerta"><b>Pendiente:</b> crear el grupo de WhatsApp de {gruposSinWhatsapp(data).map((g) => g.codigo).join(', ')} y registrarlo en la sección Grupos.</p></div>
       )}
       <AvanceVendedor data={data} email={email} trab={t} verPago />
     </>
@@ -1599,9 +1600,9 @@ function MiAvance({ data, email }) {
 
 /* ================= PANEL (módulos) ================= */
 const MODULOS = {
-  ventas: { nombre: 'Ventas', icono: '💼', secciones: [['mi', 'Mi avance'], ['interesados', 'Interesados'], ['prospectos', 'Prospectos'], ['inscritos', 'Inscritos'], ['consultas', 'Consultas'], ['grupos', 'Grupos'], ['instalaciones', 'Instalaciones']] },
-  web: { nombre: 'Web', icono: '🖥️', secciones: [['cursos', 'Cursos'], ['grupos', 'Horarios'], ['enlaces', 'Enlaces'], ['ajustes', 'Ajustes']] },
-  gerencia: { nombre: 'Gerencia', icono: '📊', secciones: [['resumen', 'Resumen'], ['trabajadores', 'Trabajadores'], ['equipo', 'Equipo']] },
+  ventas: { nombre: 'Ventas', icono: 'ventas', secciones: [['mi', 'Mi avance'], ['interesados', 'Interesados'], ['prospectos', 'Prospectos'], ['inscritos', 'Inscritos'], ['consultas', 'Consultas'], ['grupos', 'Grupos'], ['instalaciones', 'Instalaciones']] },
+  web: { nombre: 'Web', icono: 'web', secciones: [['cursos', 'Cursos'], ['grupos', 'Horarios'], ['enlaces', 'Enlaces'], ['ajustes', 'Ajustes']] },
+  gerencia: { nombre: 'Gerencia', icono: 'gerencia', secciones: [['resumen', 'Resumen'], ['trabajadores', 'Trabajadores'], ['equipo', 'Equipo']] },
 }
 const POR_ROL = { gerente: ['gerencia', 'ventas', 'web'], vendedora: ['ventas'] }
 const ETIQUETA_ROL = { gerente: 'Gerente', vendedora: 'Vendedora' }
@@ -1656,7 +1657,7 @@ function Panel({ email, rol, onSalir }) {
         {modulos.length > 1 && (
           <div className="mods" role="tablist" aria-label="Módulos">
             {modulos.map((m) => (
-              <button key={m} role="tab" aria-selected={modulo === m} onClick={() => ir(m)}><span aria-hidden="true">{MODULOS[m].icono}</span>{MODULOS[m].nombre}</button>
+              <button key={m} role="tab" aria-selected={modulo === m} onClick={() => ir(m)}><Icon n={MODULOS[m].icono} size={16} />{MODULOS[m].nombre}</button>
             ))}
           </div>
         )}
@@ -1716,7 +1717,7 @@ function Panel({ email, rol, onSalir }) {
         <PagoForm insc={pagoForm} onClose={() => setPagoForm(null)}
           onSave={async (datos) => { await agregarPago(datos); setPagoForm(null); await hacer(async () => {}, 'Pago registrado') }} />
       )}
-      {toast && <div className={`toast ${toast.error ? 'bad' : ''}`} role="status">{toast.error ? '⚠ ' : '✓ '}{toast.texto}</div>}
+      {toast && <div className={`toast ${toast.error ? 'bad' : ''}`} role="status">{toast.texto}</div>}
     </div>
   )
 }

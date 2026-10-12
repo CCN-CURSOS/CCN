@@ -59,18 +59,18 @@ export function historialVendedor(data, email, limite = 40) {
   const alum = new Map((data.alumnos || []).map((a) => [a.id, a]))
   const nom = (a) => (a ? `${a.nombres} ${a.apellido_paterno}`.trim() : 'Alumno')
   ;(data.interesados || []).filter((x) => x.asignado_a === email).forEach((x) => {
-    ev.push({ t: x.asignado_en || x.creado, ico: '📥', txt: `Te derivaron a ${x.nombres} ${x.apellido_paterno} (${x.curso})` })
-    if (x.estado !== 'nuevo' && x.contactado_en) ev.push({ t: x.contactado_en, ico: '📞', txt: `Contactaste a ${x.nombres} ${x.apellido_paterno}${x.contesto === true ? ' · contestó' : x.contesto === false ? ' · no contestó' : ''}${x.observacion ? ` — ${x.observacion}` : ''}` })
+    ev.push({ t: x.asignado_en || x.creado, ico: 'Derivado', txt: `Te derivaron a ${x.nombres} ${x.apellido_paterno} (${x.curso})` })
+    if (x.estado !== 'nuevo' && x.contactado_en) ev.push({ t: x.contactado_en, ico: 'Contacto', txt: `Contactaste a ${x.nombres} ${x.apellido_paterno}${x.contesto === true ? ' · contestó' : x.contesto === false ? ' · no contestó' : ''}${x.observacion ? ` — ${x.observacion}` : ''}` })
   })
-  ;(data.prospectos || []).filter((p) => p.vendedor === email).forEach((p) => ev.push({ t: p.creado, ico: '🎯', txt: `Nuevo prospecto: ${p.nombres}${p.curso ? ` (${p.curso})` : ''}` }))
+  ;(data.prospectos || []).filter((p) => p.vendedor === email).forEach((p) => ev.push({ t: p.creado, ico: 'Prospecto', txt: `Nuevo prospecto: ${p.nombres}${p.curso ? ` (${p.curso})` : ''}` }))
   const mias = (data.matriculas || []).filter((m) => m.vendedor === email)
   const paq = new Map()
   mias.forEach((m) => { if (!paq.has(m.paquete_id)) paq.set(m.paquete_id, []); paq.get(m.paquete_id).push(m) })
-  paq.forEach((ms) => ev.push({ t: ms[0].creado, ico: '🧾', txt: `Inscribiste a ${nom(alum.get(ms[0].alumno_id))} en ${ms.map((m) => m.grupo_codigo).join(' + ')} · S/ ${suma(ms.map((m) => m.precio))}` }))
+  paq.forEach((ms) => ev.push({ t: ms[0].creado, ico: 'Inscripción', txt: `Inscribiste a ${nom(alum.get(ms[0].alumno_id))} en ${ms.map((m) => m.grupo_codigo).join(' + ')} · S/ ${suma(ms.map((m) => m.precio))}` }))
   const mid = new Map(mias.map((m) => [m.id, m]))
   const lotes = new Map()
   ;(data.pagos || []).forEach((p) => { const m = mid.get(p.matricula_id); if (!m) return; const k = p.lote || p.id; const x = lotes.get(k) || { t: p.creado, n: p.numero, monto: 0, a: alum.get(m.alumno_id) }; x.monto += Number(p.monto); lotes.set(k, x) })
-  lotes.forEach((x) => ev.push({ t: x.t, ico: '💵', txt: `Pago ${x.n} de ${nom(x.a)}: S/ ${r2(x.monto)}` }))
+  lotes.forEach((x) => ev.push({ t: x.t, ico: 'Pago', txt: `Pago ${x.n} de ${nom(x.a)}: S/ ${r2(x.monto)}` }))
   return ev.filter((e) => e.t).sort((a, b) => String(b.t).localeCompare(String(a.t))).slice(0, limite)
 }
 

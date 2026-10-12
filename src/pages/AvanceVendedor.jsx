@@ -16,6 +16,7 @@ export default function AvanceVendedor({ data, email, trab, verPago = true }) {
   const hist = useMemo(() => historialVendedor(data, email), [data, email])
   const meses = [...new Set([hoy, ...(data.matriculas || []).filter((x) => x.vendedor === email).map((x) => String(x.fecha_inscripcion).slice(0, 7))])].sort().reverse()
   const sig = m.comision.siguiente
+  const [todo, setTodo] = useState(false)
 
   return (
     <div className="avance">
@@ -42,7 +43,7 @@ export default function AvanceVendedor({ data, email, trab, verPago = true }) {
           </div>
           <div className="av-meta">
             <Meta valor={m.cupos} objetivo={sig ? sig.desde : Math.max(m.cupos, 1)} etiqueta={sig ? `Con ${sig.faltan} cupo${sig.faltan === 1 ? '' : 's'} más sube al ${sig.pct}% (llevas ${m.cupos})` : `Ya estás en el tramo máximo (${m.comision.pct}%)`} />
-            <small className="tr">Tramos: {m.tramos.map((t) => `${t.desde}+ cupos → ${t.pct}%`).join(' · ')}</small>
+            <small className="tr">Tramos: {m.tramos.map((t) => `${t.desde}+ cupos: ${t.pct}%`).join(' · ')}</small>
           </div>
         </section>
       )}
@@ -90,8 +91,9 @@ export default function AvanceVendedor({ data, email, trab, verPago = true }) {
 
       <h3 className="subh">Historial</h3>
       {hist.length === 0 ? <div className="vacio"><p>Aún no hay actividad.</p></div> : (
-        <ul className="hist">{hist.map((e, i) => <li key={i}><span aria-hidden="true">{e.ico}</span><div>{e.txt}<small>{cuando(e.t)}</small></div></li>)}</ul>
+        <ul className="hist">{(todo ? hist : hist.slice(0, 10)).map((e, i) => <li key={i}><span className="tag">{e.ico}</span><div>{e.txt}<small>{cuando(e.t)}</small></div></li>)}</ul>
       )}
+      {hist.length > 10 && <button className="btn btn-line sm" style={{ justifySelf: 'start' }} onClick={() => setTodo(!todo)}>{todo ? 'Ver menos' : `Ver los ${hist.length} movimientos`}</button>}
     </div>
   )
 }
