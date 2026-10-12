@@ -387,9 +387,10 @@ export function alertasVenta(data, email, ahora = new Date()) {
     const d = dif(ini, hoy)  // días que faltan para empezar
     const a = alum.get(ms[0].alumno_id) || {}
     const base = { alumno: `${a.nombres || ''} ${a.apellido_paterno || ''}`.trim() || 'Alumno', celular: a.celular || '', saldo, inicio: ini, grupo: ms.map((m) => m.grupo_codigo).filter(Boolean).join(' + ') }
-    if (d <= 0) vacantes.push({ ...base, nivel: 'retirar', txt: 'El curso ya empezó y no pagó: no se le dan accesos y se le retira del grupo de WhatsApp hasta que pague.' })
-    else if (d === 1) vacantes.push({ ...base, nivel: 'hoy', txt: 'HOY vence su pago (un día antes del curso).' })
-    else if (d <= 4) vacantes.push({ ...base, nivel: 'pronto', txt: `Debe pagar a más tardar el ${ini === hoy ? 'hoy' : new Date(new Date(ini + 'T12:00:00') - 86400000).toISOString().slice(0, 10)} (un día antes del curso).` })
+    if (d < 0) vacantes.push({ ...base, nivel: 'retirar', txt: 'El curso ya empezó y no pagó: no se le dan accesos y se le retira del grupo de WhatsApp hasta que pague.' })
+    else if (d === 0) vacantes.push({ ...base, nivel: 'hoy', txt: 'El curso empieza HOY: debe pagar como máximo 3 horas antes de la clase. Si no paga a tiempo, no se le dan accesos.' })
+    else if (d === 1) vacantes.push({ ...base, nivel: 'hoy', txt: 'HOY vence su pago (un día antes del curso) para darle sus accesos. Excepcionalmente puede pagar el día del inicio, hasta 3 horas antes de la clase.' })
+    else if (d <= 4) vacantes.push({ ...base, nivel: 'pronto', txt: `Debe pagar a más tardar el ${new Date(new Date(ini + 'T12:00:00') - 86400000).toISOString().slice(0, 10)} (un día antes del curso).` })
   })
   const orden = { retirar: 0, hoy: 1, pronto: 2 }
   vacantes.sort((x, y) => orden[x.nivel] - orden[y.nivel])

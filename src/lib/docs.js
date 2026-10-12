@@ -56,50 +56,71 @@ Vigente desde el {{fecha_inicio}}. Aceptado electrónicamente. Fecha de envío: 
     titulo: 'Plan de trabajo y funciones',
     contenido: `PLAN DE TRABAJO Y FUNCIONES — {{nombre}}
 
-1. TU META
-Vender los cursos de CCN y que cada curso abra con mínimo 10 inscritos. Metas por hitos: las fija gerencia en tu ficha. Si no se cumplen, el curso se puede postergar; no hay penalidad.
+Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, tus plazos y límites, tus funciones y las reglas al vender. Léelo completo y vuelve a él cuando tengas una duda.
 
-2. HORARIO
-Mínimo 24 horas por semana (4 h por día, lunes a sábado), en varios bloques si lo necesitas. Usa "Iniciar jornada / Terminar jornada" desde una laptop. Los feriados cuentan como 4 h. Terminadas tus horas puedes y debes seguir contestando: cada venta que cierres te da comisión.
+1. TUS METAS
+- Cada curso abre con MÍNIMO 10 inscritos y tiene un MÁXIMO de 20 alumnos. Tu trabajo es llenar los cupos.
+- Tus metas por hitos (cupos y fechas) las ves siempre actualizadas en tu dashboard, en "Mi avance".
+- Si un curso no llega a 10, se posterga 1 o 2 semanas (no se cancela) y no hay penalidad para ti.
+- Un curso se considera CERRADO EN VENTA cuando llega a 20 alumnos. No se inscribe más allá de 20.
+- Club Ofimática (Word + Excel + PowerPoint) cuenta como 1 cupo.
+
+2. HORARIO Y JORNADA
+- Mínimo 24 horas por semana (4 h por día, de lunes a sábado), en varios bloques si lo necesitas. Es un mínimo: puedes trabajar más.
+- Usa "Iniciar jornada / Terminar jornada" desde una laptop. Sin señal por 15 minutos, la jornada se cierra sola. Solo gerencia corrige horas.
+- Los feriados cuentan como 4 h.
+- Terminadas tus horas puedes y debes seguir contestando: cada venta que cierres te da comisión.
 
 3. QUÉ HACES
 - Respondes TODOS los mensajes de WhatsApp, TikTok e Instagram (tienes rol de vendedora: solo ver y responder mensajes).
-- De 8 am a 7 pm la respuesta no debe tardar más de 2 horas. Lo de después de las 7 pm se responde al día siguiente, sabiendo que cada mensaje sin responder es una venta que se puede perder.
 - Registras a cada prospecto y llenas Contacto 1 y Contacto 2 (en qué quedó y si hay que volver a contactar, con fecha).
 - Usas tu Agenda: pendientes, notas y calendario.
-- Inscribes a los alumnos (Ventas → Inscritos).
+- Inscribes a los alumnos (Ventas → Inscritos). El sistema genera solo el código de alumno.
 - Programas las instalaciones de programas dentro de las ventanas permitidas; las instalaciones las hace gerencia.
-- Eres administradora de los grupos de WhatsApp: los dejas para que nadie escriba hasta antes del curso.
+- Creas y administras los grupos de WhatsApp de cada curso.
+- Atiendes y registras quejas y reclamos.
 
-4. GRUPOS DE WHATSAPP: CÓMO CREARLOS Y NOMBRARLOS
+4. PLAZOS Y LÍMITES (lo que no puedes pasar por alto)
+- Respuesta a mensajes: máximo 2 horas entre las 8 a. m. y las 7 p. m. Lo que llega después de las 7 p. m. se responde al día siguiente. Cada mensaje sin responder es una venta que se puede perder.
+- Pago de la vacante: lo ideal es un día antes del inicio, para poder darle sus accesos. Excepcionalmente puede pagar el mismo día, hasta 3 horas antes de la clase. Si el curso empieza y no pagó, no se le dan accesos y se le retira del grupo de WhatsApp hasta que pague. El panel te avisa (pronto / hoy / retirar).
+- Instalaciones de programas: las agendas solo en estas ventanas — lunes a viernes de 7 p. m. a 10 p. m., sábados de 3 p. m. a 10 p. m., domingos de 8 a. m. a 10 p. m. Cada una dura 1 hora y debe quedar lista 3 días antes del inicio del curso.
+- Recontactos: no dejes pasar la fecha de "volver a contactar"; el panel te avisa cuando se te pasa.
+- Quejas y reclamos: se avisan a gerencia de inmediato.
+- Descuentos: ninguno sin autorización previa de gerencia.
+- Grupos de WhatsApp: se dejan en "solo administradores" hasta el inicio del curso.
+
+5. GRUPOS DE WHATSAPP: CÓMO CREARLOS Y NOMBRARLOS
 - Creas el grupo de cada curso apenas gerencia confirma la fecha de inicio. Un grupo por curso y por fecha de inicio.
 - El nombre del grupo es el CÓDIGO DEL GRUPO, siempre con este formato:
   G + número del grupo (2 cifras) - DÍAS - CURSO - FECHA DE INICIO (día.mes)
-  Ejemplo: G05-M/J-NOTION-24.11
+  Ejemplo: G05-M/J-NOTION-24.11 (grupo 5, martes y jueves, curso Notion, inicia el 24 de noviembre)
 - Número del grupo: correlativo, en el orden en que se crean (G01, G02, G03...). No se repite ni se reutiliza.
 - Días de clase, con estas letras: L = lunes, M = martes, X = miércoles, J = jueves, V = viernes, S = sábado, D = domingo. Dos días van separados por una barra: L/X (lunes y miércoles), M/J (martes y jueves). Un solo día va solo: D.
 - Curso: en MAYÚSCULAS, sin tildes ni espacios (usa guion si hace falta). Ejemplos: CLUB, WORD, EXCEL, POWERPOINT, NOTION, PHOTOSHOP, ILLUSTRATOR, WEB, CLAUDE, IA, CANVA.
-- Fecha de inicio: día y mes separados por punto (24.11, 04.01). Si la fecha cambia, renombras el grupo y avisas a gerencia.
-- Ejemplos: G01-L/X-CLUB-23.11 · G02-L/X-WORD-23.11 · G05-M/J-NOTION-24.11 · G08-D-WEB-22.11
-- Después de crearlo: lo dejas en "solo administradores" hasta el inicio del curso y lo registras en Ventas → Grupos de WhatsApp (el sistema avisa si falta).
+- Fecha de inicio: día y mes separados por punto, con dos cifras (24.11, 04.01). Si la fecha cambia, renombras el grupo y avisas a gerencia.
+- Después de crearlo: lo dejas en "solo administradores" y lo registras en Ventas → Grupos de WhatsApp (el sistema avisa si falta).
 - Cualquier duda con el código, consulta a gerencia antes de crear el grupo.
 
-5. REGLAS AL VENDER
-- Precio fijo según la lista de cada curso en el sistema. Descuentos solo con autorización previa de gerencia.
-- Antes de inscribir envías los términos y condiciones (y los requisitos de PC si aplica). El sistema no te deja inscribir sin marcarlo.
+6. ANTES DE INSCRIBIR A UN ALUMNO
+- Envías primero los términos y condiciones. El sistema no te deja inscribir sin marcarlo.
+- Si el curso requiere instalar un programa, envías también los requisitos mínimos de PC.
+- Verificas que el pago entre a una cuenta oficial de CCN y registras el comprobante.
+- Confirmas el curso, el grupo y la fecha de inicio.
+
+7. REGLAS AL VENDER
+- Precio fijo según la lista de cada curso en el sistema. Descuentos solo con autorización previa de gerencia; el sistema te pide marcarla y anotar quién y por qué.
 - Los pagos entran SOLO a las cuentas oficiales de CCN, nunca a cuentas personales.
 - Devoluciones: en primera instancia la respuesta es NO.
-- Separación de vacante: se paga a más tardar un día antes del curso. Si el curso empieza y no pagó, no se le dan accesos y se le retira del grupo hasta que pague.
 - Club Ofimática: es un paquete (Word + Excel + PowerPoint), cuenta como 1 cupo.
 
-6. PROBLEMAS, QUEJAS Y RECLAMOS
+8. PROBLEMAS, QUEJAS Y RECLAMOS
 - Si un alumno tiene un problema, lo atiendes tú, pero consultas siempre con gerencia cómo solucionarlo.
-- Una queja o reclamo se avisa a gerencia de inmediato.
+- Una queja o reclamo se registra en "Quejas y reclamos" y se avisa a gerencia de inmediato.
 
-7. TU PAGO
-Honorario base mensual (recibo por honorarios) + comisión sobre lo vendido (3 % / 4 % / 5 % según cupos del mes) + S/ 50 por curso cerrado en el que vendiste. Lo ves en "Mi avance".
+9. TU PAGO
+Honorario base mensual (recibo por honorarios) + comisión sobre lo vendido en el mes (3 % de 0 a 9 cupos, 4 % de 10 a 14, 5 % desde 15) + S/ 50 por cada curso que se llena (20 alumnos) en el que vendiste al menos un alumno. Lo ves en "Mi avance".
 
-8. LO QUE SE REVISA
+10. LO QUE SE REVISA
 Gerencia revisa tu reporte semanal: inscritos, ventas, atención, recontactos, pendientes y horas.`,
   },
 }
