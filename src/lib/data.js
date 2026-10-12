@@ -406,6 +406,7 @@ export async function urlComprobante(ruta) {
 
 /* Crea (o actualiza) al alumno, lo matricula en 1 o más grupos y registra su primer pago */
 export async function crearInscripcion({ alumno, grupos, precioTotal, pago, paquete = '', nota = '', fecha, terminos = false, requisitos = false, descuentoAutorizado = false, descuentoMotivo = '' }) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(alumno.email || '').trim())) throw new Error('El correo del alumno es obligatorio.')
   const hoy = fecha || new Date().toISOString().slice(0, 10)
   const precios = repartir(precioTotal, grupos.map(() => 1))
   const paqueteId = crypto.randomUUID()

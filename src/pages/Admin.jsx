@@ -1484,6 +1484,7 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
     if (!/^\d{8}$/.test(doc) && al.tipo_doc === 'DNI') { setErr('El DNI tiene 8 números.'); return }
     if (al.tipo_doc === 'CE' && doc.length < 8) { setErr('Revisa el carné de extranjería.'); return }
     if (al.nombres.trim().length < 2 || al.apellido_paterno.trim().length < 2) { setErr('Faltan los nombres o el apellido paterno.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test((al.email || '').trim())) { setErr('El correo del alumno es obligatorio: ahí se envía su bienvenida con accesos. Revisa que esté bien escrito.'); return }
     if (!elegidos.length) { setErr('Elige al menos un curso (grupo).'); return }
     if (!terminos) { setErr('Marca que enviaste los Términos y condiciones al alumno.'); return }
     if (pideReq && !requisitos) { setErr('Marca que enviaste los requisitos mínimos de PC y que el alumno los cumple.'); return }
@@ -1533,7 +1534,7 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
         </div>
         <div className="g2">
           <label>Celular<input id="i-cel" inputMode="tel" value={al.celular} onChange={(e) => setA('celular', e.target.value)} /></label>
-          <label>Correo<input id="i-mail" type="email" value={al.email} onChange={(e) => setA('email', e.target.value)} /></label>
+          <label>Correo (obligatorio)<input id="i-mail" type="email" required value={al.email} onChange={(e) => setA('email', e.target.value)} placeholder="correo@ejemplo.com" /></label>
         </div>
       </section>
 
