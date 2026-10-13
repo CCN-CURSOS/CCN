@@ -44,7 +44,7 @@ export default function AvanceVendedor({ data, email, trab, verPago = true, hist
         <section className="hero-din" aria-label="Lo que vas ganando">
           <small>Este mes vas ganando</small>
           <b className="monto">{soles(m.aPagar)}</b>
-          <span>{soles(m.sueldo)} de sueldo{m.parcial ? ` (${m.dias} de ${m.diasMes} días)` : ''} + <b>{soles(m.comision.monto)}</b> de comisión{m.bono > 0 && <> + <b>{soles(m.bono)}</b> de bono 🎉</>}</span>
+          <span>{soles(m.sueldo)} de sueldo{m.parcial ? ` (${m.dias} de ${m.diasMes} días)` : ''}{m.pasajes > 0 && ` + ${soles(m.pasajes)} de bono de pasajes`} + <b>{soles(m.comision.monto)}</b> de comisión{m.bono > 0 && <> + <b>{soles(m.bono)}</b> de bono 🎉</>}</span>
           {sig && (() => { const tk = m.cupos ? m.vendido / m.cupos : 299; const total = r0(m.sueldo + ((m.vendido + sig.faltan * tk) * sig.pct) / 100); return <div className="reto"><i>🔥</i><p>Cierra <b>{sig.faltan} cupo{sig.faltan === 1 ? '' : 's'} más</b> y tu comisión sube al <b>{sig.pct}%</b>: ganarías <b>{soles(total)}</b> este mes.</p></div> })()}
           {!sig && <div className="reto"><i>🏆</i><p>Estás en el tramo máximo: <b>{m.comision.pct}%</b> de comisión. ¡Sigue así!</p></div>}
           {proxima && <div className="hito"><div className="meta-top"><b>Próxima meta: {proxima.cupos} cupos{proxima.cursos > 1 ? ` en ${proxima.cursos} cursos` : ''}</b><span>{proxima.cumplida ? 'Cumplida' : `${fmtF(proxima.fecha)} · ${proxima.dias} día${proxima.dias === 1 ? '' : 's'}`}</span></div><div className="barra"><i style={{ width: `${proxima.pct}%` }} /></div><small>Llevas {proxima.cupos_actual} de {proxima.cupos}</small></div>}
@@ -95,7 +95,7 @@ export default function AvanceVendedor({ data, email, trab, verPago = true, hist
           <div>
             <small>Va ganando este mes</small>
             <b className="grande">{soles(m.aPagar)}</b>
-            <span>{soles(m.sueldo)} de sueldo{m.parcial ? ` (${m.dias} de ${m.diasMes} días)` : ''} + {soles(m.comision.monto)} de comisión ({m.comision.pct}% de {soles(m.vendido)}){m.bono > 0 && ` + ${soles(m.bono)} de bono por curso cerrado (${m.bonos.map((b) => b.grupo).join(', ')})`}</span>
+            <span>{soles(m.sueldo)} de sueldo{m.parcial ? ` (${m.dias} de ${m.diasMes} días)` : ''}{m.pasajes > 0 && ` + ${soles(m.pasajes)} de bono de pasajes`} + {soles(m.comision.monto)} de comisión ({m.comision.pct}% de {soles(m.vendido)}){m.bono > 0 && ` + ${soles(m.bono)} de bono por curso cerrado (${m.bonos.map((b) => b.grupo).join(', ')})`}</span>
           </div>
           <div className="av-meta">
             <Meta valor={m.cupos} objetivo={sig ? sig.desde : Math.max(m.cupos, 1)} etiqueta={sig ? `Con ${sig.faltan} cupo${sig.faltan === 1 ? '' : 's'} más sube al ${sig.pct}% (llevas ${m.cupos})` : `Ya estás en el tramo máximo (${m.comision.pct}%)`} />
@@ -137,7 +137,7 @@ export default function AvanceVendedor({ data, email, trab, verPago = true, hist
             <table className="cons-table" style={{ minWidth: 0 }}>
               <thead><tr><th>Mes</th><th>Cupos</th><th>Vendido</th><th>Tramo</th><th>Comisión</th><th>Sueldo</th><th>A pagar</th></tr></thead>
               <tbody>{[...serie].filter((s) => s.activo).reverse().map((s) => (
-                <tr key={s.mes}><td>{nombreMes(s.mes)}</td><td>{s.cupos}</td><td>{soles(s.vendido)}</td><td>{s.comision.pct}%</td><td>{soles(s.comision.monto)}</td><td>{soles(s.sueldo)}{s.parcial && <small className="paq">{s.dias} de {s.diasMes} días</small>}</td><td><b>{soles(s.aPagar)}</b></td></tr>
+                <tr key={s.mes}><td>{nombreMes(s.mes)}</td><td>{s.cupos}</td><td>{soles(s.vendido)}</td><td>{s.comision.pct}%</td><td>{soles(s.comision.monto)}</td><td>{soles(s.sueldo + s.pasajes)}{s.parcial && <small className="paq">{s.dias} de {s.diasMes} días</small>}</td><td><b>{soles(s.aPagar)}</b></td></tr>
               ))}</tbody>
             </table>
           </div>

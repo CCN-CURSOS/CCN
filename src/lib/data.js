@@ -729,7 +729,7 @@ export async function recibeInteresados(email, valor) {
 
 /* ---------- Trabajadores ---------- */
 export async function guardarTrabajador(t) {
-  const fila = { nombre: String(t.nombre || '').trim(), puesto: t.puesto || 'vendedor', cargo: t.cargo || '', email: t.email ? String(t.email).trim().toLowerCase() : null, sueldo_base: Number(t.sueldo_base) || 0, fecha_inicio: t.fecha_inicio || null, documento: t.documento || '', celular: t.celular || '', tarifa_hora: Number(t.tarifa_hora) || 0, cursos: Array.isArray(t.cursos) ? t.cursos.map(String) : [], comision_tramos: t.comision_tramos, metas: t.metas || null, activo: t.activo !== false, notas: t.notas || '' }
+  const fila = { nombre: String(t.nombre || '').trim(), puesto: t.puesto || 'vendedor', cargo: t.cargo || '', email: t.email ? String(t.email).trim().toLowerCase() : null, sueldo_base: Number(t.sueldo_base) || 0, bono_pasajes: Number(t.bono_pasajes) || 0, fecha_inicio: t.fecha_inicio || null, documento: t.documento || '', celular: t.celular || '', tarifa_hora: Number(t.tarifa_hora) || 0, cursos: Array.isArray(t.cursos) ? t.cursos.map(String) : [], comision_tramos: t.comision_tramos, metas: t.metas || null, activo: t.activo !== false, notas: t.notas || '' }
   if (fila.nombre.length < 2) throw new Error('Escribe el nombre del trabajador.')
   if (!fila.comision_tramos) delete fila.comision_tramos
   if (!fila.metas) delete fila.metas

@@ -73,7 +73,7 @@ create table if not exists public.asistencias (
   clase_id       uuid not null references public.clases (id) on delete cascade,
   grupo_id       text not null default '',
   alumno_id      uuid not null references public.alumnos (id) on delete cascade,
-  estado         text not null check (estado in ('presente', 'tarde', 'falta', 'justificada')),
+  estado         text not null check (estado in ('presente', 'falta')),
   participo      boolean not null default false,
   registrado_por text not null default '',
   editado_por    text not null default '',

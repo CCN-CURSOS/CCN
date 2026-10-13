@@ -1,7 +1,9 @@
 /* Métricas del vendedor: todo se calcula con los datos que el panel ya tiene (sin tablas extra). */
+import { sinIgv } from './igv.js'
 
 export const TRAMOS_DEF = [{ desde: 0, pct: 3 }, { desde: 10, pct: 4 }, { desde: 15, pct: 5 }]
-export const SUELDO_DEF = 600
+export const SUELDO_DEF = 450          // sueldo base mensual (S/); si se aumenta el sueldo, se aumenta este monto
+export const BONO_PASAJES_DEF = 150    // bono fijo de pasajes (S/); los descuentos por hora lo afectan
 export const PUESTOS = { instructor: 'Profesores', vendedor: 'Vendedores' }
 export const TARIFA_HORA_DEF = 20 // S/400 por curso de 20 h
 
@@ -52,6 +54,7 @@ export function bonosCursoCerrado(data, email, mes) {
 export function metricasVendedor(data, email, mes, trab) {
   const tramos = tramosDe(trab)
   const sueldoBase = Number(trab?.sueldo_base ?? SUELDO_DEF)
+  const pasajesBase = Number(trab?.bono_pasajes ?? BONO_PASAJES_DEF)
   // Desde la fecha de inicio: antes no se paga; el mes de inicio se paga por los días trabajados.
   const ini = trab?.fecha_inicio ? String(trab.fecha_inicio).slice(0, 10) : ''
   const [ay, am] = mes.split('-').map(Number)
@@ -60,9 +63,10 @@ export function metricasVendedor(data, email, mes, trab) {
   const parcial = !!ini && ini.slice(0, 7) === mes && Number(ini.slice(8, 10)) > 1
   const dias = parcial ? diasMes - Number(ini.slice(8, 10)) + 1 : diasMes
   const sueldo = !activo ? 0 : parcial ? r2((sueldoBase * dias) / diasMes) : sueldoBase
+  const pasajes = !activo ? 0 : parcial ? r2((pasajesBase * dias) / diasMes) : pasajesBase
   const mats = (data.matriculas || []).filter((m) => m.vendedor === email && m.estado === 'activa' && mesDe(m.fecha_inscripcion) === mes)
   const ids = new Set(mats.map((m) => m.id))
-  const vendido = suma(mats.map((m) => m.precio))
+  const vendido = suma(mats.map((m) => sinIgv(m.precio)))   // la comisión se calcula sobre el precio base (sin IGV)
   const cobrado = suma((data.pagos || []).filter((p) => ids.has(p.matricula_id)).map((p) => p.monto))
   const prospectos = (data.prospectos || []).filter((p) => p.vendedor === email && mesDe(p.creado) === mes)
   const ints = (data.interesados || []).filter((x) => x.asignado_a === email && mesDe(x.asignado_en || x.creado) === mes)
@@ -79,7 +83,7 @@ export function metricasVendedor(data, email, mes, trab) {
     cupos: sumaCupos(mats), inscripciones: new Set(mats.map((m) => m.paquete_id)).size, vendido, cobrado,
     prospectos: prospectos.length, prospectosInscritos: prospectos.filter((p) => p.estado === 'inscrito').length,
     interesados: ints.length, contactados: contactados.length, contestaron: ints.filter((x) => x.contesto === true).length,
-    sem, tramos, sueldo, sueldoBase, activo, parcial, dias, diasMes, comision: com, bonos, bono, aPagar: activo ? r2(sueldo + com.monto + bono) : 0,
+    sem, tramos, sueldo, sueldoBase, pasajes, pasajesBase, activo, parcial, dias, diasMes, comision: com, bonos, bono, aPagar: activo ? r2(sueldo + pasajes + com.monto + bono) : 0,
   }
 }
 

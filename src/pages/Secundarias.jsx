@@ -38,7 +38,10 @@ const TERMINOS = [
   'El alumno se compromete a pagar la totalidad del valor monetario del curso en las fechas establecidas por el equipo de CCN.',
   'La separación de vacante se completa pagando el saldo del curso a más tardar un (01) día antes de su inicio, para poder brindarle sus accesos. Excepcionalmente puede pagarse el mismo día del inicio, hasta tres (03) horas antes de la hora de la clase. Si el curso inicia y el pago no se ha realizado, no se brindan los accesos y el alumno es retirado del grupo de WhatsApp hasta que pague.',
   'Todo pago se realiza únicamente a las cuentas oficiales de CCN que te indique el equipo por los canales oficiales.',
-  'Cada curso abre con un mínimo de diez (10) participantes por horario. Si no se llega a completar, CCN podrá postergar el inicio del mismo por 1 o 2 semanas como máximo.',
+  'Cada curso abre con un mínimo de cinco (5) participantes por horario y tiene un máximo de veinte (20). Si no se llega al mínimo, CCN podrá postergar el inicio del curso entre 1 y 2 semanas, según la cantidad de participantes que falten.',
+  'Para recibir el certificado del curso, el alumno debe cumplir la asistencia mínima, participar en las clases y entregar a tiempo todos los trabajos (entregables) del curso. La fecha límite de entrega es la última clase del curso; si hiciera falta, el profesor podrá agregar una clase adicional. El alumno que no entregue a tiempo no accede al certificado.',
+  'Las clases se graban y quedan disponibles para los alumnos del grupo durante un tiempo limitado como beneficio del curso. Está prohibido compartirlas, copiarlas o publicarlas.',
+  'Los precios publicados no incluyen IGV. El IGV (18 %) se suma al valor del curso y el total a pagar se te informa antes de inscribirte. CCN emite boleta o factura electrónica por tu pago.',
   'El material producido por el alumno para la obtención de todo tipo de constancia o certificado podrá ser usado por CCN con fines publicitarios, acreditando la autoría del material al alumno correspondiente.',
   'No se realizan devoluciones.',
 ]

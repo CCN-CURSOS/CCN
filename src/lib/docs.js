@@ -1,7 +1,7 @@
 /* Documentos de trabajo: textos base (BORRADOR, para que los revise un contador o abogado).
-   Variables: {{nombre}} {{documento}} {{email}} {{puesto}} {{sueldo}} {{fecha_inicio}} {{fecha_fin}} {{mes}} {{fecha_envio}} */
+   Variables: {{nombre}} {{documento}} {{email}} {{puesto}} {{sueldo}} {{bono}} {{fecha_inicio}} {{fecha_fin}} {{mes}} {{fecha_envio}} */
 export const TIPOS_DOC = { contrato: 'Contrato', confidencialidad: 'Acuerdo de confidencialidad', plan: 'Plan de trabajo y funciones' }
-export const VARIABLES_DOC = ['{{nombre}}', '{{documento}}', '{{email}}', '{{puesto}}', '{{sueldo}}', '{{fecha_inicio}}', '{{fecha_fin}}', '{{mes}}', '{{fecha_envio}}']
+export const VARIABLES_DOC = ['{{nombre}}', '{{documento}}', '{{email}}', '{{puesto}}', '{{sueldo}}', '{{bono}}', '{{fecha_inicio}}', '{{fecha_fin}}', '{{mes}}', '{{fecha_envio}}']
 
 export const DOC_DEFAULT = {
   contrato: {
@@ -14,9 +14,9 @@ Entre CCN – Centro de Capacitaciones y Negocios ("CCN") y {{nombre}}, DNI {{do
 
 2. PLAZO. Desde el {{fecha_inicio}} hasta el {{fecha_fin}}. Se renueva mediante un nuevo contrato mensual.
 
-3. RETRIBUCIÓN. (a) Honorario base: {{sueldo}} mensuales, contra recibo por honorarios. En el primer mes se paga en proporción a los días del periodo. (b) Comisión sobre el total vendido del mes, por cupos cerrados: de 0 a 9 cupos, 3 %; de 10 a 14, 4 %; desde 15, 5 %. (c) Bono de S/ 50 por cada curso que se cierre (abra con su mínimo de inscritos) en el que haya vendido al menos un alumno.
+3. RETRIBUCIÓN. (a) Honorario base: {{sueldo}} mensuales, más un bono de movilidad (pasajes) de {{bono}} mensuales, contra recibo por honorarios. En el primer mes se paga en proporción a los días del periodo. (b) Comisión sobre el total vendido del mes, por cupos cerrados: de 0 a 9 cupos, 3 %; de 10 a 14, 4 %; desde 15, 5 %. (c) Bono de S/ 50 por cada curso que se cierre (abra con su mínimo de inscritos) en el que haya vendido al menos un alumno.
 
-4. HORAS. Dedicación mínima de 24 horas por semana (4 horas por día, de lunes a sábado), registradas con la jornada del sistema. Los feriados se pagan y cuentan como 4 horas cumplidas. Si no se cumple el mínimo semanal, se descuenta en proporción a las horas faltantes.
+4. HORAS. Dedicación mínima de 24 horas por semana (4 horas por día, de lunes a sábado), registradas con la jornada del sistema. Los feriados se pagan y cuentan como 4 horas cumplidas. Se trabaja de lunes a domingo con un día de descanso por semana, que se elige de lunes a viernes y se avisa con una semana de anticipación. Los sábados y domingos la asistencia a la oficina es obligatoria, y entre semana se acuerda un tercer día presencial; los días presenciales son de 4 horas. Los descuentos se calculan por hora sobre el total mensual (honorario base más bono de movilidad): valor de la hora = total mensual ÷ horas mínimas del mes. Se descuentan las horas no trabajadas y cada día presencial no asistido (4 horas), y el descuento alcanza también al bono de movilidad.
 
 5. COBROS. Todo pago de alumnos se hace únicamente a las cuentas oficiales de CCN. Está prohibido recibir dinero en cuentas personales.
 
@@ -59,15 +59,17 @@ Vigente desde el {{fecha_inicio}}. Aceptado electrónicamente. Fecha de envío: 
 Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, tus plazos y límites, tus funciones y las reglas al vender. Léelo completo y vuelve a él cuando tengas una duda.
 
 1. TUS METAS
-- Cada curso abre con MÍNIMO 10 inscritos y tiene un MÁXIMO de 20 alumnos. Tu trabajo es llenar los cupos.
+- Cada curso abre con MÍNIMO 5 inscritos y tiene un MÁXIMO de 20 alumnos. Tu trabajo es llenar los cupos.
 - Tus metas por hitos (cupos y fechas) las ves siempre actualizadas en tu dashboard, en "Mi avance".
-- Si un curso no llega a 10, se posterga 1 o 2 semanas (no se cancela) y no hay penalidad para ti.
+- Si un curso no llega a 5, se posterga entre 1 y 2 semanas, según cuántos alumnos falten (no se cancela) y no hay penalidad para ti.
 - Un curso se considera CERRADO EN VENTA cuando llega a 20 alumnos. No se inscribe más allá de 20.
 - Club Ofimática (Word + Excel + PowerPoint) cuenta como 1 cupo.
 
-2. HORARIO Y JORNADA
-- Mínimo 24 horas por semana (4 h por día, de lunes a sábado), en varios bloques si lo necesitas. Es un mínimo: puedes trabajar más.
-- Usa "Iniciar jornada / Terminar jornada" desde una laptop. Sin señal por 15 minutos, la jornada se cierra sola. Solo gerencia corrige horas.
+2. HORARIO, JORNADA Y PRESENCIALIDAD
+- Trabajas de lunes a domingo, con 1 día de descanso por semana. El descanso es obligatorio: lo eliges de lunes a viernes y lo avisas con 1 semana de anticipación.
+- Mínimo 4 horas por día trabajado (24 horas por semana como mínimo), en varios bloques si lo necesitas. Es un mínimo: puedes trabajar más. Tú eliges tu hora de entrada.
+- Sábado y domingo vienes a la oficina de La Molina: es obligatorio y no se negocia. Al inicio vienes 3 días por semana: sábado, domingo y un tercer día entre semana que fijas tú. Los días presenciales también son de 4 horas. Si gerencia aumenta los días presenciales, te lo avisa con anticipación.
+- Usa "Iniciar jornada / Terminar jornada" desde una laptop. Al llegar a la oficina entras a tu sistema y ahí registras tu entrada. Sin señal por 15 minutos, la jornada se cierra sola. Solo gerencia corrige horas.
 - Los feriados cuentan como 4 h.
 - Terminadas tus horas puedes y debes seguir contestando: cada venta que cierres te da comisión.
 
@@ -115,6 +117,9 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Los pagos entran SOLO a las cuentas oficiales de CCN, nunca a cuentas personales.
 - Devoluciones: en primera instancia la respuesta es NO.
 - Club Ofimática: es un paquete (Word + Excel + PowerPoint), cuenta como 1 cupo.
+- Los precios del sistema NO incluyen IGV: el sistema suma el 18 % automáticamente. Dile al alumno el total que muestra el sistema.
+- ENTREGABLES Y CERTIFICADO: cada curso tiene trabajos (entregables) obligatorios. La fecha límite de entrega es la última clase del curso (si no alcanza, el profesor puede agregar una clase más). Quien no entrega a tiempo NO accede al certificado. Debes decirlo al vender; también está en los términos y condiciones. Para el certificado además se pide asistencia mínima y participación.
+- BENEFICIO: las clases se graban y los alumnos del grupo pueden volver a verlas.
 
 8. PROBLEMAS, QUEJAS Y RECLAMOS
 - Si un alumno tiene un problema, lo atiendes tú, pero consultas siempre con gerencia cómo solucionarlo.
@@ -128,7 +133,8 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Cada certificado y cada constancia tienen un código y un QR con el que cualquier persona puede verificarlos.
 
 10. TU PAGO
-Honorario base mensual (recibo por honorarios) + comisión sobre lo vendido en el mes (3 % de 0 a 9 cupos, 4 % de 10 a 14, 5 % desde 15) + S/ 50 por cada curso que se llena (20 alumnos) en el que vendiste al menos un alumno. Lo ves en "Mi avance".
+Sueldo mensual + bono de pasajes (ambos figuran en tu ficha y en tu contrato; si se aumenta tu sueldo, el bono se mantiene) + comisión sobre lo vendido en el mes (3 % de 0 a 9 cupos, 4 % de 10 a 14, 5 % desde 15) + S/ 50 por cada curso que se llena (20 alumnos) en el que vendiste al menos un alumno. La comisión se calcula sobre el precio sin IGV. Lo ves en "Mi avance".
+DESCUENTOS: se calculan por hora sobre el total (sueldo + bono de pasajes). Valor de la hora = total mensual ÷ horas mínimas del mes. Se descuentan las horas no trabajadas y cada día presencial al que no asistas (se descuentan sus 4 horas). El descuento alcanza también al bono de pasajes.
 
 11. LO QUE SE REVISA
 Gerencia revisa tu reporte semanal: inscritos, ventas, atención, recontactos, pendientes y horas.`,
@@ -136,7 +142,7 @@ Gerencia revisa tu reporte semanal: inscritos, ventas, atención, recontactos, p
 }
 
 export function renderDoc(texto, v = {}) {
-  const mapa = { nombre: v.nombre, documento: v.documento || '__________', email: v.email, puesto: v.puesto || 'Vendedora', sueldo: v.sueldo, fecha_inicio: v.fecha_inicio, fecha_fin: v.fecha_fin, mes: v.mes, fecha_envio: v.fecha_envio }
+  const mapa = { nombre: v.nombre, documento: v.documento || '__________', email: v.email, puesto: v.puesto || 'Vendedora', sueldo: v.sueldo, bono: v.bono, fecha_inicio: v.fecha_inicio, fecha_fin: v.fecha_fin, mes: v.mes, fecha_envio: v.fecha_envio }
   return String(texto || '').replace(/\{\{(\w+)\}\}/g, (m, k) => (mapa[k] != null && mapa[k] !== '' ? mapa[k] : m))
 }
 export const plantillaDe = (data, tipo) => (data.plantillas || []).find((x) => x.tipo === tipo) || { tipo, ...DOC_DEFAULT[tipo] }

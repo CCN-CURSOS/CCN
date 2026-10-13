@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { fechaCorta } from '../lib/data.js'
+import { precioWeb } from '../lib/igv.js'
 
 const Flecha = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -24,8 +25,8 @@ export default function CourseCard({ c, grupo }) {
           {grupo?.inicio && <> · Inicio {fechaCorta(grupo.inicio)}</>}
         </p>
         <div className="cc-precio">
-          <b>S/{c.precio}</b>
-          {c.precio_antes > c.precio && <><span className="antes">S/{c.precio_antes}</span><span className="dsct">-{Math.round((1 - c.precio / c.precio_antes) * 100)}%</span></>}
+          <b>{precioWeb(c.precio)}</b><small className="igv"> IGV incl.</small>
+          {c.precio_antes > c.precio && <><span className="antes">{precioWeb(c.precio_antes)}</span><span className="dsct">-{Math.round((1 - c.precio / c.precio_antes) * 100)}%</span></>}
         </div>
 
         <div className="cc-pie">

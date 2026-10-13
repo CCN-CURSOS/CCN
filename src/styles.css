@@ -1290,9 +1290,7 @@ section{padding-block:64px}
 .asis-est{margin:0}
 .asis-est button{padding:5px 10px;font-size:.8rem}
 .asis-est button.sel.presente{background:#22C55E;border-color:#22C55E;color:#052E16}
-.asis-est button.sel.tarde{background:#FACC15;border-color:#FACC15;color:#422006}
 .asis-est button.sel.falta{background:#F87171;border-color:#F87171;color:#450A0A}
-.asis-est button.sel.justificada{background:#93C5FD;border-color:#93C5FD;color:#172554}
 .asis-est button:disabled{cursor:default;opacity:.75}
 .asis-part{font-size:.84rem;white-space:nowrap}
 .asis-motivo{display:grid;gap:6px;margin-top:16px;font-weight:700;font-size:.86rem}
@@ -1308,3 +1306,6 @@ section{padding-block:64px}
 .temario{margin:6px 0 14px;padding-left:20px;display:grid;gap:4px}
 .cons-table input[type=date],.cons-table input[type=time]{min-width:0;width:100%}
 @media(max-width:700px){.asis-fila{grid-template-columns:1fr}}
+
+/* IGV incluido junto al precio */
+.igv{font-size:.62em;font-weight:600;color:var(--muted);letter-spacing:.02em;margin-left:2px}

@@ -3,8 +3,9 @@ import AvanceVendedor from './AvanceVendedor'
 import JornadaCard from '../components/JornadaCard'
 import Icon from '../components/Icons'
 import { Barras, Embudo } from '../components/Charts'
-import { lunesDe, semanaHoras, minutosJornada, jornadaSinSenal, fmtHM, MINIMO_SEMANA_MIN, metasDe, PUESTOS, SUELDO_DEF, TARIFA_HORA_DEF, TRAMOS_DEF, tramosDe, metricasVendedor, metricasProfesor, nombreGrupoWa, gruposSinWhatsapp, metricasCurso, AVISO_INSTALACION, PROGRAMAS, ESTADOS_INSTALACION, programaSugerido, errorHorarioInstalacion, choqueInstalacion, horaCorta, hora12, proximoRecontacto, recontactoVencido, reporteSemana, alertasVenta } from '../lib/ventas'
+import { lunesDe, semanaHoras, minutosJornada, jornadaSinSenal, fmtHM, MINIMO_SEMANA_MIN, metasDe, PUESTOS, SUELDO_DEF, BONO_PASAJES_DEF, TARIFA_HORA_DEF, TRAMOS_DEF, tramosDe, metricasVendedor, metricasProfesor, nombreGrupoWa, gruposSinWhatsapp, metricasCurso, AVISO_INSTALACION, PROGRAMAS, ESTADOS_INSTALACION, programaSugerido, errorHorarioInstalacion, choqueInstalacion, horaCorta, hora12, proximoRecontacto, recontactoVencido, reporteSemana, alertasVenta } from '../lib/ventas'
 import { TIPOS_DOC, VARIABLES_DOC, renderDoc, plantillaDe, fechaLarga } from '../lib/docs'
+import { conIgv, precioWeb } from '../lib/igv'
 import { Link } from 'react-router-dom'
 import { Logo } from '../components/Layout.jsx'
 import PanelProfesor, { ClasesDrawer } from './Profesor'
@@ -144,8 +145,8 @@ function CursoForm({ inicial, total, enInicio, onSave, onClose }) {
       <section className="fs">
         <h3>Precio y duración</h3>
         <div className="g2">
-          <label>Precio actual en S/ (con descuento)<input id="c-precio" type="number" min="0" value={f.precio} onChange={(e) => set('precio', e.target.value)} /></label>
-          <label>Precio real en S/ (se muestra tachado, opcional)<input id="c-antes" type="number" min="0" value={f.precio_antes} onChange={(e) => set('precio_antes', e.target.value)} placeholder="Ej. 510 · déjalo vacío si no hay descuento" /></label>
+          <label>Precio actual en S/ SIN IGV (con descuento)<input id="c-precio" type="number" min="0" value={f.precio} onChange={(e) => set('precio', e.target.value)} /><small>El IGV (18 %) se suma solo: el alumno ve y paga {precioWeb(f.precio)}.</small></label>
+          <label>Precio real en S/ SIN IGV (se muestra tachado, opcional)<input id="c-antes" type="number" min="0" value={f.precio_antes} onChange={(e) => set('precio_antes', e.target.value)} placeholder="Ej. 510 · déjalo vacío si no hay descuento" /></label>
           <label>Horas<input id="c-horas" type="number" min="1" value={f.horas} onChange={(e) => set('horas', e.target.value)} /></label>
           <label>Sesiones<input id="c-ses" type="number" min="1" value={f.sesiones} onChange={(e) => set('sesiones', e.target.value)} /></label>
         </div>
@@ -216,7 +217,7 @@ function Cursos({ data, hacer, abrirGrupo }) {
                   <b>{c.titulo}</b>
                   <small>{c.horas} h · {c.sesiones} sesiones · {g ? `${g.inicio ? fechaCorta(g.inicio) : 'sin fecha'} (${g.estado})` : 'sin grupo abierto'}</small>
                 </div>
-                <label className="pr" data-l="Precio">S/
+                <label className="pr" data-l="Precio sin IGV" title={`Con IGV: ${soles(conIgv(precio[c.id] ?? c.precio))}`}>S/
                   <input type="number" min="0" aria-label={`Precio de ${c.titulo}`}
                     value={precio[c.id] ?? c.precio}
                     onChange={(e) => setPrecio({ ...precio, [c.id]: e.target.value })}
@@ -273,7 +274,7 @@ function Seccion({ titulo, ayuda, children }) {
 
 /* ================= GRUPOS ================= */
 const DIAS = ['Lun.-Vie.', 'Sábados', 'Sáb.-Dom.', 'Lun.-Mié.', 'Mar.-Jue.', 'Domingos']
-const GRUPO_VACIO = { curso_id: '', inicio: '', dias: '', horario: '', estado: 'abierto', inscritos: 0, minimo: 10, mostrar_inscritos: false, activo: true }
+const GRUPO_VACIO = { curso_id: '', inicio: '', dias: '', horario: '', estado: 'abierto', inscritos: 0, minimo: 5, mostrar_inscritos: false, activo: true }
 const partes = (h) => { const m = /(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})/.exec(h || ''); return m ? [m[1], m[2]] : ['', ''] }
 
 function GrupoForm({ inicial, cursos, onSave, onClose }) {
@@ -290,7 +291,7 @@ function GrupoForm({ inicial, cursos, onSave, onClose }) {
       await onSave({
         ...f, inicio: f.inicio || null,
         horario: d && h ? `${d} - ${h}` : (f.horario || ''),
-        inscritos: Number(f.inscritos) || 0, minimo: Number(f.minimo) || 10,
+        inscritos: Number(f.inscritos) || 0, minimo: Number(f.minimo) || 5,
       })
     } catch (e) { setErr(e.message); setBusy(false) }
   }
@@ -1146,7 +1147,7 @@ function EnviarContrato({ t, data, onClose, hacer }) {
   const firmoConf = (data.documentos || []).some((d) => d.vendedor === t.email && d.tipo === 'confidencialidad' && d.estado === 'firmado')
   const [f, setF] = useState({ inicio: ini0, fin: fin0, contrato: true, confidencialidad: !firmoConf })
   const faltan = [!t.documento && 'DNI', !t.email && 'correo de acceso', !t.fecha_inicio && 'fecha de inicio', !(Number(t.sueldo_base) > 0) && 'sueldo'].filter(Boolean)
-  const vars = { nombre: t.nombre, documento: t.documento, email: t.email, sueldo: soles(t.sueldo_base), fecha_inicio: fechaLarga(f.inicio), fecha_fin: fechaLarga(f.fin), mes: nombreMes(f.inicio.slice(0, 7)), fecha_envio: fechaLarga(hoyISO()) }
+  const vars = { nombre: t.nombre, documento: t.documento, email: t.email, sueldo: soles(t.sueldo_base), bono: soles(t.bono_pasajes), fecha_inicio: fechaLarga(f.inicio), fecha_fin: fechaLarga(f.fin), mes: nombreMes(f.inicio.slice(0, 7)), fecha_envio: fechaLarga(hoyISO()) }
   const tipos = ['contrato', 'confidencialidad'].filter((k) => f[k])
   const enviar = () => hacer(async () => {
     if (!f.inicio || !f.fin || f.fin < f.inicio) throw new Error('Revisa las fechas: la de fin no puede ser antes que la de inicio.')
@@ -1301,7 +1302,7 @@ function FirmaCard({ d, hacer }) {
 function PlanTrabajo({ data, email }) {
   const t = armarTrabajadores(data).find((x) => x.email === email) || { nombre: email }
   const pl = plantillaDe(data, 'plan')
-  const vars = { nombre: t.nombre, documento: t.documento, email, sueldo: soles(t.sueldo_base), fecha_inicio: t.fecha_inicio ? fechaLarga(t.fecha_inicio) : '', mes: '', fecha_envio: '' }
+  const vars = { nombre: t.nombre, documento: t.documento, email, sueldo: soles(t.sueldo_base), bono: soles(t.bono_pasajes), fecha_inicio: t.fecha_inicio ? fechaLarga(t.fecha_inicio) : '', mes: '', fecha_envio: '' }
   return (
     <>
       <Seccion titulo="Plan de trabajo" ayuda="Tus funciones y reglas. Léelo cada vez que tengas dudas." />
@@ -1467,7 +1468,7 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
 
   const elegidos = sel.map((id) => grupos.find((g) => String(g.id) === id)).filter(Boolean)
   const pideReq = elegidos.some((g) => programaSugerido(cursoDe(g.curso_id)?.titulo || ''))
-  const sugerido = elegidos.reduce((t, g) => t + Number(cursoDe(g.curso_id)?.precio || 0), 0)
+  const sugerido = conIgv(elegidos.reduce((t, g) => t + Number(cursoDe(g.curso_id)?.precio || 0), 0))   // precio de lista + IGV
   useEffect(() => { if (!precioManual) setPrecio(sugerido ? String(sugerido) : '') }, [sugerido, precioManual])
 
   function buscarAlumno(doc) {
@@ -1560,10 +1561,10 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
         {elegidos.length > 1 && (
           <label>Nombre del paquete<input id="i-paq" value={paquete} onChange={(e) => setPaquete(e.target.value)} placeholder="Ej.: Club Ofimática" /></label>
         )}
-        <label>Precio acordado {elegidos.length > 1 ? 'por todo el paquete' : ''} (S/)
+        <label>Precio acordado {elegidos.length > 1 ? 'por todo el paquete' : ''} (S/, IGV incluido)
           <input id="i-precio" type="number" min="0" step="0.01" value={precio} onChange={(e) => { setPrecio(e.target.value); setPrecioManual(true) }} />
         </label>
-        {sugerido > 0 && Number(precio) !== sugerido && <p className="note">Precio de lista: {soles(sugerido)}. {Number(precio) < sugerido && !esClubSel ? 'Estás dando descuento.' : ''}</p>}
+        {sugerido > 0 && Number(precio) !== sugerido && <p className="note">Precio de lista con IGV: {soles(sugerido)}. {Number(precio) < sugerido && !esClubSel ? 'Estás dando descuento.' : ''}</p>}
         {sugerido > 0 && Number(precio) < sugerido - 0.005 && !esClubSel && (
           <div className="fs descuento">
             <p className="note"><b>El precio es fijo.</b> Un descuento solo se da con autorización previa de gerencia.</p>
@@ -1791,7 +1792,7 @@ function Resumen({ data }) {
     const precio = ms.reduce((t, m) => t + Number(m.precio), 0)
     return { g, c: cursoDe(g.curso_id), n: g.inscritos || 0, vendido: precio, cobrado: pagado, saldo: Math.max(0, precio - pagado) }
   })
-  const alertas = data.grupos.filter((g) => g.estado === 'abierto' && g.inicio && g.inicio >= hoy && g.inicio <= en21 && (g.inscritos || 0) < (g.minimo || 10))
+  const alertas = data.grupos.filter((g) => g.estado === 'abierto' && g.inicio && g.inicio >= hoy && g.inicio <= en21 && (g.inscritos || 0) < (g.minimo || 5))
   const llenos = data.grupos.filter((g) => g.estado === 'lleno')
   const sinWa = gruposSinWhatsapp(data)
   const nuevos = (data.interesados || []).filter((x) => x.estado === 'nuevo').length
@@ -1846,7 +1847,7 @@ function Resumen({ data }) {
       {(alertas.length > 0 || llenos.length > 0 || sinWa.length > 0) && (
         <div className="alertas">
           {sinWa.map((g) => <p key={'w' + g.id} className="alerta"><b>{g.codigo}</b> {cursoDe(g.curso_id)?.titulo} aún no tiene grupo de WhatsApp.</p>)}
-          {alertas.map((g) => <p key={g.id} className="alerta"><b>{g.codigo}</b> {cursoDe(g.curso_id)?.titulo} empieza el {fechaCorta(g.inicio)} con {g.inscritos || 0} de {g.minimo || 10} inscritos.</p>)}
+          {alertas.map((g) => <p key={g.id} className="alerta"><b>{g.codigo}</b> {cursoDe(g.curso_id)?.titulo} empieza el {fechaCorta(g.inicio)} con {g.inscritos || 0} de {g.minimo || 5} inscritos.</p>)}
           {llenos.map((g) => <p key={g.id} className="alerta ok"><b>{g.codigo}</b> {cursoDe(g.curso_id)?.titulo} está lleno.</p>)}
         </div>
       )}
@@ -1861,7 +1862,7 @@ function Resumen({ data }) {
                   <td><span className="cod">{g.codigo}</span></td>
                   <td><b>{c?.titulo || 'Curso'}</b></td>
                   <td>{g.inicio ? fechaCorta(g.inicio) : 'Sin fecha'}</td>
-                  <td><div className="barra" title={`${n} de ${g.minimo || 10} mínimo`}><i style={{ width: `${Math.min(100, (n / (g.minimo || 10)) * 100)}%` }} /></div><small>{n}/{g.minimo || 10} mín. · máx. {g.maximo || 20}</small></td>
+                  <td><div className="barra" title={`${n} de ${g.minimo || 5} mínimo`}><i style={{ width: `${Math.min(100, (n / (g.minimo || 5)) * 100)}%` }} /></div><small>{n}/{g.minimo || 5} mín. · máx. {g.maximo || 20}</small></td>
                   <td>{soles(v)}</td><td>{soles(co)}</td><td>{saldo > 0 ? soles(saldo) : '—'}</td>
                 </tr>
               ))}
@@ -2112,7 +2113,7 @@ function FichaCurso({ data, curso, hacer, onVolver, abrirGrupo, editarGrupo, irW
               <Embudo pasos={[{ label: 'Interesados', valor: m.ints.length, color: '#3a5a94' }, { label: 'Contactados', valor: m.contactados, color: '#2b8cc4' }, { label: 'Inscritos', valor: m.cupos, color: '#0f9e8b' }]} />
             </section>
             <section><h3>Cupos por grupo</h3>
-              {m.grupos.length === 0 ? <p className="note">Aún no hay grupos.</p> : <Barras datos={m.grupos.map((g) => ({ label: g.codigo || '—', inscritos: g.inscritos || 0, minimo: g.minimo || 10 }))} series={[{ key: 'inscritos', nombre: 'Inscritos', color: 'var(--teal)' }, { key: 'minimo', nombre: 'Mínimo', color: '#B7C2D3' }]} />}
+              {m.grupos.length === 0 ? <p className="note">Aún no hay grupos.</p> : <Barras datos={m.grupos.map((g) => ({ label: g.codigo || '—', inscritos: g.inscritos || 0, minimo: g.minimo || 5 }))} series={[{ key: 'inscritos', nombre: 'Inscritos', color: 'var(--teal)' }, { key: 'minimo', nombre: 'Mínimo', color: '#B7C2D3' }]} />}
             </section>
           </div>
         </>
@@ -2157,7 +2158,7 @@ function FichaCurso({ data, curso, hacer, onVolver, abrirGrupo, editarGrupo, irW
               <td><span className="cod">{g.codigo || '—'}</span></td>
               <td>{fecha(g.inicio)}</td>
               <td>{g.dias || '—'}<small className="paq">{g.horario || ''}</small></td>
-              <td><div className="barra" title={`${g.inscritos || 0} de ${g.minimo || 10} mínimo`}><i style={{ width: `${Math.min(100, ((g.inscritos || 0) / (g.minimo || 10)) * 100)}%` }} /></div><small>{g.inscritos || 0}/{g.minimo || 10} mín. · máx. {g.maximo || 20}</small></td>
+              <td><div className="barra" title={`${g.inscritos || 0} de ${g.minimo || 5} mínimo`}><i style={{ width: `${Math.min(100, ((g.inscritos || 0) / (g.minimo || 5)) * 100)}%` }} /></div><small>{g.inscritos || 0}/{g.minimo || 5} mín. · máx. {g.maximo || 20}</small></td>
               <td>{g.estado === 'abierto' ? 'Abierto' : g.estado === 'lleno' ? 'Lleno' : 'Cerrado'}</td>
               <td>{w ? <a href={w.enlace} target="_blank" rel="noopener noreferrer">{w.nombre}</a> : <span className="wa falta">Falta crear</span>}</td>
               <td>{t ? t.nombre : <small>Sin asignar</small>}</td>
@@ -2266,6 +2267,7 @@ function TrabajadorForm({ inicial, equipo, cursos, onClose, onSave }) {
             </label>
             <label>Fecha de inicio<input id="tr-ini" type="date" value={f.fecha_inicio || ''} onChange={(e) => set('fecha_inicio', e.target.value)} /></label>
             <label>Sueldo base mensual (S/)<input id="tr-sue" type="number" min="0" value={f.sueldo_base} onChange={(e) => set('sueldo_base', e.target.value)} /></label>
+            <label>Bono de pasajes mensual (S/)<input id="tr-bono" type="number" min="0" value={f.bono_pasajes ?? 0} onChange={(e) => set('bono_pasajes', e.target.value)} /><small>Si se aumenta el sueldo, se sube el sueldo base y este bono se mantiene.</small></label>
             <div>
               <b>Comisión por cupos cerrados en el mes</b>
               <p className="note">Se aplica sobre el total vendido del mes. Cada fila: desde cuántos cupos, qué porcentaje.</p>
@@ -2408,7 +2410,7 @@ function Trabajadores({ data, hacer }) {
   const [borrando, setBorrando] = useState(null)
   const lista = armarTrabajadores(data)
   const mes = new Date().toISOString().slice(0, 7)
-  const nuevo = (puesto) => setForm({ nombre: '', puesto, cargo: '', email: '', documento: '', celular: '', sueldo_base: puesto === 'vendedor' ? SUELDO_DEF : 0, fecha_inicio: '', tarifa_hora: 0, cursos: [], comision_tramos: null, activo: true, notas: '' })
+  const nuevo = (puesto) => setForm({ nombre: '', puesto, cargo: '', email: '', documento: '', celular: '', sueldo_base: puesto === 'vendedor' ? SUELDO_DEF : 0, bono_pasajes: puesto === 'vendedor' ? BONO_PASAJES_DEF : 0, fecha_inicio: '', tarifa_hora: 0, cursos: [], comision_tramos: null, activo: true, notas: '' })
   const guardar = (f) => hacer(async () => { await guardarTrabajador({ ...f, id: f.virtual ? undefined : f.id }); setForm(null); setSel(null) }, 'Guardado')
   const formEl = form && <TrabajadorForm inicial={form} equipo={data.equipo} cursos={data.cursos} onClose={() => setForm(null)} onSave={guardar} />
 

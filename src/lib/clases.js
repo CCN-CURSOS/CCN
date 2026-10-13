@@ -70,19 +70,20 @@ export function ventana(clase, ahora = new Date()) {
   return 'cerrada'
 }
 
-export const ESTADOS_ASIS = [['presente', 'Presente'], ['tarde', 'Tarde'], ['falta', 'Falta'], ['justificada', 'Justificada']]
-export const ETIQ_ASIS = Object.fromEntries(ESTADOS_ASIS)
+/* Solo dos estados: Asistió o Faltó. (Una falta justificada se corrige a "Asistió" con sustento; "Tarde" no existe.)
+   Los valores 'tarde' y 'justificada' solo quedan en el historial antiguo; se muestran con su etiqueta vieja. */
+export const ESTADOS_ASIS = [['presente', 'Asistió'], ['falta', 'Faltó']]
+export const ETIQ_ASIS = { ...Object.fromEntries(ESTADOS_ASIS), tarde: 'Asistió (tarde)', justificada: 'Asistió (justificada)' }
 
 /* Resumen por alumno. "Clase dictada" = clase cerrada con asistencia guardada.
-   Asistió = presente o tarde. (La justificada se muestra aparte; falta decidir si cuenta en el 80 %.) */
+   Asistió = estado 'presente' (por seguridad también cuentan los valores antiguos 'tarde' y 'justificada'). */
 export function resumenAlumno(clases, asistencias, alumnoId, ahora = new Date()) {
   const dictadas = clases.filter((c) => ventana(c, ahora) === 'cerrada' && asistencias.some((a) => a.clase_id === c.id))
   const mias = asistencias.filter((a) => a.alumno_id === alumnoId && dictadas.some((c) => c.id === a.clase_id))
-  const cuenta = (e) => mias.filter((a) => a.estado === e).length
-  const asistio = cuenta('presente') + cuenta('tarde')
+  const asistio = mias.filter((a) => a.estado !== 'falta').length
   const n = dictadas.length
   return {
-    dictadas: n, asistio, presente: cuenta('presente'), tarde: cuenta('tarde'), falta: cuenta('falta'), justificada: cuenta('justificada'),
+    dictadas: n, asistio, falta: mias.filter((a) => a.estado === 'falta').length,
     participo: mias.filter((a) => a.participo).length,
     pct: n ? Math.round((asistio / n) * 100) : null,
     pctPart: n ? Math.round((mias.filter((a) => a.participo).length / n) * 100) : null,

@@ -47,7 +47,7 @@ create table if not exists public.grupos (
   horario text not null default '',
   estado text not null default 'abierto' check (estado in ('abierto','lleno','cerrado')),
   inscritos int not null default 0,
-  minimo int not null default 10,
+  minimo int not null default 5,
   mostrar_inscritos boolean not null default false,
   activo boolean not null default true,
   creado timestamptz not null default now()

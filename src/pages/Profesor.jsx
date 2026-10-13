@@ -110,7 +110,7 @@ function Hoja({ clase, alumnos, registros, gerente, ahora, onClose, onSaved, avi
       </div>
       {alumnos.length === 0 && <p className="note">Este grupo todavía no tiene alumnos inscritos.</p>}
       {editable && alumnos.length > 0 && !exigeMotivo && (
-        <button type="button" className="btn btn-line sm" style={{ justifySelf: 'start', width: 'auto' }} onClick={() => setF((s) => Object.fromEntries(Object.entries(s).map(([id, x]) => [id, { ...x, estado: x.estado || 'presente' }])))}>Marcar a todos los que faltan como presentes</button>
+        <button type="button" className="btn btn-line sm" style={{ justifySelf: 'start', width: 'auto' }} onClick={() => setF((s) => Object.fromEntries(Object.entries(s).map(([id, x]) => [id, { ...x, estado: x.estado || 'presente' }])))}>Marcar a todos los que faltan como «Asistió»</button>
       )}
       <div className="asis-lista">
         {alumnos.map((a) => {
@@ -197,7 +197,7 @@ function AsistenciaGrupo({ bundle, recargar, gerente, avisar }) {
       </div>
 
       <h3 className="sub">Resumen por alumno</h3>
-      <p className="note">Asistió = presente o tarde, sobre las clases ya dictadas. Para el certificado se pedirá 80 % o más de asistencia.</p>
+      <p className="note">Asistió = marcado como «Asistió», sobre las clases ya dictadas. Una falta justificada se corrige a «Asistió» (con sustento). Para el certificado se pedirá 80 % o más de asistencia.</p>
       {alumnos.length === 0 ? <p className="note">Aún no hay alumnos inscritos en este grupo.</p> : (
         <div className="cons-wrap">
           <table className="cons-table" style={{ minWidth: 560 }}>
@@ -210,7 +210,7 @@ function AsistenciaGrupo({ bundle, recargar, gerente, avisar }) {
                     <td><b>{nombreAlumno(a)}</b><small className="paq">{a.codigo}</small></td>
                     <td>{r.pct == null ? '—' : <><span className={`pill ${r.pct < 80 ? 'off baja' : ''}`}>{r.pct} %</span> <small>{r.asistio}/{r.dictadas}</small></>}</td>
                     <td>{r.pctPart == null ? '—' : <small>{r.participo}/{r.dictadas} ({r.pctPart} %)</small>}</td>
-                    <td>{r.dictadas ? <small>{r.falta} falta{r.falta === 1 ? '' : 's'}{r.justificada ? ` · ${r.justificada} justif.` : ''}</small> : '—'}</td>
+                    <td>{r.dictadas ? <small>{r.falta} falta{r.falta === 1 ? '' : 's'}</small> : '—'}</td>
                   </tr>
                 )
               })}
@@ -363,7 +363,7 @@ function GrupoProfesor({ g, curso, volver, avisar }) {
           <div className="kpis">
             <div><b>{curso?.horas || '—'} h</b><span>duración del curso</span></div>
             <div><b>{curso?.sesiones || '—'}</b><span>sesiones</span></div>
-            <div><b>{g.inscritos ?? '—'}</b><span>inscritos (mín. {g.minimo || 10} · máx. {g.maximo || 20})</span></div>
+            <div><b>{g.inscritos ?? '—'}</b><span>inscritos (mín. {g.minimo || 5} · máx. {g.maximo || 20})</span></div>
           </div>
           {curso?.descripcion && <p className="note">{curso.descripcion}</p>}
           <h3 className="sub">Temario</h3>

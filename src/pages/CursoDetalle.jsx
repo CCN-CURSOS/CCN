@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { loadCatalog, wa, fechaCorta } from '../lib/data.js'
 import CourseCard from '../components/CourseCard.jsx'
+import { precioWeb } from '../lib/igv.js'
 import { Header, Footer } from '../components/Layout.jsx'
 
 const Flecha = () => (
@@ -104,8 +105,8 @@ export default function CursoDetalle() {
             <aside className="cd-side" style={{ top: alto + 96 }}>
               <div className="cd-box">
                 <div className="cd-precio">
-                  <b>S/{curso.precio}</b>
-                  {curso.precio_antes > curso.precio && <><span className="antes">S/{curso.precio_antes}</span><span className="dsct">-{Math.round((1 - curso.precio / curso.precio_antes) * 100)}% DSCT.</span></>}
+                  <b>{precioWeb(curso.precio)}</b><small className="igv"> IGV incl.</small>
+                  {curso.precio_antes > curso.precio && <><span className="antes">{precioWeb(curso.precio_antes)}</span><span className="dsct">-{Math.round((1 - curso.precio / curso.precio_antes) * 100)}% DSCT.</span></>}
                 </div>
                 <dl>
                   {grupo?.inicio && <div><dt>Inicio</dt><dd>{fechaCorta(grupo.inicio)}</dd></div>}
