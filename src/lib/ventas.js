@@ -1,5 +1,6 @@
 /* Métricas del vendedor: todo se calcula con los datos que el panel ya tiene (sin tablas extra). */
 import { sinIgv } from './igv.js'
+import { FERIADOS } from './clases.js'
 
 export const TRAMOS_DEF = [{ desde: 0, pct: 3 }, { desde: 10, pct: 4 }, { desde: 15, pct: 5 }]
 export const SUELDO_DEF = 450          // sueldo base mensual (S/); si se aumenta el sueldo, se aumenta este monto
@@ -59,7 +60,8 @@ export function metricasVendedor(data, email, mes, trab) {
   const ini = trab?.fecha_inicio ? String(trab.fecha_inicio).slice(0, 10) : ''
   const [ay, am] = mes.split('-').map(Number)
   const diasMes = new Date(ay, am, 0).getDate()
-  const activo = !ini || ini.slice(0, 7) <= mes
+  // Inicio de contrato: antes de esa fecha NO se calcula pago. Sin fecha de inicio tampoco (hay que registrarla en la ficha).
+  const activo = !!ini && ini.slice(0, 7) <= mes
   const parcial = !!ini && ini.slice(0, 7) === mes && Number(ini.slice(8, 10)) > 1
   const dias = parcial ? diasMes - Number(ini.slice(8, 10)) + 1 : diasMes
   const sueldo = !activo ? 0 : parcial ? r2((sueldoBase * dias) / diasMes) : sueldoBase
@@ -83,7 +85,7 @@ export function metricasVendedor(data, email, mes, trab) {
     cupos: sumaCupos(mats), inscripciones: new Set(mats.map((m) => m.paquete_id)).size, vendido, cobrado,
     prospectos: prospectos.length, prospectosInscritos: prospectos.filter((p) => p.estado === 'inscrito').length,
     interesados: ints.length, contactados: contactados.length, contestaron: ints.filter((x) => x.contesto === true).length,
-    sem, tramos, sueldo, sueldoBase, pasajes, pasajesBase, activo, parcial, dias, diasMes, comision: com, bonos, bono, aPagar: activo ? r2(sueldo + pasajes + com.monto + bono) : 0,
+    sem, tramos, sueldo, sueldoBase, pasajes, pasajesBase, ini, activo, parcial, dias, diasMes, comision: com, bonos, bono, aPagar: activo ? r2(sueldo + pasajes + com.monto + bono) : 0,
   }
 }
 
@@ -401,4 +403,49 @@ export function alertasVenta(data, email, ahora = new Date()) {
   const waDe = (g) => (data.gruposWa || []).find((w) => String(w.grupo_id) === String(g.id))
   const gruposAdmin = (data.grupos || []).filter((g) => g.estado !== 'cerrado' && g.activo !== false && g.codigo && waDe(g) && !waDe(g).solo_admins && (!g.inicio || g.inicio >= hoy))
   return { vacantes, gruposAdmin }
+}
+
+
+/* ---------- Descuentos por hora (SOLO GERENCIA: la vendedora no los ve) ----------
+   Valor de la hora = (sueldo + bono de pasajes) ÷ 104 h (24 h por semana × 52 ÷ 12) ≈ S/5,77 con S/600.
+   Se descuenta: (1) horas no trabajadas del periodo (las horas extra del mismo mes compensan; los feriados cuentan 4 h) y
+   (2) ajustes que registra gerencia a mano, p. ej. "Día presencial no asistido" = 4 h. El descuento alcanza también al bono.
+   Solo cuenta desde el inicio de contrato. En el mes en curso se evalúa hasta AYER. */
+export const HORAS_MES_MIN = 104
+const isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+export function descuentosVendedora(data, email, mes, trab, ahora = new Date()) {
+  const ini = trab?.fecha_inicio ? String(trab.fecha_inicio).slice(0, 10) : ''
+  const [ay, am] = mes.split('-').map(Number)
+  const diasMes = new Date(ay, am, 0).getDate()
+  const primero = `${mes}-01`
+  const ultimo = `${mes}-${String(diasMes).padStart(2, '0')}`
+  const hoy = isoLocal(ahora)
+  const ayer = isoLocal(new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() - 1))
+  const desde = ini && ini > primero ? ini : primero
+  const hasta = mes < hoy.slice(0, 7) ? ultimo : mes === hoy.slice(0, 7) ? ayer : ''
+  const sueldoBase = Number(trab?.sueldo_base ?? SUELDO_DEF)
+  const pasajes = Number(trab?.bono_pasajes ?? BONO_PASAJES_DEF)
+  const valorHora = r2((sueldoBase + pasajes) / HORAS_MES_MIN)
+  const empezo = !!ini && !!hasta && hasta >= desde
+  let dias = 0, minMin = 0, trabMin = 0
+  if (empezo) {
+    const a = new Date(desde + 'T12:00:00'), b = new Date(hasta + 'T12:00:00')
+    dias = Math.round((b - a) / 86400000) + 1
+    minMin = Math.round((24 * 60 * dias) / 7)
+    const porDia = new Map()
+    ;(data.jornadas || []).filter((j) => j.vendedor === email).forEach((j) => {
+      const d = isoLocal(new Date(j.inicio))
+      if (d >= desde && d <= hasta) porDia.set(d, (porDia.get(d) || 0) + minutosJornada(j, ahora))
+    })
+    for (let i = 0; i < dias; i++) {
+      const d = isoLocal(new Date(a.getFullYear(), a.getMonth(), a.getDate() + i))
+      if (FERIADOS.includes(d.slice(5))) porDia.set(d, Math.max(porDia.get(d) || 0, 240))
+    }
+    trabMin = [...porDia.values()].reduce((t, x) => t + x, 0)
+  }
+  const faltanMin = Math.max(0, minMin - trabMin)
+  const descHoras = r2((faltanMin / 60) * valorHora)
+  const ajustes = (data.descuentos_trab || []).filter((x) => x.vendedor === email && x.mes === mes)
+  const descAjustes = r2(ajustes.reduce((t, x) => t + Number(x.horas || 0) * valorHora, 0))
+  return { desde, hasta, empezo, dias, minMin, trabMin, faltanMin, valorHora, descHoras, ajustes, descAjustes, total: r2(descHoras + descAjustes) }
 }

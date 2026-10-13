@@ -105,9 +105,9 @@ export const DEMO_USER = 'demo@ccn.pe'
 const demoRead = () => {
   try {
     const raw = localStorage.getItem(LS)
-    if (raw) { const d = JSON.parse(raw); if (!d.enlaces) d.enlaces = SEED_ENLACES; if (!d.consultas) d.consultas = []; if (!d.interesados) d.interesados = []; for (const k of ['alumnos', 'matriculas', 'pagos', 'historial', 'prospectos', 'trabajadores', 'gruposWa', 'asignaciones', 'pagos_trabajador', 'instalaciones', 'accesos', 'jornadas', 'pendientes', 'notas_agenda', 'plantillas', 'documentos', 'quejas', 'clases', 'asistencias']) if (!d[k]) d[k] = []; if (!d.equipo) d.equipo = [{ email: 'demo@ccn.pe', rol: 'gerente' }]; return d }
+    if (raw) { const d = JSON.parse(raw); if (!d.enlaces) d.enlaces = SEED_ENLACES; if (!d.consultas) d.consultas = []; if (!d.interesados) d.interesados = []; for (const k of ['alumnos', 'matriculas', 'pagos', 'historial', 'prospectos', 'trabajadores', 'gruposWa', 'asignaciones', 'pagos_trabajador', 'instalaciones', 'accesos', 'jornadas', 'pendientes', 'notas_agenda', 'plantillas', 'documentos', 'quejas', 'clases', 'asistencias', 'descuentos_trab']) if (!d[k]) d[k] = []; if (!d.equipo) d.equipo = [{ email: 'demo@ccn.pe', rol: 'gerente' }]; return d }
   } catch (e) { /* sin almacenamiento */ }
-  return { cursos: SEED_CURSOS, grupos: [], enlaces: SEED_ENLACES, consultas: [], interesados: [], alumnos: [], matriculas: [], pagos: [], historial: [], prospectos: [], trabajadores: [], gruposWa: [], asignaciones: [], pagos_trabajador: [], instalaciones: [], accesos: [], jornadas: [], pendientes: [], notas_agenda: [], plantillas: [], documentos: [], quejas: [], clases: [], asistencias: [], equipo: [{ email: 'demo@ccn.pe', rol: 'gerente' }], ajustes: { whatsapp: WA_ENV } }
+  return { cursos: SEED_CURSOS, grupos: [], enlaces: SEED_ENLACES, consultas: [], interesados: [], alumnos: [], matriculas: [], pagos: [], historial: [], prospectos: [], trabajadores: [], gruposWa: [], asignaciones: [], pagos_trabajador: [], instalaciones: [], accesos: [], jornadas: [], pendientes: [], notas_agenda: [], plantillas: [], documentos: [], quejas: [], clases: [], asistencias: [], descuentos_trab: [], equipo: [{ email: 'demo@ccn.pe', rol: 'gerente' }], ajustes: { whatsapp: WA_ENV } }
 }
 const demoWrite = (db) => { try { localStorage.setItem(LS, JSON.stringify(db)) } catch (e) { /* ignorar */ } }
 const uid = () => 'd' + Math.random().toString(36).slice(2, 10)
@@ -168,7 +168,7 @@ export async function contarClic(id) {
 /* ---------- Panel admin ---------- */
 export async function loadAll() {
   if (!hasBackend) { const db = demoRead(); return { ...db, ajustes: db.ajustes || { whatsapp: WA_ENV } } }
-  const [c, g, a, en, co, it, al, ma, pa, hi, eq, pr, tr, gw, asg, pt, ins, acc, jor, pen, nta, pla, doc, que] = await Promise.all([
+  const [c, g, a, en, co, it, al, ma, pa, hi, eq, pr, tr, gw, asg, pt, ins, acc, jor, pen, nta, pla, doc, que, des] = await Promise.all([
     supabase.from('cursos').select('*').order('orden'),
     supabase.from('grupos').select('*').order('inicio', { ascending: false }),
     supabase.from('ajustes').select('*'),
@@ -193,6 +193,7 @@ export async function loadAll() {
     supabase.from('plantillas_doc').select('*'),
     supabase.from('documentos_trab').select('*').order('creado', { ascending: false }),
     supabase.from('quejas').select('*').order('creado', { ascending: false }),
+    supabase.from('descuentos_trab').select('*').order('creado', { ascending: false }),
   ])
   if (c.error) throw c.error
   if (g.error) throw g.error
@@ -204,7 +205,7 @@ export async function loadAll() {
     consultas: co.error ? [] : (co.data || []), consultasError: co.error ? co.error.message : '',
     interesados: it.error ? [] : (it.data || []), interesadosError: it.error ? it.error.message : '',
     alumnos: al.error ? [] : (al.data || []), matriculas: ma.error ? [] : (ma.data || []), pagos: pa.error ? [] : (pa.data || []),
-    historial: hi.error ? [] : (hi.data || []), equipo: eq.error ? [] : (eq.data || []), prospectos: pr.error ? [] : (pr.data || []), prospectosError: pr.error ? pr.error.message : '', trabajadores: tr.error ? [] : (tr.data || []), trabajadoresError: tr.error ? tr.error.message : '', gruposWa: gw.error ? [] : (gw.data || []), gruposWaError: gw.error ? gw.error.message : '', asignaciones: asg.error ? [] : (asg.data || []), pagos_trabajador: pt.error ? [] : (pt.data || []), profesoresError: asg.error ? asg.error.message : '', instalaciones: ins.error ? [] : (ins.data || []), instalacionesError: ins.error ? ins.error.message : '', accesos: acc.error ? [] : (acc.data || []), accesosError: acc.error ? acc.error.message : '', jornadas: jor.error ? [] : (jor.data || []), jornadasError: jor.error ? jor.error.message : '', pendientes: pen.error ? [] : (pen.data || []), pendientesError: pen.error ? pen.error.message : '', notas_agenda: nta.error ? [] : (nta.data || []), notasError: nta.error ? nta.error.message : '', plantillas: pla.error ? [] : (pla.data || []), documentos: doc.error ? [] : (doc.data || []), documentosError: doc.error ? doc.error.message : '', quejas: que.error ? [] : (que.data || []), quejasError: que.error ? que.error.message : '', crmError,
+    historial: hi.error ? [] : (hi.data || []), equipo: eq.error ? [] : (eq.data || []), prospectos: pr.error ? [] : (pr.data || []), prospectosError: pr.error ? pr.error.message : '', trabajadores: tr.error ? [] : (tr.data || []), trabajadoresError: tr.error ? tr.error.message : '', gruposWa: gw.error ? [] : (gw.data || []), gruposWaError: gw.error ? gw.error.message : '', asignaciones: asg.error ? [] : (asg.data || []), pagos_trabajador: pt.error ? [] : (pt.data || []), profesoresError: asg.error ? asg.error.message : '', instalaciones: ins.error ? [] : (ins.data || []), instalacionesError: ins.error ? ins.error.message : '', accesos: acc.error ? [] : (acc.data || []), accesosError: acc.error ? acc.error.message : '', jornadas: jor.error ? [] : (jor.data || []), jornadasError: jor.error ? jor.error.message : '', pendientes: pen.error ? [] : (pen.data || []), pendientesError: pen.error ? pen.error.message : '', notas_agenda: nta.error ? [] : (nta.data || []), notasError: nta.error ? nta.error.message : '', plantillas: pla.error ? [] : (pla.data || []), documentos: doc.error ? [] : (doc.data || []), documentosError: doc.error ? doc.error.message : '', quejas: que.error ? [] : (que.data || []), quejasError: que.error ? que.error.message : '', descuentos_trab: des.error ? [] : (des.data || []), crmError,
     ajustes: { whatsapp: WA_ENV, ...ajustes },
   }
 }

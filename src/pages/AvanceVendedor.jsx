@@ -40,6 +40,10 @@ export default function AvanceVendedor({ data, email, trab, verPago = true, hist
         </label>
       </div>
 
+      {(!trab?.fecha_inicio || String(trab.fecha_inicio).slice(0, 10) > new Date().toISOString().slice(0, 10)) && (
+        <p className="banner">{trab?.fecha_inicio ? `El contrato empieza el ${new Date(String(trab.fecha_inicio).slice(0, 10) + 'T00:00:00').toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' })}. Hasta entonces no se calcula ningún pago.` : 'Aún no está registrada la fecha de inicio del contrato; hasta entonces no se calcula ningún pago.'}</p>
+      )}
+
       {compacto && (
         <section className="hero-din" aria-label="Lo que vas ganando">
           <small>Este mes vas ganando</small>

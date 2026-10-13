@@ -3,7 +3,7 @@ import AvanceVendedor from './AvanceVendedor'
 import JornadaCard from '../components/JornadaCard'
 import Icon from '../components/Icons'
 import { Barras, Embudo } from '../components/Charts'
-import { lunesDe, semanaHoras, minutosJornada, jornadaSinSenal, fmtHM, MINIMO_SEMANA_MIN, metasDe, PUESTOS, SUELDO_DEF, BONO_PASAJES_DEF, TARIFA_HORA_DEF, TRAMOS_DEF, tramosDe, metricasVendedor, metricasProfesor, nombreGrupoWa, gruposSinWhatsapp, metricasCurso, AVISO_INSTALACION, PROGRAMAS, ESTADOS_INSTALACION, programaSugerido, errorHorarioInstalacion, choqueInstalacion, horaCorta, hora12, proximoRecontacto, recontactoVencido, reporteSemana, alertasVenta } from '../lib/ventas'
+import { lunesDe, semanaHoras, minutosJornada, jornadaSinSenal, fmtHM, MINIMO_SEMANA_MIN, metasDe, PUESTOS, SUELDO_DEF, BONO_PASAJES_DEF, descuentosVendedora, TARIFA_HORA_DEF, TRAMOS_DEF, tramosDe, metricasVendedor, metricasProfesor, nombreGrupoWa, gruposSinWhatsapp, metricasCurso, AVISO_INSTALACION, PROGRAMAS, ESTADOS_INSTALACION, programaSugerido, errorHorarioInstalacion, choqueInstalacion, horaCorta, hora12, proximoRecontacto, recontactoVencido, reporteSemana, alertasVenta } from '../lib/ventas'
 import { TIPOS_DOC, VARIABLES_DOC, renderDoc, plantillaDe, fechaLarga } from '../lib/docs'
 import { conIgv, precioWeb } from '../lib/igv'
 import { Link } from 'react-router-dom'
@@ -2265,7 +2265,7 @@ function TrabajadorForm({ inicial, equipo, cursos, onClose, onSave }) {
                 <option value="">Sin acceso</option>{(equipo || []).filter((e) => e.rol === 'vendedora').map((e) => <option key={e.email} value={e.email}>{e.email}</option>)}
               </select>
             </label>
-            <label>Fecha de inicio<input id="tr-ini" type="date" value={f.fecha_inicio || ''} onChange={(e) => set('fecha_inicio', e.target.value)} /></label>
+            <label>Inicio de contrato<input id="tr-ini" type="date" value={f.fecha_inicio || ''} onChange={(e) => set('fecha_inicio', e.target.value)} /><small>Desde este día se calcula su pago (y los descuentos). Antes de esta fecha el sistema no calcula nada.</small></label>
             <label>Sueldo base mensual (S/)<input id="tr-sue" type="number" min="0" value={f.sueldo_base} onChange={(e) => set('sueldo_base', e.target.value)} /></label>
             <label>Bono de pasajes mensual (S/)<input id="tr-bono" type="number" min="0" value={f.bono_pasajes ?? 0} onChange={(e) => set('bono_pasajes', e.target.value)} /><small>Si se aumenta el sueldo, se sube el sueldo base y este bono se mantiene.</small></label>
             <div>
@@ -2419,12 +2419,13 @@ function Trabajadores({ data, hacer }) {
     return (
       <>
         <button className="btn btn-line sm" onClick={() => setSel(null)}><Icon n="back" size={13} /> {PUESTOS[t.puesto] || 'Trabajadores'}</button>
-        <Seccion titulo={t.nombre} ayuda={`${t.cargo || (t.puesto === 'instructor' ? 'Profesor' : 'Vendedor')}${t.puesto === 'vendedor' ? ` · sueldo base ${soles(t.sueldo_base)}` : ''}${t.activo === false ? ' · inactivo' : ''}`}>
+        <Seccion titulo={t.nombre} ayuda={`${t.cargo || (t.puesto === 'instructor' ? 'Profesor' : 'Vendedor')}${t.puesto === 'vendedor' ? ` · sueldo base ${soles(t.sueldo_base)} + bono ${soles(t.bono_pasajes)} · ${t.fecha_inicio ? `contrato desde el ${fechaCorta(t.fecha_inicio)}` : 'SIN fecha de inicio de contrato'}` : ''}${t.activo === false ? ' · inactivo' : ''}`}>
           <button className="btn btn-teal" onClick={() => setForm(t)}>Editar datos</button>
           {!t.virtual && <button className="btn btn-line" onClick={() => setBorrando(t)}>Borrar</button>}
         </Seccion>
         {t.notas && <p className="note">{t.notas}</p>}
         {t.puesto === 'vendedor' && (t.email ? <AvanceVendedor data={data} email={t.email} trab={t} verPago historial={false} /> : <div className="vacio"><p>Esta persona no tiene correo de acceso asignado. Edita sus datos para vincularla.</p></div>)}
+        {t.puesto === 'vendedor' && t.email && <DescuentosDe data={data} t={t} hacer={hacer} />}
         {t.puesto === 'vendedor' && t.email && <ReporteSemanal data={data} email={t.email} />}
         {t.puesto === 'vendedor' && t.email && <DocumentosDe data={data} t={t} hacer={hacer} />}
         {t.puesto === 'vendedor' && t.email && <PendientesDe data={data} email={t.email} hacer={hacer} />}
@@ -2454,13 +2455,76 @@ function Trabajadores({ data, hacer }) {
           return (
             <button key={x.id || x.email} className={`tcard ${x.activo === false ? 'off' : ''}`} onClick={() => setSel(x.id || x.email)}>
               <b>{x.nombre}</b><small>{x.cargo || PUESTOS[x.puesto]}{x.activo === false ? ' · inactivo' : ''}</small>
-              {mv && <><span><i>{mv.cupos}</i> cupos · {soles(mv.vendido)} vendido</span><span>A pagar este mes: <i>{soles(mv.aPagar)}</i></span></>}
+              {mv && <><span><i>{mv.cupos}</i> cupos · {soles(mv.vendido)} vendido</span><span>{!x.fecha_inicio ? <i>Falta el inicio de contrato</i> : x.fecha_inicio > hoyISO() ? <>Contrato inicia el <i>{fechaCorta(x.fecha_inicio)}</i></> : <>A pagar este mes: <i>{soles(Math.max(0, mv.aPagar - descuentosVendedora(data, x.email, mes, x).total))}</i></>}</span></>}
               {mp && <><span><i>{mp.cursos.length}</i> cursos · <i>{mp.nGrupos}</i> grupos · <i>{mp.horas} h</i></span><span>Pagado: <i>{soles(mp.totalPagado)}</i> · por pagar: <i>{soles(mp.porPagar)}</i></span></>}
             </button>
           )
         })}
       </div>
       {formEl}
+    </>
+  )
+}
+
+/* ================= DESCUENTOS POR HORA (solo gerencia; la vendedora NO los ve) ================= */
+function DescuentosDe({ data, t, hacer }) {
+  const hoyMes = hoyISO().slice(0, 7)
+  const iniMes = t.fecha_inicio ? String(t.fecha_inicio).slice(0, 7) : ''
+  const meses = []
+  if (iniMes && iniMes <= hoyMes) { let [y, mm] = iniMes.split('-').map(Number); while (`${y}-${String(mm).padStart(2, '0')}` <= hoyMes) { meses.push(`${y}-${String(mm).padStart(2, '0')}`); mm++; if (mm > 12) { mm = 1; y++ } } }
+  const [mes, setMes] = useState(hoyMes)
+  const [dia, setDia] = useState(hoyISO())
+  const [otro, setOtro] = useState({ horas: '', motivo: '' })
+  const d = descuentosVendedora(data, t.email, mes, t)
+  const m = metricasVendedor(data, t.email, mes, t)
+  const neto = Math.max(0, m.aPagar - d.total)
+  const reg = (horas, motivo, fecha) => hacer(() => save('descuentos_trab', { vendedor: t.email, mes, fecha: fecha || null, horas, motivo }), 'Descuento registrado')
+  return (
+    <>
+      <Seccion titulo="Descuentos por hora (solo gerencia)" ayuda="Lo que se descuenta por horas no trabajadas y por días presenciales no asistidos. La vendedora no ve esta sección. Solo cuenta desde el inicio de contrato.">
+        {meses.length > 1 && <select aria-label="Mes" value={mes} onChange={(e) => setMes(e.target.value)}>{meses.map((x) => <option key={x} value={x}>{nombreMes(x)}</option>)}</select>}
+      </Seccion>
+      {!t.fecha_inicio ? <p className="banner">Registra el <b>inicio de contrato</b> en “Editar datos” para calcular su pago y sus descuentos.</p>
+        : t.fecha_inicio > hoyISO() ? <p className="note">Su contrato empieza el {fechaCorta(t.fecha_inicio)}. Hasta entonces no se calcula pago ni descuentos.</p> : (
+          <div className="cons-wrap">
+            <table className="cons-table" style={{ minWidth: 420 }}>
+              <tbody>
+                <tr><td>Periodo evaluado</td><td>{d.empezo ? `${fechaCorta(d.desde)} → ${fechaCorta(d.hasta)} (${d.dias} días${mes === hoyMes ? ', hasta ayer' : ''})` : 'Aún no hay días para evaluar'}</td></tr>
+                <tr><td>Horas mínimas del periodo</td><td>{fmtHM(d.minMin)}</td></tr>
+                <tr><td>Horas trabajadas</td><td>{fmtHM(d.trabMin)}</td></tr>
+                <tr><td>Horas faltantes</td><td><b>{fmtHM(d.faltanMin)}</b></td></tr>
+                <tr><td>Valor de la hora</td><td>{soles(d.valorHora)} <small>(sueldo + bono ÷ 104 h)</small></td></tr>
+                <tr><td>Descuento por horas faltantes</td><td>{soles(d.descHoras)}</td></tr>
+                <tr><td>Ajustes registrados</td><td>{soles(d.descAjustes)}</td></tr>
+                <tr><td><b>Total descuento</b></td><td><b>{soles(d.total)}</b></td></tr>
+                <tr><td>Pago del mes antes del descuento</td><td>{soles(m.aPagar)}</td></tr>
+                <tr><td><b>A pagar neto</b></td><td><b>{soles(neto)}</b></td></tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+      {t.fecha_inicio && t.fecha_inicio <= hoyISO() && (
+        <>
+          <h3 className="sub">Registrar un descuento</h3>
+          <div className="fila-form" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end' }}>
+            <label>Día presencial no asistido<input type="date" value={dia} onChange={(e) => setDia(e.target.value)} /></label>
+            <button className="btn btn-line" disabled={!dia} onClick={() => reg(4, `Día presencial no asistido (${fechaCorta(dia)})`, dia)}>+ Descontar 4 h</button>
+          </div>
+          <div className="fila-form" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end', marginTop: 10 }}>
+            <label>Otras horas<input type="number" min="0.5" step="0.5" value={otro.horas} onChange={(e) => setOtro({ ...otro, horas: e.target.value })} style={{ width: 90 }} /></label>
+            <label style={{ flex: 1, minWidth: 180 }}>Motivo<input value={otro.motivo} onChange={(e) => setOtro({ ...otro, motivo: e.target.value })} placeholder="Ej.: salió antes de lo acordado" /></label>
+            <button className="btn btn-line" disabled={!(Number(otro.horas) > 0) || otro.motivo.trim().length < 3} onClick={() => { reg(Number(otro.horas), otro.motivo.trim(), null); setOtro({ horas: '', motivo: '' }) }}>+ Descontar</button>
+          </div>
+          {d.ajustes.length > 0 && (
+            <ul className="lista-simple" style={{ marginTop: 12 }}>
+              {d.ajustes.map((x) => (
+                <li key={x.id}>{x.horas} h · {x.motivo || 'Sin motivo'} <small>({soles(Number(x.horas) * d.valorHora)}{x.registrado_por ? ` · ${String(x.registrado_por).split('@')[0]}` : ''})</small> <button type="button" className="link" onClick={() => hacer(() => remove('descuentos_trab', x.id), 'Descuento quitado')}>Quitar</button></li>
+              ))}
+            </ul>
+          )}
+          <p className="note">Las horas extra del mismo mes compensan las faltantes. Los feriados cuentan como 4 h. Las horas se toman de “Iniciar/Terminar jornada”.</p>
+        </>
+      )}
     </>
   )
 }
