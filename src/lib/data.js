@@ -105,9 +105,9 @@ export const DEMO_USER = 'demo@ccn.pe'
 const demoRead = () => {
   try {
     const raw = localStorage.getItem(LS)
-    if (raw) { const d = JSON.parse(raw); if (!d.enlaces) d.enlaces = SEED_ENLACES; if (!d.consultas) d.consultas = []; if (!d.interesados) d.interesados = []; for (const k of ['alumnos', 'matriculas', 'pagos', 'historial', 'prospectos', 'trabajadores', 'gruposWa', 'asignaciones', 'pagos_trabajador', 'instalaciones', 'accesos', 'jornadas', 'pendientes', 'notas_agenda', 'plantillas', 'documentos', 'quejas', 'clases', 'asistencias', 'descuentos_trab']) if (!d[k]) d[k] = []; if (!d.equipo) d.equipo = [{ email: 'demo@ccn.pe', rol: 'gerente' }]; return d }
+    if (raw) { const d = JSON.parse(raw); if (!d.enlaces) d.enlaces = SEED_ENLACES; if (!d.consultas) d.consultas = []; if (!d.interesados) d.interesados = []; for (const k of ['alumnos', 'matriculas', 'pagos', 'historial', 'prospectos', 'trabajadores', 'gruposWa', 'asignaciones', 'pagos_trabajador', 'instalaciones', 'accesos', 'jornadas', 'pendientes', 'notas_agenda', 'plantillas', 'documentos', 'quejas', 'clases', 'asistencias', 'descuentos_trab', 'certificados', 'firmas', 'entregables', 'entregas', 'grupo_evaluaciones', 'grupo_accesos', 'grupo_material', 'alumno_notas']) if (!d[k]) d[k] = []; if (!d.equipo) d.equipo = [{ email: 'demo@ccn.pe', rol: 'gerente' }]; return d }
   } catch (e) { /* sin almacenamiento */ }
-  return { cursos: SEED_CURSOS, grupos: [], enlaces: SEED_ENLACES, consultas: [], interesados: [], alumnos: [], matriculas: [], pagos: [], historial: [], prospectos: [], trabajadores: [], gruposWa: [], asignaciones: [], pagos_trabajador: [], instalaciones: [], accesos: [], jornadas: [], pendientes: [], notas_agenda: [], plantillas: [], documentos: [], quejas: [], clases: [], asistencias: [], descuentos_trab: [], equipo: [{ email: 'demo@ccn.pe', rol: 'gerente' }], ajustes: { whatsapp: WA_ENV } }
+  return { cursos: SEED_CURSOS, grupos: [], enlaces: SEED_ENLACES, consultas: [], interesados: [], alumnos: [], matriculas: [], pagos: [], historial: [], prospectos: [], trabajadores: [], gruposWa: [], asignaciones: [], pagos_trabajador: [], instalaciones: [], accesos: [], jornadas: [], pendientes: [], notas_agenda: [], plantillas: [], documentos: [], quejas: [], clases: [], asistencias: [], descuentos_trab: [], certificados: [], firmas: [], entregables: [], entregas: [], grupo_evaluaciones: [], grupo_accesos: [], grupo_material: [], alumno_notas: [], equipo: [{ email: 'demo@ccn.pe', rol: 'gerente' }], ajustes: { whatsapp: WA_ENV } }
 }
 const demoWrite = (db) => { try { localStorage.setItem(LS, JSON.stringify(db)) } catch (e) { /* ignorar */ } }
 const uid = () => 'd' + Math.random().toString(36).slice(2, 10)
@@ -167,8 +167,12 @@ export async function contarClic(id) {
 
 /* ---------- Panel admin ---------- */
 export async function loadAll() {
-  if (!hasBackend) { const db = demoRead(); return { ...db, ajustes: db.ajustes || { whatsapp: WA_ENV } } }
-  const [c, g, a, en, co, it, al, ma, pa, hi, eq, pr, tr, gw, asg, pt, ins, acc, jor, pen, nta, pla, doc, que, des] = await Promise.all([
+  if (!hasBackend) {
+    const db = demoRead()
+    return { ...db, ajustes: db.ajustes || { whatsapp: WA_ENV }, instructoresDisp: (db.trabajadores || []).filter((t) => t.activo !== false && t.puesto === 'instructor')
+      .map((t) => ({ id: t.id, nombre: t.nombre, email: t.email, acceso: (db.equipo || []).some((e) => e.rol === 'profesor' && e.email === t.email) })), clasesConAsistencia: [...new Set((db.asistencias || []).map((x) => x.clase_id))] }
+  }
+  const [c, g, a, en, co, it, al, ma, pa, hi, eq, pr, tr, gw, asg, pt, ins, acc, jor, pen, nta, pla, doc, que, des, cer, fir, ent, cla, gev, ist, gac, asi, dsp] = await Promise.all([
     supabase.from('cursos').select('*').order('orden'),
     supabase.from('grupos').select('*').order('inicio', { ascending: false }),
     supabase.from('ajustes').select('*'),
@@ -194,6 +198,15 @@ export async function loadAll() {
     supabase.from('documentos_trab').select('*').order('creado', { ascending: false }),
     supabase.from('quejas').select('*').order('creado', { ascending: false }),
     supabase.from('descuentos_trab').select('*').order('creado', { ascending: false }),
+    supabase.from('certificados').select('*').order('creado', { ascending: false }).limit(3000),
+    supabase.from('firmas').select('*'),
+    supabase.from('entregables').select('*').order('curso_id').order('orden'),
+    supabase.from('clases').select('id, grupo_id, numero, inicio, fin, reabierta_hasta, reabierta_por, reabierta_motivo').order('grupo_id').order('numero').limit(5000),
+    supabase.from('grupo_evaluaciones').select('*'),
+    supabase.rpc('instructores_de_grupos'),
+    supabase.from('grupo_accesos').select('*'),
+    supabase.from('asistencias').select('clase_id').limit(30000),
+    supabase.rpc('instructores_disponibles'),
   ])
   if (c.error) throw c.error
   if (g.error) throw g.error
@@ -205,7 +218,9 @@ export async function loadAll() {
     consultas: co.error ? [] : (co.data || []), consultasError: co.error ? co.error.message : '',
     interesados: it.error ? [] : (it.data || []), interesadosError: it.error ? it.error.message : '',
     alumnos: al.error ? [] : (al.data || []), matriculas: ma.error ? [] : (ma.data || []), pagos: pa.error ? [] : (pa.data || []),
-    historial: hi.error ? [] : (hi.data || []), equipo: eq.error ? [] : (eq.data || []), prospectos: pr.error ? [] : (pr.data || []), prospectosError: pr.error ? pr.error.message : '', trabajadores: tr.error ? [] : (tr.data || []), trabajadoresError: tr.error ? tr.error.message : '', gruposWa: gw.error ? [] : (gw.data || []), gruposWaError: gw.error ? gw.error.message : '', asignaciones: asg.error ? [] : (asg.data || []), pagos_trabajador: pt.error ? [] : (pt.data || []), profesoresError: asg.error ? asg.error.message : '', instalaciones: ins.error ? [] : (ins.data || []), instalacionesError: ins.error ? ins.error.message : '', accesos: acc.error ? [] : (acc.data || []), accesosError: acc.error ? acc.error.message : '', jornadas: jor.error ? [] : (jor.data || []), jornadasError: jor.error ? jor.error.message : '', pendientes: pen.error ? [] : (pen.data || []), pendientesError: pen.error ? pen.error.message : '', notas_agenda: nta.error ? [] : (nta.data || []), notasError: nta.error ? nta.error.message : '', plantillas: pla.error ? [] : (pla.data || []), documentos: doc.error ? [] : (doc.data || []), documentosError: doc.error ? doc.error.message : '', quejas: que.error ? [] : (que.data || []), quejasError: que.error ? que.error.message : '', descuentos_trab: des.error ? [] : (des.data || []), crmError,
+    historial: hi.error ? [] : (hi.data || []), equipo: eq.error ? [] : (eq.data || []), prospectos: pr.error ? [] : (pr.data || []), prospectosError: pr.error ? pr.error.message : '', trabajadores: tr.error ? [] : (tr.data || []), trabajadoresError: tr.error ? tr.error.message : '', gruposWa: gw.error ? [] : (gw.data || []), gruposWaError: gw.error ? gw.error.message : '', asignaciones: asg.error ? [] : (asg.data || []), pagos_trabajador: pt.error ? [] : (pt.data || []), profesoresError: asg.error ? asg.error.message : '', instalaciones: ins.error ? [] : (ins.data || []), instalacionesError: ins.error ? ins.error.message : '', accesos: acc.error ? [] : (acc.data || []), accesosError: acc.error ? acc.error.message : '', jornadas: jor.error ? [] : (jor.data || []), jornadasError: jor.error ? jor.error.message : '', pendientes: pen.error ? [] : (pen.data || []), pendientesError: pen.error ? pen.error.message : '', notas_agenda: nta.error ? [] : (nta.data || []), notasError: nta.error ? nta.error.message : '', plantillas: pla.error ? [] : (pla.data || []), documentos: doc.error ? [] : (doc.data || []), documentosError: doc.error ? doc.error.message : '', quejas: que.error ? [] : (que.data || []), quejasError: que.error ? que.error.message : '', descuentos_trab: des.error ? [] : (des.data || []), certificados: cer.error ? [] : (cer.data || []), certificadosError: cer.error ? cer.error.message : '', firmas: fir.error ? [] : (fir.data || []), entregables: ent.error ? [] : (ent.data || []), entregablesError: ent.error ? ent.error.message : '', crmError,
+    clases: cla.error ? [] : (cla.data || []), grupo_evaluaciones: gev.error ? [] : (gev.data || []), instructores: ist.error ? [] : (ist.data || []), grupo_accesos: gac.error ? [] : (gac.data || []), instructoresDisp: dsp.error ? [] : (dsp.data || []),
+    clasesConAsistencia: asi.error ? null : [...new Set((asi.data || []).map((x) => x.clase_id))],
     ajustes: { whatsapp: WA_ENV, ...ajustes },
   }
 }
@@ -255,7 +270,9 @@ export function consultasCSV(lista) {
 
 /* ---------- Interesados (formulario de inscripción de cada curso) ---------- */
 /* Demo: reparte al que lleva más tiempo sin recibir (igual que el automático de Supabase) */
-function demoElegirVendedora(db) {
+function demoElegirVendedora(db, email) {
+  const prev = email && db.interesados.find((i) => String(i.email).toLowerCase() === String(email).toLowerCase() && i.asignado_a && Date.now() - (Date.parse(i.creado) || 0) < 30 * 60000)
+  if (prev && (db.equipo || []).some((e) => e.email === prev.asignado_a && e.rol === 'vendedora' && e.recibe_interesados !== false)) return prev.asignado_a
   const v = (db.equipo || []).filter((e) => e.rol === 'vendedora' && e.recibe_interesados !== false)
   const ult = (m) => Math.max(0, ...db.interesados.filter((i) => i.asignado_a === m).map((i) => Date.parse(i.asignado_en) || 0))
   return v.sort((a, b) => ult(a.email) - ult(b.email) || a.email.localeCompare(b.email))[0]?.email || null
@@ -267,9 +284,10 @@ export async function crearInteresado(c) {
     email: c.email, tipo_doc: c.tipo_doc, documento: c.documento, celular: c.celular,
     acepta_datos: true, acepta_adicional: Boolean(c.acepta_adicional), estado: 'nuevo',
   }
+  if (c.observacion) fila.observacion = String(c.observacion).slice(0, 300)
   if (!hasBackend) {
     const db = demoRead()
-    const quien = demoElegirVendedora(db)
+    const quien = demoElegirVendedora(db, fila.email)
     db.interesados.unshift({ ...fila, id: uid(), creado: new Date().toISOString(), asignado_a: quien, asignado_en: quien ? new Date().toISOString() : null })
     demoWrite(db)
     return
@@ -547,10 +565,22 @@ export function inscritosCSV(lista) {
   return '\ufeffsep=,\r\n' + [cab, ...filas].map((f) => f.map(esc).join(',')).join('\r\n')
 }
 
+/* ¿Tiene el permiso extra de coordinación académica? (ej. Carla: vendedora + Académico) */
+export async function getCoordina(email) {
+  if (!hasBackend) return !!(demoRead().equipo || []).find((x) => x.email === DEMO_USER)?.coordina
+  const { data, error } = await supabase.from('admins').select('coordina').eq('email', email).maybeSingle()
+  return !error && !!(data && data.coordina)
+}
+export async function ponerCoordina(email, valor) {
+  if (!hasBackend) { const db = demoRead(); const x = db.equipo.find((y) => y.email === email); if (x) { x.coordina = !!valor; demoWrite(db) } return }
+  const { error } = await supabase.from('admins').update({ coordina: !!valor }).eq('email', email)
+  if (error) throw new Error(error.code === '42703' ? 'Falta pegar certificados.sql en Supabase (SQL Editor).' : error.message)
+}
 /* ---------- Equipo: quién entra al panel y con qué rol ---------- */
 export const ROLES = {
   gerente: { nombre: 'Gerente', ayuda: 'Ve y maneja todo: gerencia, ventas y web.' },
   vendedora: { nombre: 'Vendedora', ayuda: 'Módulo de ventas: prospectos, inscritos, pagos y grupos.' },
+  asistente: { nombre: 'Asistente académico', ayuda: 'Módulo Académico: grupos, clases, profesor, accesos, T1/T2 y certificados. No ve pagos, precios ni tarifas.' },
   profesor: { nombre: 'Profesor', ayuda: 'Solo ve sus grupos: alumnos, asistencia y documentos. No ve pagos ni precios.' },
 }
 export async function guardarMiembro({ email, rol }) {
@@ -571,18 +601,23 @@ export async function cargarProfesor() {
     const t = (db.trabajadores || []).find((x) => String(x.email || '').toLowerCase() === DEMO_USER)
     const asg = t ? (db.asignaciones || []).filter((a) => a.trabajador_id === t.id) : []
     const grupos = db.grupos.filter((g) => asg.some((a) => String(a.grupo_id) === String(g.id)))
-    return { grupos, cursos: db.cursos, mias: asg.map((a) => ({ grupo_id: a.grupo_id, horas: a.horas, horas_dictadas: a.horas_dictadas })) }
+    return { grupos, cursos: db.cursos, mias: asg.map((a) => ({ grupo_id: a.grupo_id, horas: a.horas, horas_dictadas: a.horas_dictadas })), clases: db.clases.filter((c) => grupos.some((g) => String(g.id) === c.grupo_id)), accesos: db.grupo_accesos || [], asistidas: [...new Set(db.asistencias.map((x) => x.clase_id))] }
   }
   const { data: mias, error } = await supabase.rpc('profesor_mis_grupos')
   if (error) throw error
   const ids = (mias || []).map((x) => x.grupo_id)
-  if (!ids.length) return { grupos: [], cursos: [], mias: [] }
+  if (!ids.length) return { grupos: [], cursos: [], mias: [], clases: [], accesos: [], asistidas: [] }
   const g = await supabase.from('grupos').select('*').in('id', ids).order('inicio')
   if (g.error) throw g.error
   const cids = [...new Set((g.data || []).map((x) => x.curso_id))]
   const c = await supabase.from('cursos').select('*').in('id', cids)
   if (c.error) throw c.error
-  return { grupos: g.data || [], cursos: c.data || [], mias: mias || [] }
+  const [cl, ac, as] = await Promise.all([
+    supabase.from('clases').select('id, grupo_id, numero, inicio, fin, reabierta_hasta, reabierta_por, reabierta_motivo').in('grupo_id', ids).order('inicio'),
+    supabase.from('grupo_accesos').select('*').in('grupo_id', ids),
+    supabase.from('asistencias').select('clase_id').in('grupo_id', ids).limit(20000),
+  ])
+  return { grupos: g.data || [], cursos: c.data || [], mias: mias || [], clases: cl.error ? [] : (cl.data || []), accesos: ac.error ? [] : (ac.data || []), asistidas: as.error ? [] : [...new Set((as.data || []).map((x) => x.clase_id))] }
 }
 
 /* Clases, alumnos (solo nombre, código y correo) y asistencias de un grupo */
@@ -627,7 +662,9 @@ export async function guardarAsistencias(filas, { gerente = false, clase } = {})
   if (!hasBackend) {
     const db = demoRead()
     const t = Date.now(), ini = new Date(clase.inicio).getTime(), fin = new Date(clase.fin).getTime()
-    const fuera = t > fin || t < ini - 10 * 60000
+    const rc = db.clases.find((c) => c.id === clase.id) || clase
+    const reab = t > fin && rc.reabierta_hasta && t <= new Date(rc.reabierta_hasta).getTime()
+    const fuera = (t > fin && !reab) || t < ini - 10 * 60000
     if (fuera && !gerente) throw new Error('La clase terminó: la asistencia está cerrada. Solo gerencia puede corregirla.')
     if (fuera && gerente && !filas.every((f) => String(f.motivo || '').trim().length >= 10)) throw new Error('La clase está cerrada. Para cambiar la asistencia escribe el sustento (el correo del alumno).')
     filas.forEach((f) => {
@@ -900,3 +937,230 @@ export async function atenderQueja(id, nota) {
   if (error) throw error
 }
 export const numeroGerencia = () => numero
+
+
+/* ================= Certificados y constancias ================= */
+/* Clases y asistencias de un grupo (para el cálculo de asistencia; el gerente las lee directo) */
+export async function cargarAsistenciaGrupo(grupoId) {
+  const gid = String(grupoId)
+  if (!hasBackend) { const db = demoRead(); return { clases: db.clases.filter((c) => c.grupo_id === gid).sort((a, b) => a.numero - b.numero), asistencias: db.asistencias.filter((a) => a.grupo_id === gid) } }
+  const [c, a] = await Promise.all([
+    supabase.from('clases').select('*').eq('grupo_id', gid).order('numero'),
+    supabase.from('asistencias').select('*').eq('grupo_id', gid).limit(5000),
+  ])
+  const fallo = [c, a].find((x) => x.error)
+  if (fallo) throw new Error(fallo.error.message)
+  return { clases: c.data || [], asistencias: a.data || [] }
+}
+
+/* Guarda un documento emitido. `nuevoCodigo` genera el número; si por mala suerte se repite, reintenta. */
+export async function emitirCertificado(fila, nuevoCodigo) {
+  if (!hasBackend) {
+    const db = demoRead()
+    if (db.certificados.some((x) => x.matricula_id === fila.matricula_id && x.tipo === fila.tipo && x.curso_titulo === fila.curso_titulo && x.estado === 'vigente')) throw new Error('Ese documento ya fue emitido.')
+    const row = { ...fila, id: uid(), creado: new Date().toISOString(), estado: 'vigente', codigo: nuevoCodigo(fila.tipo), emitido_por: DEMO_USER }
+    db.certificados.unshift(row); demoWrite(db); return row
+  }
+  for (let i = 0; i < 4; i++) {
+    const { data, error } = await supabase.from('certificados').insert({ ...fila, codigo: nuevoCodigo(fila.tipo) }).select('*').single()
+    if (!error) return data
+    if (error.code === '23505' && /codigo/.test(error.message)) continue           // número repetido: probar otro
+    if (error.code === '23505') throw new Error('Ese documento ya fue emitido.')
+    if (error.code === '42P01') throw new Error('Falta pegar certificados.sql en Supabase (SQL Editor).')
+    throw error
+  }
+  throw new Error('No se pudo generar un número único. Intenta de nuevo.')
+}
+
+export async function anularCertificado(id, estado = 'anulado') {
+  if (!hasBackend) { const db = demoRead(); const c = db.certificados.find((x) => x.id === id); if (c) c.estado = estado; demoWrite(db); return }
+  const { error } = await supabase.from('certificados').update({ estado }).eq('id', id)
+  if (error) throw error
+}
+
+/* Verificación pública: hay que acertar el documento del alumno (o su código) y el número del documento */
+export async function verificarDocumento(doc, codigo) {
+  const d = String(doc || '').replace(/\s/g, '').toUpperCase()
+  const c = String(codigo || '').trim().toUpperCase()
+  if (!hasBackend) {
+    const db = demoRead()
+    const x = db.certificados.find((r) => String(r.codigo).toUpperCase() === c && (String(r.alumno_doc || '').replace(/\s/g, '').toUpperCase() === d || String(r.alumno_codigo || '').toUpperCase() === d))
+    return x || null
+  }
+  const { data, error } = await supabase.rpc('verificar_documento', { p_doc: doc, p_codigo: codigo })
+  if (error) throw error
+  return (data && data[0]) || null
+}
+
+/* Firmas reales para los certificados (solo gerencia las ve). clave = 'direccion' o el id del trabajador (instructor). imagen = PNG transparente (data URL). */
+export async function guardarFirma(clave, { nombre = '', cargo = '', imagen = '' }) {
+  const fila = { clave: String(clave), nombre, cargo, imagen, actualizado: new Date().toISOString() }
+  if (!hasBackend) {
+    const db = demoRead(); const i = db.firmas.findIndex((x) => x.clave === fila.clave)
+    if (i >= 0) db.firmas[i] = { ...db.firmas[i], ...fila }; else db.firmas.push(fila)
+    demoWrite(db); return
+  }
+  const { error } = await supabase.from('firmas').upsert(fila)
+  if (error) throw new Error(error.code === '42P01' ? 'Falta pegar certificados.sql en Supabase (SQL Editor).' : error.message)
+}
+export async function quitarFirma(clave) {
+  if (!hasBackend) { const db = demoRead(); db.firmas = db.firmas.filter((x) => x.clave !== String(clave)); demoWrite(db); return }
+  const { error } = await supabase.from('firmas').delete().eq('clave', String(clave))
+  if (error) throw error
+}
+
+/* ================= Entregables ================= */
+/* Entregables de un curso y las entregas (marcas) de un grupo. El profesor ve solo su grupo (lo asegura la base de datos). */
+export async function cargarEntregasGrupo(grupoId, cursoId) {
+  const gid = String(grupoId), cid = String(cursoId)
+  if (!hasBackend) {
+    const db = demoRead()
+    return { entregables: db.entregables.filter((e) => String(e.curso_id) === cid && e.activo !== false).sort((a, b) => a.orden - b.orden), entregas: db.entregas.filter((x) => x.grupo_id === gid), config: (db.grupo_evaluaciones || []).filter((x) => x.grupo_id === gid) }
+  }
+  const [e, x, cf] = await Promise.all([
+    supabase.from('entregables').select('*').eq('curso_id', cid).eq('activo', true).order('orden'),
+    supabase.from('entregas').select('*').eq('grupo_id', gid).limit(5000),
+    supabase.from('grupo_evaluaciones').select('*').eq('grupo_id', gid),
+  ])
+  const fallo = [e, x].find((r) => r.error)
+  if (fallo) throw new Error(fallo.error.code === '42P01' ? 'Falta pegar entregables.sql en Supabase (SQL Editor).' : fallo.error.message)
+  return { entregables: e.data || [], entregas: x.data || [], config: cf.error ? [] : (cf.data || []) }
+}
+
+/* Marca o desmarca un entregable de un alumno */
+export async function guardarEntrega({ grupo_id, alumno_id, entregable_id, ...cambios }) {
+  const campos = {}
+  for (const k of ['entregado', 'aprobado', 'repaso']) if (cambios[k] !== undefined) campos[k] = Boolean(cambios[k])
+  // Aprobar implica que ya entregó; si se quita la entrega, también se quita la aprobación.
+  if (campos.aprobado) campos.entregado = true
+  if (campos.entregado === false) campos.aprobado = false
+  const fila = { grupo_id: String(grupo_id), alumno_id, entregable_id, ...campos, actualizado: new Date().toISOString() }
+  if (!hasBackend) {
+    const db = demoRead()
+    const x = db.entregas.find((r) => r.grupo_id === fila.grupo_id && r.alumno_id === alumno_id && r.entregable_id === entregable_id)
+    if (x) Object.assign(x, fila); else db.entregas.push({ entregado: false, aprobado: false, repaso: false, ...fila, id: uid(), creado: fila.actualizado })
+    demoWrite(db); return
+  }
+  const { error } = await supabase.from('entregas').upsert(fila, { onConflict: 'grupo_id,alumno_id,entregable_id' })
+  if (error) throw error
+}
+
+/* Enlace de entrega (Drive o Forms) y fecha límite propia de una evaluación de un grupo. Lo hace coordinación académica. */
+export async function guardarEvaluacionGrupo({ grupo_id, entregable_id, enlace, fecha_limite }) {
+  const fila = { grupo_id: String(grupo_id), entregable_id, enlace: String(enlace || '').trim(), fecha_limite: fecha_limite || null, actualizado: new Date().toISOString() }
+  if (fila.enlace && !/^https?:\/\//i.test(fila.enlace)) throw new Error('El enlace debe empezar con https://')
+  if (!hasBackend) {
+    const db = demoRead()
+    const x = db.grupo_evaluaciones.find((r) => r.grupo_id === fila.grupo_id && r.entregable_id === entregable_id)
+    if (x) Object.assign(x, fila); else db.grupo_evaluaciones.push({ ...fila, id: uid() })
+    demoWrite(db); return
+  }
+  const { error } = await supabase.from('grupo_evaluaciones').upsert(fila, { onConflict: 'grupo_id,entregable_id' })
+  if (error) throw new Error(error.code === '42P01' ? 'Falta pegar entregables.sql en Supabase (SQL Editor).' : error.message)
+}
+
+/* Zoom y clases grabadas de un grupo (los pone el asistente académico; el profesor los ve) */
+export async function guardarAccesosGrupo({ grupo_id, zoom, grabaciones }) {
+  const url = (v) => { const x = String(v || '').trim(); if (x && !/^https?:\/\//i.test(x)) throw new Error('Los enlaces deben empezar con https://'); return x }
+  const fila = { grupo_id: String(grupo_id), zoom: url(zoom), grabaciones: url(grabaciones), actualizado: new Date().toISOString() }
+  if (!hasBackend) {
+    const db = demoRead()
+    const x = db.grupo_accesos.find((r) => r.grupo_id === fila.grupo_id)
+    if (x) Object.assign(x, fila); else db.grupo_accesos.push(fila)
+    demoWrite(db); return
+  }
+  const { error } = await supabase.from('grupo_accesos').upsert(fila, { onConflict: 'grupo_id' })
+  if (error) throw new Error(error.code === '42P01' ? 'Falta pegar entregables.sql en Supabase (SQL Editor).' : error.message)
+}
+export async function cargarAccesosGrupo(grupoId) {
+  const gid = String(grupoId)
+  if (!hasBackend) { const db = demoRead(); return db.grupo_accesos.find((r) => r.grupo_id === gid) || { zoom: '', grabaciones: '' } }
+  const { data, error } = await supabase.from('grupo_accesos').select('*').eq('grupo_id', gid).maybeSingle()
+  if (error) throw new Error(error.code === '42P01' ? 'Falta pegar entregables.sql en Supabase (SQL Editor).' : error.message)
+  return data || { zoom: '', grabaciones: '' }
+}
+/* ---------- Material del grupo y notas por alumno (profesor) ---------- */
+const FALTA_SQL = 'Falta pegar entregables.sql en Supabase (SQL Editor).'
+export async function cargarMaterialGrupo(grupoId) {
+  const gid = String(grupoId)
+  if (!hasBackend) { const db = demoRead(); return db.grupo_material.filter((m) => m.grupo_id === gid).sort((a, b) => (a.creado || '').localeCompare(b.creado || '')) }
+  const { data, error } = await supabase.from('grupo_material').select('*').eq('grupo_id', gid).order('creado')
+  if (error) throw new Error(error.code === '42P01' ? FALTA_SQL : error.message)
+  return data || []
+}
+export async function guardarMaterial({ grupo_id, titulo, enlace }) {
+  const t = String(titulo || '').trim(); const u = String(enlace || '').trim()
+  if (t.length < 2) throw new Error('Escribe un nombre para el material.')
+  if (!/^https?:\/\//i.test(u)) throw new Error('El enlace debe empezar con https://')
+  const fila = { grupo_id: String(grupo_id), titulo: t, enlace: u }
+  if (!hasBackend) { const db = demoRead(); db.grupo_material.push({ ...fila, id: uid(), creado: new Date().toISOString(), creado_por: DEMO_USER }); demoWrite(db); return }
+  const { error } = await supabase.from('grupo_material').insert({ ...fila, creado_por: (await supabase.auth.getUser()).data?.user?.email || '' })
+  if (error) throw new Error(error.code === '42P01' ? FALTA_SQL : error.message)
+}
+export async function quitarMaterial(id) {
+  if (!hasBackend) { const db = demoRead(); db.grupo_material = db.grupo_material.filter((m) => m.id !== id); demoWrite(db); return }
+  const { error } = await supabase.from('grupo_material').delete().eq('id', id)
+  if (error) throw error
+}
+export async function cargarNotasGrupo(grupoId) {
+  const gid = String(grupoId)
+  if (!hasBackend) { const db = demoRead(); return db.alumno_notas.filter((n) => n.grupo_id === gid) }
+  const { data, error } = await supabase.from('alumno_notas').select('*').eq('grupo_id', gid)
+  if (error) { if (error.code === '42P01') return []; throw error }
+  return data || []
+}
+export async function guardarNotaAlumno({ grupo_id, alumno_id, nota }) {
+  const fila = { grupo_id: String(grupo_id), alumno_id, nota: String(nota || '').trim().slice(0, 1000), actualizado: new Date().toISOString() }
+  if (!hasBackend) {
+    const db = demoRead(); const x = db.alumno_notas.find((n) => n.grupo_id === fila.grupo_id && n.alumno_id === alumno_id)
+    if (x) Object.assign(x, fila, { autor: DEMO_USER }); else db.alumno_notas.push({ ...fila, autor: DEMO_USER })
+    demoWrite(db); return
+  }
+  const { error } = await supabase.from('alumno_notas').upsert({ ...fila, autor: (await supabase.auth.getUser()).data?.user?.email || '' }, { onConflict: 'grupo_id,alumno_id' })
+  if (error) throw new Error(error.code === '42P01' ? FALTA_SQL : error.message)
+}
+
+/* Asignar profesor a un grupo SIN ver ni tocar pagos: la tarifa se copia sola desde la ficha del profesor (gerencia la revisa) */
+export async function asignarInstructor(grupoId, trabajadorId) {
+  const gid = String(grupoId)
+  if (!hasBackend) {
+    const db = demoRead()
+    const a = db.asignaciones.find((x) => String(x.grupo_id) === gid)
+    if (a && a.trabajador_id === trabajadorId) return
+    const t = db.trabajadores.find((x) => x.id === trabajadorId)
+    const g = db.grupos.find((x) => String(x.id) === gid)
+    const c = g && db.cursos.find((x) => String(x.id) === String(g.curso_id))
+    const fila = { grupo_id: gid, trabajador_id: trabajadorId, horas: Number(c?.horas) || 0, horas_dictadas: a?.horas_dictadas || 0, tarifa_hora: Number(t?.tarifa_hora) || 0, nota: 'Asignado por el asistente académico: gerencia revisa la tarifa y las horas' }
+    if (a) Object.assign(a, fila); else db.asignaciones.push({ id: uid(), ...fila })
+    demoWrite(db); return
+  }
+  const { error } = await supabase.rpc('asignar_instructor', { p_grupo: gid, p_trabajador: trabajadorId })
+  if (error) throw new Error(error.message || 'No se pudo asignar')
+}
+export async function quitarInstructor(grupoId) {
+  const gid = String(grupoId)
+  if (!hasBackend) { const db = demoRead(); db.asignaciones = db.asignaciones.filter((x) => String(x.grupo_id) !== gid); demoWrite(db); return }
+  const { error } = await supabase.rpc('quitar_instructor', { p_grupo: gid })
+  if (error) throw new Error(error.message || 'No se pudo quitar')
+}
+
+/* Reabrir por unas horas la asistencia de una clase que ya cerró (asistente académico o gerencia) */
+export async function reabrirAsistencia(claseId, horas, motivo) {
+  const h = Number(horas)
+  if (!(h >= 1 && h <= 48)) throw new Error('La reapertura puede durar de 1 a 48 horas.')
+  if (String(motivo || '').trim().length < 10) throw new Error('Escribe el motivo de la reapertura (mínimo 10 letras).')
+  if (!hasBackend) {
+    const db = demoRead(); const c = db.clases.find((x) => x.id === claseId)
+    if (!c) throw new Error('La clase no existe.')
+    if (Date.now() <= new Date(c.fin).getTime()) throw new Error('Esa clase todavía no terminó: la asistencia sigue abierta.')
+    Object.assign(c, { reabierta_hasta: new Date(Date.now() + h * 3600000).toISOString(), reabierta_por: DEMO_USER, reabierta_motivo: String(motivo).trim() })
+    demoWrite(db); return
+  }
+  const { error } = await supabase.rpc('reabrir_asistencia', { p_clase: claseId, p_horas: h, p_motivo: String(motivo).trim() })
+  if (error) throw new Error(error.code === '42883' ? 'Falta pegar entregables.sql en Supabase (SQL Editor).' : error.message)
+}
+export async function cerrarReapertura(claseId) {
+  if (!hasBackend) { const db = demoRead(); const c = db.clases.find((x) => x.id === claseId); if (c) { c.reabierta_hasta = new Date().toISOString(); demoWrite(db) } return }
+  const { error } = await supabase.rpc('cerrar_reapertura', { p_clase: claseId })
+  if (error) throw new Error(error.message)
+}

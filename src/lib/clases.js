@@ -67,7 +67,13 @@ export function ventana(clase, ahora = new Date()) {
   const fin = new Date(clase.fin).getTime()
   if (t < ini - MARGEN_ANTES_MIN * 60000) return 'futura'
   if (t <= fin) return 'abierta'
+  if (reabierta(clase, ahora)) return 'abierta'      // reapertura temporal autorizada por el asistente académico o gerencia
   return 'cerrada'
+}
+/* ¿La clase ya terminó pero tiene una reapertura vigente? */
+export function reabierta(clase, ahora = new Date()) {
+  const t = ahora.getTime()
+  return Boolean(clase.reabierta_hasta) && t > new Date(clase.fin).getTime() && t <= new Date(clase.reabierta_hasta).getTime()
 }
 
 /* Solo dos estados: Asistió o Faltó. (Una falta justificada se corrige a "Asistió" con sustento; "Tarde" no existe.)

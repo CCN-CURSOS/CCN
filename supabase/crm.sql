@@ -394,9 +394,19 @@ $$;
 
 create or replace function public.derivar_interesado() returns trigger
   language plpgsql security definer set search_path = public as $$
+declare prev text;
 begin
   if tg_op = 'INSERT' then
-    new.asignado_a  := public.elegir_vendedora();       -- nadie puede elegir a quién le toca desde la web
+    -- Un mismo carrito crea un interesado por curso: si la misma persona (mismo correo) ya entró en los últimos 30 minutos,
+    -- va a la MISMA vendedora (siempre que ella siga recibiendo interesados). Si no, rota como siempre.
+    select i.asignado_a into prev from public.interesados i
+     where lower(i.email) = lower(new.email) and i.creado > now() - interval '30 minutes' and i.asignado_a is not null
+     order by i.creado desc limit 1;
+    if prev is not null and exists (select 1 from public.admins a where a.email = prev and a.rol = 'vendedora' and a.recibe_interesados) then
+      new.asignado_a := prev;
+    else
+      new.asignado_a := public.elegir_vendedora();       -- nadie puede elegir a quién le toca desde la web
+    end if;
     new.asignado_en := case when new.asignado_a is null then null else now() end;
   elsif new.asignado_a is distinct from old.asignado_a then
     if public.es_gerente() then new.asignado_en := now();   -- solo el gerente reasigna

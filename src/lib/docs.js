@@ -8,7 +8,7 @@ export const DOC_DEFAULT = {
     titulo: 'Contrato de locación de servicios — {{mes}}',
     contenido: `CONTRATO DE LOCACIÓN DE SERVICIOS (BORRADOR)
 
-Entre CCN – Centro de Capacitaciones y Negocios ("CCN") y {{nombre}}, DNI {{documento}} ("el/la Prestador/a"), se acuerda lo siguiente:
+Entre FIDTAIL PERU S.A.C., RUC 20608933019, titular de la marca CCN – Centro de Capacitaciones y Negocios ("CCN"), y {{nombre}}, DNI {{documento}} ("el/la Prestador/a"), se acuerda lo siguiente:
 
 1. OBJETO. El/la Prestador/a brindará servicios de venta de los cursos de CCN: atención de prospectos por WhatsApp, TikTok e Instagram, seguimiento, inscripción de alumnos y administración de los grupos de WhatsApp, según el documento "Plan de trabajo y funciones".
 
@@ -78,6 +78,7 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Registras a cada prospecto y llenas Contacto 1 y Contacto 2 (en qué quedó y si hay que volver a contactar, con fecha).
 - Usas tu Agenda: pendientes, notas y calendario.
 - Inscribes a los alumnos (Ventas → Inscritos). El sistema genera solo el código de alumno.
+- Las inscripciones que llegan desde la web (carrito) entran como interesados y se abre un WhatsApp con el pedido (código P-…, cursos y total con IGV). Los atiendes en el mismo orden: respondes, confirmas el pago y los inscribes. Quien lleva varios cursos llena sus datos una sola vez.
 - Programas las instalaciones de programas dentro de las ventanas permitidas; las instalaciones las hace gerencia.
 - Creas y administras los grupos de WhatsApp de cada curso.
 - Atiendes y registras quejas y reclamos.
@@ -118,7 +119,7 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Devoluciones: en primera instancia la respuesta es NO.
 - Club Ofimática: es un paquete (Word + Excel + PowerPoint), cuenta como 1 cupo.
 - Los precios del sistema NO incluyen IGV: el sistema suma el 18 % automáticamente. Dile al alumno el total que muestra el sistema.
-- ENTREGABLES Y CERTIFICADO: cada curso tiene trabajos (entregables) obligatorios. La fecha límite de entrega es la última clase del curso (si no alcanza, el profesor puede agregar una clase más). Quien no entrega a tiempo NO accede al certificado. Debes decirlo al vender; también está en los términos y condiciones. Para el certificado además se pide asistencia mínima y participación.
+- EVALUACIONES T1 Y T2 Y CERTIFICADO: cada curso tiene dos trabajos obligatorios: T1 (a mitad del curso) y T2 (proyecto final). El T1 se entrega dentro de los 3 días después de la clase en que se anuncia; el T2, a más tardar 48 horas antes de la última clase. La última clase es de repaso: el profesor revisa los trabajos que elija con los alumnos y resuelve preguntas. Quien no entrega a tiempo o no aprueba NO accede al certificado (si cumplió la asistencia mínima, recibe la constancia). El certificado sale dentro de las 72 horas después de la última clase. Debes decirlo al vender; también está en los términos y condiciones. Para el certificado además se pide asistencia mínima y participación.
 - BENEFICIO: las clases se graban y los alumnos del grupo pueden volver a verlas.
 
 8. PROBLEMAS, QUEJAS Y RECLAMOS
@@ -126,9 +127,9 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Una queja o reclamo se registra en "Quejas y reclamos" y se avisa a gerencia de inmediato.
 
 9. AL TERMINAR UN CURSO: CERTIFICADOS Y ASISTENCIAS
-- Al terminar, cada alumno recibe por CORREO su constancia de participación (si cumplió la asistencia mínima) y, si cumplió además la participación y los entregables del curso, su certificado. Los aprueba gerencia y el sistema los envía solo.
+- Al terminar, cada alumno recibe por CORREO su constancia de participación (si cumplió la asistencia mínima) y, si cumplió además la participación y aprobó T1 y T2, su certificado. Se emiten dentro de las 72 horas después de la última clase (ver la sección 12 si haces de asistente académico).
 - NO avises a los grupos de WhatsApp que el certificado ya se emitió: el correo llega directo al alumno. Si alguien pregunta, dile que le llega a su correo una vez aprobado por gerencia.
-- Las asistencias las toma el profesor durante la clase y se cierran al terminar. Tú NO puedes modificarlas ni prometer que se cambiarán.
+- Las asistencias las toma el profesor durante la clase y se cierran al terminar. Tú NO puedes modificarlas ni prometer que se cambiarán. Si un profesor olvidó tomarla, solo puedes reabrirla para que él la registre (sección 12).
 - Si un alumno reclama por su asistencia, indícale que escriba al correo oficial de la escuela con su sustento. Solo gerencia decide si se corrige.
 - Cada certificado y cada constancia tienen un código y un QR con el que cualquier persona puede verificarlos.
 
@@ -137,7 +138,18 @@ Sueldo mensual + bono de pasajes (ambos figuran en tu ficha y en tu contrato; si
 DESCUENTOS: se calculan por hora sobre el total (sueldo + bono de pasajes). Valor de la hora = total mensual ÷ horas mínimas del mes. Se descuentan las horas no trabajadas y cada día presencial al que no asistas (se descuentan sus 4 horas). El descuento alcanza también al bono de pasajes.
 
 11. LO QUE SE REVISA
-Gerencia revisa tu reporte semanal: inscritos, ventas, atención, recontactos, pendientes y horas.`,
+Gerencia revisa tu reporte semanal: inscritos, ventas, atención, recontactos, pendientes y horas. Si haces de asistente académico, también: cronogramas al día, accesos cargados, clases sin asistencia y certificados dentro de las 72 horas.
+
+12. SI HACES DE ASISTENTE ACADÉMICO (mientras no haya una persona en ese puesto)
+El asistente académico es un puesto aparte del de vendedora; por ahora lo cubres tú y por eso ves el módulo "Académico" en tu panel. No entras a Gerencia y no ves sueldos, pagos, tarifas ni contratos de nadie. Cuando se contrate a la persona del puesto, este módulo pasa a ella.
+- Grupos: creas y editas los grupos y generas sus clases (Académico → Grupos). No puedes borrarlos: eso lo hace gerencia.
+- Profesor: eliges el profesor del grupo en Académico → Cronograma y accesos. Si dice "sin acceso al panel", avisa a gerencia para que lo habilite. La tarifa la revisa gerencia.
+- Accesos de cada grupo: un solo enlace de Zoom por grupo y una carpeta de clases grabadas por grupo. El profesor los ve en su panel, así que deben estar cargados antes de la primera clase.
+- Evaluaciones: por cada grupo creas el Google Forms (con subida de archivos) o la carpeta de Drive de T1 y de T2, y pegas el enlace en el cronograma. Revisa que las fechas límite sean las correctas.
+- Cronograma: al cargar los enlaces, descargas el PDF del cronograma o copias el texto para WhatsApp y se lo envías al profesor. Incluye fechas exactas de T1, T2 y de la última clase (repaso).
+- Asistencia: revisas las clases que terminaron sin asistencia. Si el profesor olvidó tomarla, usas "Reabrir para el profesor": eliges 12, 24 o 48 horas y escribes el motivo (mínimo 10 letras). Tú no tomas ni corriges asistencias; solo el profesor la registra, y queda anotado quién la reabrió y por qué.
+- Certificados: dentro de las 72 horas después de la última clase, emites las constancias y certificados en Académico → Certificados. El sistema solo deja emitir si el curso terminó, todas las clases tienen asistencia y el grupo tiene profesor con firma. El PDF lleva un QR de verificación. No avises a los grupos de WhatsApp: el alumno lo recibe en su correo.
+- Revisas semanalmente: grupos sin profesor, accesos faltantes, cronogramas por vencer y clases sin asistencia.`,
   },
 }
 

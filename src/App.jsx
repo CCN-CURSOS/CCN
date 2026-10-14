@@ -3,8 +3,10 @@ import Home from './pages/Home.jsx'
 import Cursos from './pages/Cursos.jsx'
 import CursoDetalle from './pages/CursoDetalle.jsx'
 import Inscripcion from './pages/Inscripcion.jsx'
+import { Carrito, Checkout } from './pages/Carrito.jsx'
 import Links from './pages/Links.jsx'
 import Admin from './pages/Admin.jsx'
+import Verificar from './pages/Verificar.jsx'
 import { PaginaComo, PaginaHorarios, PaginaPreguntas, PaginaContacto, PaginaTerminos, PaginaPrivacidad } from './pages/Secundarias.jsx'
 import { ScrollToHash } from './components/Layout.jsx'
 
@@ -17,6 +19,8 @@ export default function App() {
       <Route path="/cursos" element={<Cursos />} />
       <Route path="/cursos/:id" element={<CursoDetalle />} />
       <Route path="/inscripcion/:id" element={<Inscripcion />} />
+      <Route path="/carrito" element={<Carrito />} />
+      <Route path="/checkout" element={<Checkout />} />
       <Route path="/como-aprendes" element={<PaginaComo />} />
       <Route path="/horarios" element={<PaginaHorarios />} />
       <Route path="/preguntas" element={<PaginaPreguntas />} />
@@ -24,6 +28,7 @@ export default function App() {
       <Route path="/terminos" element={<PaginaTerminos />} />
       <Route path="/privacidad" element={<PaginaPrivacidad />} />
       <Route path="/links" element={<Links />} />
+      <Route path="/verificar" element={<Verificar />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="*" element={<Home />} />
     </Routes>

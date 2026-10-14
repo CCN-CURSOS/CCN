@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Logo } from '../components/Layout.jsx'
 import Icon from '../components/Icons'
-import { hasBackend, cargarProfesor, cargarClasesGrupo, guardarClases, guardarAsistencias, historialAsistencia, fechaCorta } from '../lib/data.js'
+import { hasBackend, cargarProfesor, cargarClasesGrupo, guardarClases, guardarAsistencias, historialAsistencia, fechaCorta, cargarEntregasGrupo, guardarEntrega, cargarAccesosGrupo, cargarMaterialGrupo, guardarMaterial, quitarMaterial, cargarNotasGrupo, guardarNotaAlumno } from '../lib/data.js'
+import { cronogramaGrupo, fechaHora } from '../lib/cronograma.js'
 import {
   DIAS_SEMANA, diasDeTexto, horaDeTexto, generarFechas, aTs, fechaClase, horaClase, fechaISOLima, horaHHMM, horasDeClase, ventana,
-  ESTADOS_ASIS, ETIQ_ASIS, resumenAlumno,
+  ESTADOS_ASIS, ETIQ_ASIS, resumenAlumno, reabierta,
 } from '../lib/clases.js'
 
 /* ================= piezas pequeñas ================= */
@@ -53,14 +54,14 @@ function useBundle(grupoId) {
   return [b, cargar, err]
 }
 
-const ChipVentana = ({ v }) => (
-  <span className={`vent ${v}`}>{v === 'abierta' ? '● En curso' : v === 'cerrada' ? '🔒 Cerrada' : 'Próxima'}</span>
+const ChipVentana = ({ v, re }) => (
+  <span className={`vent ${v}`}>{re ? '↻ Reabierta' : v === 'abierta' ? '● En curso' : v === 'cerrada' ? '🔒 Cerrada' : 'Próxima'}</span>
 )
 
 /* ================= HOJA DE ASISTENCIA (una clase) ================= */
-function Hoja({ clase, alumnos, registros, gerente, ahora, onClose, onSaved, avisar }) {
+function Hoja({ clase, alumnos, registros, gerente, lectura, ahora, onClose, onSaved, avisar }) {
   const v = ventana(clase, ahora)
-  const editable = gerente || v === 'abierta'
+  const editable = !lectura && (gerente || v === 'abierta')
   const exigeMotivo = gerente && v !== 'abierta'
   const [f, setF] = useState(() => Object.fromEntries(alumnos.map((a) => {
     const r = registros.get(a.alumno_id)
@@ -103,7 +104,8 @@ function Hoja({ clase, alumnos, registros, gerente, ahora, onClose, onSaved, avi
         {editable && <button className="btn btn-teal" disabled={busy} onClick={guardar}>{busy ? 'Guardando…' : exigeMotivo ? 'Guardar corrección' : 'Guardar asistencia'}</button>}
       </>}>
       <div className={`asis-aviso ${v}`}>
-        {v === 'abierta' && <>● <b>Clase en curso.</b> La asistencia se cierra al terminar (<b>{horaClase(clase.fin)}</b>); después queda guardada y solo gerencia puede corregirla.</>}
+        {v === 'abierta' && reabierta(clase, ahora) && <>↻ <b>Asistencia reabierta</b> por {String(clase.reabierta_por || '').split('@')[0]} hasta <b>{horaClase(clase.reabierta_hasta)}</b> ({fechaClase(clase.reabierta_hasta)}). Motivo: {clase.reabierta_motivo}. Regístrala ahora: después se cierra sola.</>}
+        {v === 'abierta' && !reabierta(clase, ahora) && <>● <b>Clase en curso.</b> La asistencia se cierra al terminar (<b>{horaClase(clase.fin)}</b>); después queda guardada y solo gerencia puede corregirla.</>}
         {v === 'futura' && !gerente && <>La clase aún no empieza. La asistencia se abre 10 minutos antes de empezar (<b>{horaClase(clase.inicio)}</b>).</>}
         {v === 'cerrada' && !gerente && <>🔒 <b>Clase cerrada.</b> La asistencia quedó guardada y no se puede cambiar. Si un alumno reclama, debe escribir al correo de la escuela con su sustento.</>}
         {exigeMotivo && <>🔒 <b>Fuera del horario de la clase.</b> Solo tú (gerencia) puedes cambiarla, con el sustento del correo del alumno. Queda registrado quién, cuándo y por qué.</>}
@@ -149,7 +151,7 @@ function Hoja({ clase, alumnos, registros, gerente, ahora, onClose, onSaved, avi
 }
 
 /* ================= ASISTENCIA DE UN GRUPO (resumen + lista de clases) ================= */
-function AsistenciaGrupo({ bundle, recargar, gerente, avisar }) {
+function AsistenciaGrupo({ bundle, recargar, gerente, lectura, avisar }) {
   const ahora = useAhora()
   const [abierta, setAbierta] = useState(null)
   const { clases, alumnos, asistencias } = bundle
@@ -165,7 +167,7 @@ function AsistenciaGrupo({ bundle, recargar, gerente, avisar }) {
   if (!clases.length) return <div className="vacio"><p>Este grupo todavía no tiene clases programadas.{gerente ? ' Genera las clases arriba.' : ' Gerencia las programa con el calendario del grupo.'}</p></div>
   return (
     <>
-      {sinTomar.length > 0 && <p className="banner aviso-inst">⚠️ {sinTomar.length === 1 ? 'La clase' : 'Las clases'} {sinTomar.map((c) => c.numero).join(', ')} {sinTomar.length === 1 ? 'terminó' : 'terminaron'} <b>sin asistencia</b>. {gerente ? 'No cuentan como dictadas hasta que se registre con sustento.' : 'Avisa a gerencia: ya no puedes registrarla.'}</p>}
+      {sinTomar.length > 0 && <p className="banner aviso-inst">⚠️ {sinTomar.length === 1 ? 'La clase' : 'Las clases'} {sinTomar.map((c) => c.numero).join(', ')} {sinTomar.length === 1 ? 'terminó' : 'terminaron'} <b>sin asistencia</b>. {gerente ? 'No cuentan como dictadas hasta que se registre con sustento.' : 'Pide al asistente académico que la reabra: así podrás registrarla.'}</p>}
       <div className="kpis">
         <div><b>{clases.length}</b><span>clases programadas</span></div>
         <div><b>{dictadas}</b><span>dictadas (con asistencia)</span></div>
@@ -183,11 +185,12 @@ function AsistenciaGrupo({ bundle, recargar, gerente, avisar }) {
                 <tr key={c.id} className={v === 'abierta' ? 'nueva' : ''}>
                   <td><b>{c.numero}</b></td>
                   <td>{fechaClase(c.inicio)} · {horaClase(c.inicio)} – {horaClase(c.fin)}<small className="paq">{horasDeClase(c)} h</small></td>
-                  <td><ChipVentana v={v} /></td>
+                  <td><ChipVentana v={v} re={reabierta(c, ahora)} /></td>
                   <td>{n ? `${n}/${alumnos.length} registrados` : (v === 'cerrada' ? <span className="err">Sin asistencia</span> : '—')}</td>
                   <td>
-                    {v === 'abierta' && <button className="btn btn-teal sm" onClick={() => setAbierta(c.id)}>{n ? 'Editar asistencia' : 'Tomar asistencia'}</button>}
-                    {v === 'cerrada' && (n > 0 || gerente) && <button className="btn btn-line sm" onClick={() => setAbierta(c.id)}>{gerente ? (n ? 'Ver / corregir' : 'Registrar con sustento') : 'Ver'}</button>}
+                    {v === 'abierta' && !lectura && <button className="btn btn-teal sm" onClick={() => setAbierta(c.id)}>{n ? 'Editar asistencia' : 'Tomar asistencia'}</button>}
+                    {lectura && n > 0 && <button className="btn btn-line sm" onClick={() => setAbierta(c.id)}>Ver</button>}
+                    {v === 'cerrada' && !lectura && (n > 0 || gerente) && <button className="btn btn-line sm" onClick={() => setAbierta(c.id)}>{gerente ? (n ? 'Ver / corregir' : 'Registrar con sustento') : 'Ver'}</button>}
                   </td>
                 </tr>
               )
@@ -220,7 +223,7 @@ function AsistenciaGrupo({ bundle, recargar, gerente, avisar }) {
       )}
 
       {claseAbierta && (
-        <Hoja key={claseAbierta.id} clase={claseAbierta} alumnos={alumnos} registros={porClase.get(claseAbierta.id) || new Map()} gerente={gerente} ahora={ahora}
+        <Hoja key={claseAbierta.id} clase={claseAbierta} alumnos={alumnos} registros={porClase.get(claseAbierta.id) || new Map()} gerente={gerente} lectura={lectura} ahora={ahora}
           onClose={() => setAbierta(null)} onSaved={recargar} avisar={avisar} />
       )}
     </>
@@ -325,7 +328,7 @@ function GeneradorClases({ g, curso, bundle, onSaved, avisar }) {
 }
 
 /* ================= GERENCIA: ventana de clases y asistencia de un grupo ================= */
-export function ClasesDrawer({ g, curso, onClose, avisar }) {
+export function ClasesDrawer({ g, curso, onClose, avisar, lectura }) {
   const [bundle, recargar, err] = useBundle(g.id)
   return (
     <Drawer ancho titulo={`Clases · ${g.codigo || ''} ${curso?.titulo || ''}`.trim()} onClose={onClose}>
@@ -335,14 +338,230 @@ export function ClasesDrawer({ g, curso, onClose, avisar }) {
         <>
           <GeneradorClases key={bundle.clases.length} g={g} curso={curso} bundle={bundle} onSaved={recargar} avisar={avisar} />
           <hr className="sep" />
-          <AsistenciaGrupo bundle={bundle} recargar={recargar} gerente avisar={avisar} />
+          <AsistenciaGrupo bundle={bundle} recargar={recargar} gerente={!lectura} lectura={lectura} avisar={avisar} />
         </>
       )}
     </Drawer>
   )
 }
 
+/* ================= ENTREGABLES DEL GRUPO (quién entregó qué) ================= */
+function EntregablesGrupo({ g, bundle, avisar }) {
+  const [d, setD] = useState(null)
+  const [err, setErr] = useState('')
+  useEffect(() => {
+    let vivo = true
+    setD(null); setErr('')
+    cargarEntregasGrupo(g.id, g.curso_id).then((x) => vivo && setD(x)).catch((e) => vivo && setErr(e.message || 'No se pudo cargar'))
+    return () => { vivo = false }
+  }, [g.id, g.curso_id])
+
+  const filas = useMemo(() => (d ? cronogramaGrupo(bundle.clases, d.entregables, d.config) : []), [d, bundle.clases])
+  const est = useMemo(() => {
+    const m = new Map()
+    ;(d?.entregas || []).forEach((x) => m.set(`${x.alumno_id}|${x.entregable_id}`, x))
+    return m
+  }, [d])
+  const dato = (a, e) => est.get(`${a.alumno_id}|${e.id}`) || {}
+
+  async function marcar(alumno, e, cambios) {
+    const antes = d
+    setD((p) => {
+      const lista = [...p.entregas]
+      const i = lista.findIndex((x) => x.alumno_id === alumno.alumno_id && x.entregable_id === e.id)
+      const base = i >= 0 ? lista[i] : { grupo_id: String(g.id), alumno_id: alumno.alumno_id, entregable_id: e.id, entregado: false, aprobado: false, repaso: false }
+      const nuevo = { ...base, ...cambios }
+      if (nuevo.aprobado) nuevo.entregado = true
+      if (cambios.entregado === false) nuevo.aprobado = false
+      if (i >= 0) lista[i] = nuevo; else lista.push(nuevo)
+      return { ...p, entregas: lista }
+    })
+    try { await guardarEntrega({ grupo_id: g.id, alumno_id: alumno.alumno_id, entregable_id: e.id, ...cambios }) }
+    catch (er) { setD(antes); avisar(er.message || 'No se pudo guardar', true) }
+  }
+
+  if (err) return <p className="banner">{err}</p>
+  if (!d) return <p className="note">Cargando…</p>
+  if (!d.entregables.length) return <div className="vacio"><p>Aún no se definieron el T1 y el T2 de este curso.</p></div>
+  if (!bundle.alumnos.length) return <div className="vacio"><p>Aún no hay alumnos inscritos en este grupo.</p></div>
+  const oblig = d.entregables.filter((e) => e.obligatorio)
+  const ultima = bundle.clases.length ? bundle.clases[bundle.clases.length - 1] : null
+  const elegidos = (e) => bundle.alumnos.filter((a) => dato(a, e).repaso)
+  return (
+    <>
+      <p className="note">Revisa los trabajos de tus alumnos: marca <b>Entregó</b> y <b>Aprobó</b>. Para el certificado hace falta tener aprobados el T1 y el T2. En el T2 marca con ⭐ los trabajos que quieres repasar en la última clase{ultima ? ` (${fechaHora(ultima.inicio)})` : ''}. 🎓 Los certificados salen dentro de las 72 h después de esa clase.</p>
+      <div className="cons-wrap" style={{ marginBottom: 10 }}>
+        <table className="cons-table" style={{ minWidth: 560 }}>
+          <thead><tr><th>Evaluación</th><th>Se anuncia</th><th>Fecha límite</th><th>Entrega de los alumnos</th></tr></thead>
+          <tbody>
+            {filas.map((f) => (
+              <tr key={f.e.id}>
+                <td><b>{f.etapa}{f.programa ? ` · ${f.programa}` : ''}</b><br /><small>{f.e.titulo}</small></td>
+                <td>{f.anuncio ? <>Clase {f.anuncio.numero}<br /><small>{fechaHora(f.anuncio.inicio)}</small></> : '—'}</td>
+                <td>{f.limite ? fechaHora(f.limite) : '—'}</td>
+                <td>{f.enlace ? <a className="btn btn-line sm" href={f.enlace} target="_blank" rel="noopener noreferrer">Abrir carpeta ↗</a> : <small>Coordinación aún no pone el enlace</small>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="cons-wrap">
+        <table className="cons-table" style={{ minWidth: 560 }}>
+          <thead><tr><th>Alumno</th>{d.entregables.map((e) => <th key={e.id} style={{ minWidth: 150, textTransform: 'none', letterSpacing: 0 }}>{e.etapa || 'T2'}{e.programa ? ` · ${e.programa}` : ''}{!e.obligatorio && <small className="paq">Opcional</small>}</th>)}<th>Aprobados</th></tr></thead>
+          <tbody>
+            {bundle.alumnos.map((a) => {
+              const n = oblig.filter((e) => dato(a, e).aprobado).length
+              return (
+                <tr key={a.alumno_id}>
+                  <td><b>{nombreAlumno(a)}</b></td>
+                  {d.entregables.map((e) => {
+                    const x = dato(a, e)
+                    return (
+                      <td key={e.id}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12.5 }}>
+                          <label style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6, cursor: 'pointer' }}><input type="checkbox" style={{ width: 'auto', margin: 0 }} checked={!!x.entregado} onChange={(ev) => marcar(a, e, { entregado: ev.target.checked })} aria-label={`${nombreAlumno(a)} entregó ${e.titulo}`} /> Entregó</label>
+                          <label style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6, cursor: 'pointer' }}><input type="checkbox" style={{ width: 'auto', margin: 0 }} checked={!!x.aprobado} onChange={(ev) => marcar(a, e, { aprobado: ev.target.checked })} aria-label={`${nombreAlumno(a)} aprobó ${e.titulo}`} /> Aprobó</label>
+                          {(e.etapa || 'T2') === 'T2' && <label style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6, cursor: 'pointer' }}><input type="checkbox" style={{ width: 'auto', margin: 0 }} checked={!!x.repaso} onChange={(ev) => marcar(a, e, { repaso: ev.target.checked })} aria-label={`Repasar el trabajo de ${nombreAlumno(a)} en la última clase`} /> ⭐ Repasar</label>}
+                        </div>
+                      </td>
+                    )
+                  })}
+                  <td>{oblig.length ? <span className={n === oblig.length ? '' : 'err'}>{n}/{oblig.length}{n === oblig.length ? ' ✅' : ''}</span> : '—'}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      {d.entregables.filter((e) => (e.etapa || 'T2') === 'T2').map((e) => (
+        <p key={e.id} className="note"><b>⭐ Para repasar en la última clase{e.programa ? ` (${e.programa})` : ''}:</b> {elegidos(e).length ? elegidos(e).map(nombreAlumno).join(', ') : 'aún no elegiste ninguno.'}</p>
+      ))}
+    </>
+  )
+}
+
 /* ================= PROFESOR: un grupo (Información · Alumnos · Asistencia) ================= */
+/* ================= ACCESOS DEL GRUPO (Zoom, carpetas de T1 y T2, clases grabadas) ================= */
+function AccesosGrupo({ g, bundle }) {
+  const [d, setD] = useState(null)
+  const [err, setErr] = useState('')
+  useEffect(() => {
+    let vivo = true
+    setD(null); setErr('')
+    Promise.all([cargarAccesosGrupo(g.id), cargarEntregasGrupo(g.id, g.curso_id).catch(() => ({ entregables: [], entregas: [], config: [] }))])
+      .then(([a, e]) => vivo && setD({ a, filas: cronogramaGrupo(bundle.clases, e.entregables, e.config) }))
+      .catch((x) => vivo && setErr(x.message || 'No se pudo cargar'))
+    return () => { vivo = false }
+  }, [g.id, g.curso_id, bundle.clases])
+  if (err) return <p className="banner">{err}</p>
+  if (!d) return <p className="note">Cargando…</p>
+  const Fila = ({ icono, titulo, detalle, url }) => (
+    <div className="item" style={{ alignItems: 'center' }}>
+      <div className="tt"><div><b>{icono} {titulo}</b>{detalle && <small>{detalle}</small>}</div></div>
+      <div className="btns">{url ? <a className="btn btn-teal sm" href={url} target="_blank" rel="noopener noreferrer">Abrir ↗</a> : <small>Aún no disponible: lo pone coordinación académica</small>}</div>
+    </div>
+  )
+  return (
+    <>
+      <p className="note">Aquí están los enlaces de tu grupo. Los pone el asistente académico; si falta alguno o está mal, avísale.</p>
+      <div className="lst">
+        <Fila icono="🎥" titulo="Sala de Zoom" detalle={[g.dias, g.horario].filter(Boolean).join(' · ')} url={d.a.zoom} />
+        {d.filas.map((f) => <Fila key={f.e.id} icono="📁" titulo={`Entrega ${f.etapa}${f.programa ? ` · ${f.programa}` : ''}`} detalle={`${f.e.titulo}${f.limite ? ` · límite ${fechaHora(f.limite)}` : ''}`} url={f.enlace} />)}
+        <Fila icono="🎬" titulo="Clases grabadas" detalle="Solo para los alumnos del grupo" url={d.a.grabaciones} />
+      </div>
+    </>
+  )
+}
+
+
+/* ================= MATERIAL DEL GRUPO ================= */
+function MaterialGrupo({ g, avisar }) {
+  const [lista, setLista] = useState(null)
+  const [err, setErr] = useState('')
+  const [titulo, setTitulo] = useState('')
+  const [enlace, setEnlace] = useState('')
+  const [ocupado, setOcupado] = useState(false)
+  const cargar = useCallback(() => cargarMaterialGrupo(g.id).then((x) => { setLista(x); setErr('') }).catch((e) => setErr(e.message || 'No se pudo cargar')), [g.id])
+  useEffect(() => { setLista(null); cargar() }, [cargar])
+  async function agregar(e) {
+    e.preventDefault(); setOcupado(true)
+    try { await guardarMaterial({ grupo_id: g.id, titulo, enlace }); setTitulo(''); setEnlace(''); avisar('Material agregado ✅'); await cargar() }
+    catch (x) { avisar(x.message || 'No se pudo guardar', true) }
+    setOcupado(false)
+  }
+  async function quitar(m) {
+    if (!window.confirm(`¿Quitar "${m.titulo}" del material del grupo?`)) return
+    try { await quitarMaterial(m.id); await cargar() } catch (x) { avisar(x.message || 'No se pudo quitar', true) }
+  }
+  return (
+    <>
+      <p className="note">Deja aquí los enlaces del material de tu grupo (presentaciones, plantillas, carpetas de Drive). Los ven tú y la coordinación académica, que los comparte con los alumnos.</p>
+      {err && <p className="banner">{err}</p>}
+      {lista && lista.length === 0 && !err && <div className="vacio"><p>Aún no agregaste material.</p></div>}
+      <div className="lst">
+        {(lista || []).map((m) => (
+          <div key={m.id} className="item" style={{ alignItems: 'center' }}>
+            <div className="tt"><div><b>📎 {m.titulo}</b><small>{m.enlace}</small></div></div>
+            <div className="btns">
+              <a className="btn btn-teal sm" href={m.enlace} target="_blank" rel="noopener noreferrer">Abrir ↗</a>
+              <button className="btn btn-line sm" onClick={() => quitar(m)}>Quitar</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <form className="cform" style={{ marginTop: 16 }} onSubmit={agregar}>
+        <label>Nombre del material<input id="mat-titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ej.: Presentación clase 1" /></label>
+        <label>Enlace<input id="mat-enlace" value={enlace} onChange={(e) => setEnlace(e.target.value)} placeholder="https://…" inputMode="url" /></label>
+        <button className="cfull cbtn" type="submit" disabled={ocupado}>{ocupado ? 'GUARDANDO…' : 'AGREGAR MATERIAL'}</button>
+      </form>
+    </>
+  )
+}
+
+/* ================= ALUMNOS con NOTA PRIVADA ================= */
+function AlumnosGrupo({ g, bundle, avisar }) {
+  const [notas, setNotas] = useState({})
+  const [abierto, setAbierto] = useState('')
+  const [texto, setTexto] = useState('')
+  const [ocupado, setOcupado] = useState(false)
+  const cargar = useCallback(() => cargarNotasGrupo(g.id).then((x) => setNotas(Object.fromEntries(x.map((n) => [n.alumno_id, n.nota])))).catch(() => {}), [g.id])
+  useEffect(() => { cargar() }, [cargar])
+  const abrir = (a) => { setAbierto(a.alumno_id); setTexto(notas[a.alumno_id] || '') }
+  async function guardar(a) {
+    setOcupado(true)
+    try { await guardarNotaAlumno({ grupo_id: g.id, alumno_id: a.alumno_id, nota: texto }); avisar('Nota guardada ✅'); setAbierto(''); await cargar() }
+    catch (x) { avisar(x.message || 'No se pudo guardar', true) }
+    setOcupado(false)
+  }
+  if (bundle.alumnos.length === 0) return <div className="vacio"><p>Aún no hay alumnos inscritos en este grupo.</p></div>
+  return (
+    <div className="cons-wrap">
+      <table className="cons-table" style={{ minWidth: 620 }}>
+        <thead><tr><th>Alumno</th><th>Código</th><th>Correo</th><th>Nota (privada)</th></tr></thead>
+        <tbody>{bundle.alumnos.map((a) => (
+          <tr key={a.alumno_id}>
+            <td><b>{nombreAlumno(a)}</b></td><td>{a.codigo}</td><td>{a.email || '—'}</td>
+            <td style={{ minWidth: 220 }}>
+              {abierto === a.alumno_id ? (
+                <div>
+                  <textarea aria-label={`Nota de ${nombreAlumno(a)}`} value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={1000} rows={3} style={{ width: '100%' }} placeholder="Ej.: Participa mucho; le cuesta Excel avanzado." />
+                  <div className="btns" style={{ marginTop: 6 }}>
+                    <button className="btn btn-teal sm" disabled={ocupado} onClick={() => guardar(a)}>Guardar</button>
+                    <button className="btn btn-line sm" onClick={() => setAbierto('')}>Cancelar</button>
+                  </div>
+                </div>
+              ) : (
+                <button className="btn btn-line sm" onClick={() => abrir(a)}>{notas[a.alumno_id] ? '📝 ' + (notas[a.alumno_id].length > 40 ? notas[a.alumno_id].slice(0, 40) + '…' : notas[a.alumno_id]) : '+ Agregar nota'}</button>
+              )}
+            </td>
+          </tr>
+        ))}</tbody>
+      </table>
+      <p className="note">Las notas son observaciones tuyas sobre cada alumno: las ven tú y la coordinación académica, nunca el alumno.</p>
+    </div>
+  )
+}
+
 function GrupoProfesor({ g, curso, volver, avisar }) {
   const [tab, setTab] = useState('info')
   const [bundle, recargar, err] = useBundle(g.id)
@@ -353,7 +572,7 @@ function GrupoProfesor({ g, curso, volver, avisar }) {
         <button className="btn btn-line" onClick={volver}>← Mis cursos</button>
       </Seccion>
       <div className="chips tabs" role="tablist">
-        {[['info', 'Información'], ['alumnos', `Alumnos${bundle ? ` (${bundle.alumnos.length})` : ''}`], ['asistencia', 'Asistencia']].map(([k, n]) => (
+        {[['info', 'Información'], ['accesos', 'Accesos'], ['alumnos', `Alumnos${bundle ? ` (${bundle.alumnos.length})` : ''}`], ['asistencia', 'Asistencia'], ['entregables', 'T1 y T2'], ['material', 'Material']].map(([k, n]) => (
           <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'sel' : ''} onClick={() => setTab(k)}>{n}</button>
         ))}
       </div>
@@ -371,17 +590,142 @@ function GrupoProfesor({ g, curso, volver, avisar }) {
           <p className="note">Recuerda: durante las clases haz preguntas de participación y pide los entregables del curso. La asistencia es obligatoria y se cierra al terminar cada clase.</p>
         </div>
       )}
-      {tab === 'alumnos' && (!bundle ? (!err && <p className="note">Cargando…</p>) : (
-        bundle.alumnos.length === 0 ? <div className="vacio"><p>Aún no hay alumnos inscritos en este grupo.</p></div> : (
-          <div className="cons-wrap">
-            <table className="cons-table" style={{ minWidth: 520 }}>
-              <thead><tr><th>Alumno</th><th>Código</th><th>Correo</th></tr></thead>
-              <tbody>{bundle.alumnos.map((a) => <tr key={a.alumno_id}><td><b>{nombreAlumno(a)}</b></td><td>{a.codigo}</td><td>{a.email || '—'}</td></tr>)}</tbody>
-            </table>
-          </div>
-        )
-      ))}
+      {tab === 'alumnos' && (!bundle ? (!err && <p className="note">Cargando…</p>) : <AlumnosGrupo g={g} bundle={bundle} avisar={avisar} />)}
+      {tab === 'material' && <MaterialGrupo g={g} avisar={avisar} />}
+      {tab === 'accesos' && (!bundle ? (!err && <p className="note">Cargando…</p>) : <AccesosGrupo g={g} bundle={bundle} />)}
+      {tab === 'entregables' && (!bundle ? (!err && <p className="note">Cargando…</p>) : <EntregablesGrupo g={g} bundle={bundle} avisar={avisar} />)}
       {tab === 'asistencia' && (!bundle ? (!err && <p className="note">Cargando…</p>) : <AsistenciaGrupo bundle={bundle} recargar={recargar} gerente={false} avisar={avisar} />)}
+    </>
+  )
+}
+
+/* Tu próxima clase (con el botón al Zoom) y las clases que terminaron sin asistencia */
+function ProximaClase({ datos, curso, onAbrir }) {
+  const ahora = useAhora(30)
+  const clases = datos.clases || []
+  const grupoDe = (c) => datos.grupos.find((g) => String(g.id) === String(c.grupo_id))
+  const reabiertas = clases.filter((c) => reabierta(c, ahora))
+  const prox = [...clases].filter((c) => ventana(c, ahora) !== 'cerrada' && !reabierta(c, ahora)).sort((a, b) => new Date(a.inicio) - new Date(b.inicio))[0]
+  const asistidas = new Set(datos.asistidas || [])
+  const pendientes = clases.filter((c) => ventana(c, ahora) === 'cerrada' && !asistidas.has(c.id))
+  const zoomDe = (c) => (datos.accesos || []).find((x) => String(x.grupo_id) === String(c.grupo_id))?.zoom || ''
+  const g = prox && grupoDe(prox)
+  const v = prox ? ventana(prox, ahora) : ''
+  return (
+    <>
+      {pendientes.length > 0 && (
+        <p className="banner aviso-inst">⚠️ Tienes {pendientes.length === 1 ? 'una clase' : `${pendientes.length} clases`} sin asistencia: {pendientes.map((c) => `${grupoDe(c)?.codigo || ''} clase ${c.numero}`).join(', ')}. Si ya cerró, pide al asistente académico que la reabra para registrarla.</p>
+      )}
+      {reabiertas.map((c) => (
+        <p key={c.id} className="banner aviso-inst">↻ Se reabrió la asistencia de {grupoDe(c)?.codigo} clase {c.numero} hasta {fechaClase(c.reabierta_hasta)} {horaClase(c.reabierta_hasta)}: entra al grupo y regístrala. <button className="btn btn-teal sm" onClick={() => onAbrir(c.grupo_id)}>Abrir grupo</button></p>
+      ))}
+      {prox && g && (
+        <div className="item" style={{ marginBottom: 14, alignItems: 'center' }}>
+          <div className="tt"><div>
+            <b>{v === 'abierta' ? '● Clase en curso' : 'Tu próxima clase'} · {g.codigo} {curso(g)?.titulo}</b>
+            <small>Clase {prox.numero} · {fechaClase(prox.inicio)} · {horaClase(prox.inicio)} – {horaClase(prox.fin)}</small>
+          </div></div>
+          <div className="btns">
+            {zoomDe(prox) ? <a className="btn btn-teal sm" href={zoomDe(prox)} target="_blank" rel="noopener noreferrer">Entrar a Zoom ↗</a> : <small>Zoom aún no cargado</small>}
+            <button className="btn btn-line sm" onClick={() => onAbrir(g.id)}>{v === 'abierta' ? 'Tomar asistencia' : 'Abrir grupo'}</button>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+
+/* ================= MI AGENDA ================= */
+const claveDia = (ts) => fechaISOLima(ts)
+function AgendaProfesor({ datos, curso, onAbrir }) {
+  const ahora = useAhora(30)
+  const [verPasadas, setVerPasadas] = useState(false)
+  const grupoDe = (c) => datos.grupos.find((g) => String(g.id) === String(c.grupo_id))
+  const totalDe = (gid) => (datos.clases || []).filter((c) => String(c.grupo_id) === String(gid)).length
+  const zoomDe = (c) => (datos.accesos || []).find((x) => String(x.grupo_id) === String(c.grupo_id))?.zoom || ''
+  const hoy = fechaISOLima(ahora.toISOString()), man = fechaISOLima(new Date(ahora.getTime() + 86400000).toISOString())
+  const todas = [...(datos.clases || [])].sort((a, b) => new Date(a.inicio) - new Date(b.inicio))
+  const proximas = todas.filter((c) => new Date(c.fin) >= ahora)
+  const pasadas = todas.filter((c) => new Date(c.fin) < ahora).reverse().slice(0, 12)
+  const asistidas = new Set(datos.asistidas || [])
+  const porDia = []
+  proximas.forEach((c) => { const k = claveDia(c.inicio); const u = porDia[porDia.length - 1]; if (u && u.k === k) u.items.push(c); else porDia.push({ k, items: [c] }) })
+  const etiquetaDia = (k, c) => (k === hoy ? 'Hoy · ' : k === man ? 'Mañana · ' : '') + fechaClase(c.inicio)
+  const fila = (c, pas) => {
+    const g = grupoDe(c); const v = ventana(c, ahora)
+    return (
+      <div key={c.id} className="item" style={{ alignItems: 'center' }}>
+        <div className="tt"><div>
+          <b>{horaClase(c.inicio)} – {horaClase(c.fin)} · {g?.codigo} {curso(g || {})?.titulo}</b>
+          <small>Clase {c.numero} de {totalDe(c.grupo_id)}{pas ? (asistidas.has(c.id) ? ' · asistencia registrada ✅' : ' · sin asistencia ⚠️') : ''}{v === 'abierta' ? ' · ● en curso' : ''}</small>
+        </div></div>
+        <div className="btns">
+          {!pas && (zoomDe(c) ? <a className="btn btn-teal sm" href={zoomDe(c)} target="_blank" rel="noopener noreferrer">Zoom ↗</a> : <small>Zoom aún no cargado</small>)}
+          <button className="btn btn-line sm" onClick={() => onAbrir(c.grupo_id)}>Abrir grupo</button>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <>
+      <Seccion titulo="Mi agenda" ayuda="Tus próximas clases, día por día, con el enlace de Zoom. Hora de Lima." />
+      {proximas.length === 0 && <div className="vacio"><p>No tienes clases programadas por ahora.</p></div>}
+      {porDia.map((d) => (
+        <div key={d.k} style={{ marginBottom: 14 }}>
+          <h3 className="sub">{etiquetaDia(d.k, d.items[0])}</h3>
+          <div className="list">{d.items.map((c) => fila(c, false))}</div>
+        </div>
+      ))}
+      {pasadas.length > 0 && (
+        <>
+          <button className="btn btn-line sm" onClick={() => setVerPasadas(!verPasadas)}>{verPasadas ? 'Ocultar' : 'Ver'} clases pasadas ({pasadas.length})</button>
+          {verPasadas && <div className="list" style={{ marginTop: 10 }}>{pasadas.map((c) => fila(c, true))}</div>}
+        </>
+      )}
+    </>
+  )
+}
+
+/* ================= MIS HORAS ================= */
+const h1 = (n) => `${Math.round(n * 10) / 10}`.replace(/\.0$/, '')
+function HorasProfesor({ datos, curso }) {
+  const ahora = useAhora(60)
+  const mesActual = fechaISOLima(ahora.toISOString()).slice(0, 7)
+  const filas = datos.grupos.map((g) => {
+    const cl = (datos.clases || []).filter((c) => String(c.grupo_id) === String(g.id))
+    const prog = cl.reduce((s, c) => s + horasDeClase(c), 0)
+    const dict = cl.filter((c) => new Date(c.fin) < ahora).reduce((s, c) => s + horasDeClase(c), 0)
+    const mes = cl.filter((c) => new Date(c.fin) < ahora && fechaISOLima(c.inicio).slice(0, 7) === mesActual).reduce((s, c) => s + horasDeClase(c), 0)
+    const mia = (datos.mias || []).find((m) => String(m.grupo_id) === String(g.id))
+    return { g, c: curso(g), n: cl.length, hechas: cl.filter((c) => new Date(c.fin) < ahora).length, prog, dict, mes, curso_h: Number(mia?.horas) || Number(curso(g)?.horas) || 0 }
+  })
+  const tot = filas.reduce((a, f) => ({ dict: a.dict + f.dict, prog: a.prog + f.prog, mes: a.mes + f.mes }), { dict: 0, prog: 0, mes: 0 })
+  return (
+    <>
+      <Seccion titulo="Mis horas" ayuda="Horas de clase dictadas y por dictar en tus grupos, según el calendario de clases." />
+      <div className="kpis">
+        <div><b>{h1(tot.mes)} h</b><span>dictadas este mes</span></div>
+        <div><b>{h1(tot.dict)} h</b><span>dictadas en total</span></div>
+        <div><b>{h1(Math.max(tot.prog - tot.dict, 0))} h</b><span>por dictar</span></div>
+      </div>
+      {filas.length === 0 ? <div className="vacio"><p>Todavía no tienes grupos asignados.</p></div> : (
+        <div className="cons-wrap">
+          <table className="cons-table" style={{ minWidth: 560 }}>
+            <thead><tr><th>Grupo</th><th>Clases</th><th>Dictadas</th><th>Por dictar</th><th>Este mes</th></tr></thead>
+            <tbody>{filas.map((f) => (
+              <tr key={f.g.id}>
+                <td><b>{f.g.codigo && <span className="cod">{f.g.codigo}</span>}{f.c?.titulo || 'Curso'}</b></td>
+                <td>{f.hechas} de {f.n}{f.n === 0 && <small> · sin calendario</small>}</td>
+                <td>{h1(f.dict)} h</td>
+                <td>{h1(Math.max(f.prog - f.dict, 0))} h</td>
+                <td>{h1(f.mes)} h</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+      <p className="note">Son las horas del calendario de clases. Si una clase no se dictó o cambió, avisa al asistente académico para que ajuste el calendario.</p>
     </>
   )
 }
@@ -391,6 +735,7 @@ export default function PanelProfesor({ email, onSalir }) {
   const [datos, setDatos] = useState(null)
   const [err, setErr] = useState('')
   const [sel, setSel] = useState(null)
+  const [vista, setVista] = useState('cursos') // cursos | agenda | horas
   const [toast, setToast] = useState(null)
   const timer = useRef(null)
   const avisar = (texto, error) => { clearTimeout(timer.current); setToast({ texto, error }); timer.current = setTimeout(() => setToast(null), 2800) }
@@ -404,7 +749,9 @@ export default function PanelProfesor({ email, onSalir }) {
         <Link className="logo" to="/" aria-label="CCN"><Logo fijo="oscuro" /></Link>
         <small className="sidetag">Profesor</small>
         <div className="snav" role="tablist" aria-label="Secciones">
-          <button role="tab" aria-selected onClick={() => setSel(null)}>Mis cursos{datos && <em>{datos.grupos.length}</em>}</button>
+          <button role="tab" aria-selected={vista === 'cursos'} onClick={() => { setSel(null); setVista('cursos') }}>Mis cursos{datos && <em>{datos.grupos.length}</em>}</button>
+          <button role="tab" aria-selected={vista === 'agenda'} onClick={() => { setSel(null); setVista('agenda') }}>Mi agenda</button>
+          <button role="tab" aria-selected={vista === 'horas'} onClick={() => { setSel(null); setVista('horas') }}>Mis horas</button>
         </div>
         <div className="sidefoot">
           {email && <span>{email}</span>}
@@ -416,9 +763,12 @@ export default function PanelProfesor({ email, onSalir }) {
         {!hasBackend && <p className="banner">Modo demostración: lo que cambies se guarda solo en este navegador.</p>}
         {err && <p className="banner">{err}</p>}
         {!datos && !err && <p className="note">Cargando…</p>}
-        {datos && !grupo && (
+        {datos && !grupo && vista === 'agenda' && <AgendaProfesor datos={datos} curso={curso} onAbrir={(id) => { setVista('cursos'); setSel(id) }} />}
+        {datos && !grupo && vista === 'horas' && <HorasProfesor datos={datos} curso={curso} />}
+        {datos && !grupo && vista === 'cursos' && (
           <>
             <Seccion titulo="Mis cursos" ayuda="Los grupos que dictas. Entra a uno para ver sus alumnos y tomar la asistencia durante la clase." />
+            <ProximaClase datos={datos} curso={curso} onAbrir={(id) => setSel(id)} />
             {datos.grupos.length === 0 && <div className="vacio"><p>Todavía no tienes grupos asignados. Gerencia te los asigna cuando abre un curso.</p></div>}
             <div className="tcards">
               {datos.grupos.map((g) => {

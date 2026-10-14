@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
+import { agregar } from '../lib/carrito.js'
 import { loadCatalog, crearInteresado, wa, fechaCorta } from '../lib/data.js'
 import { Header, Footer } from '../components/Layout.jsx'
 import { FORM_VACIO, validar } from '../components/Secciones.jsx'
@@ -15,6 +16,8 @@ export default function Inscripcion() {
   const curso = data?.cursos.find((c) => String(c.id) === id)
   const grupo = curso && data.grupos.filter((g) => g.curso_id === curso.id).sort((a, b) => (a.inicio || '9999').localeCompare(b.inicio || '9999'))[0]
   const lleno = grupo?.estado === 'lleno'
+  const nav = useNavigate()
+  useEffect(() => { if (curso && grupo?.estado !== 'lleno') { agregar(curso.id); nav('/checkout', { replace: true }) } }, [curso?.id, grupo?.estado]) // eslint-disable-line
   useEffect(() => { document.title = curso ? `Inscripción · ${curso.titulo} · CCN` : 'Inscripción · CCN' }, [curso])
 
   const set = (k) => (e) => setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })

@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { loadCatalog, wa, fechaCorta } from '../lib/data.js'
 import CourseCard from '../components/CourseCard.jsx'
 import { precioWeb } from '../lib/igv.js'
+import { useCarrito } from '../lib/carrito.js'
 import { Header, Footer } from '../components/Layout.jsx'
 
 const Flecha = () => (
@@ -21,6 +22,7 @@ export default function CursoDetalle() {
   const [data, setData] = useState(null)
   const [barra, setBarra] = useState(false)
   const [alto, setAlto] = useState(76)
+  const carro = useCarrito()
 
   useEffect(() => { loadCatalog().then(setData).catch(() => setData({ cursos: [], grupos: [], error: true })) }, [])
   useEffect(() => {
@@ -125,6 +127,9 @@ export default function CursoDetalle() {
                   <li>Certificado al terminar el curso</li>
                 </ul>
                 <Link className="cd-btn" to={`/inscripcion/${curso.id}`}>{cta} <Flecha /></Link>
+                {!lleno && (carro.tiene(curso.id)
+                  ? <Link className="cd-carro on" to="/carrito">✓ En tu carrito · Ver carrito</Link>
+                  : <button type="button" className="cd-carro" onClick={() => carro.agregar(curso.id)}>Agregar al carrito</button>)}
                 <a className="cd-dudas" href={wa(`Hola, tengo una duda sobre el curso ${curso.titulo}`)} target="_blank" rel="noopener noreferrer">¿Tienes dudas? Escríbenos por WhatsApp</a>
                 <p className="cd-nota">Completa tu inscripción y te llevamos a WhatsApp.</p>
               </div>

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { wa } from '../lib/data.js'
+import { useCarrito } from '../lib/carrito.js'
 
 export function ScrollToHash() {
   const { pathname, hash } = useLocation()
@@ -17,7 +18,7 @@ export function ScrollToHash() {
     if (!link) { link = document.createElement('link'); link.rel = 'canonical'; document.head.appendChild(link) }
     link.href = 'https://ccnperuacademy.com' + (pathname === '/' ? '' : pathname)
     let rb = document.querySelector('meta[name="robots"]')
-    if (pathname.startsWith('/admin') || pathname.startsWith('/inscripcion')) {
+    if (pathname.startsWith('/admin') || pathname.startsWith('/inscripcion') || pathname.startsWith('/carrito') || pathname.startsWith('/checkout')) {
       if (!rb) { rb = document.createElement('meta'); rb.name = 'robots'; document.head.appendChild(rb) }
       rb.content = 'noindex, nofollow'
     } else if (rb) rb.remove()
@@ -40,6 +41,7 @@ export function Logo({ fijo, completo }) {
 export const hola = () => wa('Hola, quiero información sobre los cursos de CCN')
 
 export function Header() {
+  const { cantidad } = useCarrito()
   return (
     <header>
       <div className="wrap bar">
@@ -49,6 +51,10 @@ export function Header() {
         </nav>
         <div className="bar-r">
           <a className="btn btn-wa" href={hola()} target="_blank" rel="noopener noreferrer">WhatsApp</a>
+          <Link className="usr cart-ico" to="/carrito" aria-label={`Carrito (${cantidad})`} title="Tu carrito">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 11h9.7l2-8H6.2" /><circle cx="9" cy="19" r="1.4" /><circle cx="17" cy="19" r="1.4" /></svg>
+            {cantidad > 0 && <span className="cart-badge">{cantidad}</span>}
+          </Link>
           <Link className="usr" to="/admin" aria-label="Ingresar al panel" title="Ingresar">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.600 8 7" /></svg>
           </Link>
@@ -82,7 +88,7 @@ export function Footer() {
           </div>
         </div>
         <div className="ft-base">
-          <span>© {new Date().getFullYear()} CCN · Centro de Capacitación &amp; Negocios</span>
+          <span>© {new Date().getFullYear()} CCN · Centro de Capacitación &amp; Negocios, marca de FIDTAIL PERU S.A.C. · RUC 20608933019</span>
           <span className="ft-legal"><Link to="/terminos">Términos y condiciones</Link><Link to="/privacidad">Política de privacidad</Link></span>
           <span className="powered">Powered by <b>Bro Engineering</b></span>
         </div>

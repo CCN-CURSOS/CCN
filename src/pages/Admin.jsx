@@ -9,9 +9,11 @@ import { conIgv, precioWeb } from '../lib/igv'
 import { Link } from 'react-router-dom'
 import { Logo } from '../components/Layout.jsx'
 import PanelProfesor, { ClasesDrawer } from './Profesor'
+import Certificados from './Certificados'
+import { Cronograma } from './Academico.jsx'
 import {
   hasBackend, supabase, loadAll, save, remove, CATEGORIAS_ACCESO, saveAjuste, getRol, fechaCorta, subirImagen, telefono, setNumero, COLORES, MAX_INICIO, consultasCSV, interesadosCSV, marcarConsulta,
-  subirComprobante, urlComprobante, crearInscripcion, agregarPago, estadoInscripcion, borrarInscripcion, armarInscripciones, inscritosCSV, guardarMiembro, quitarMiembro, ROLES, seguimientoInteresado, reasignarInteresado, recibeInteresados, guardarProspecto, borrarProspecto, guardarTrabajador, guardarWhatsapp, asignarGrupo, pagarTrabajador, guardarInstalacion, ESTADOS_PROSPECTO, ORIGENES, guardarPendiente, marcarPendiente, borrarPendiente, guardarNota, borrarNota, guardarPlantilla, enviarDocumentos, firmarDocumento, borrarDocumento, guardarQueja, atenderQueja, numeroGerencia,
+  subirComprobante, urlComprobante, crearInscripcion, agregarPago, estadoInscripcion, borrarInscripcion, armarInscripciones, inscritosCSV, guardarMiembro, ponerCoordina, getCoordina, quitarMiembro, ROLES, seguimientoInteresado, reasignarInteresado, recibeInteresados, guardarProspecto, borrarProspecto, guardarTrabajador, guardarWhatsapp, asignarGrupo, pagarTrabajador, guardarInstalacion, ESTADOS_PROSPECTO, ORIGENES, guardarPendiente, marcarPendiente, borrarPendiente, guardarNota, borrarNota, guardarPlantilla, enviarDocumentos, firmarDocumento, borrarDocumento, guardarQueja, atenderQueja, numeroGerencia,
 } from '../lib/data.js'
 
 /* ================= piezas pequeñas ================= */
@@ -498,7 +500,7 @@ function WhatsappForm({ g, curso, actual, onClose, onSave }) {
   )
 }
 
-function Grupos({ data, hacer, abrirGrupo, editarGrupo, soloLeer }) {
+function Grupos({ data, hacer, abrirGrupo, editarGrupo, soloLeer, sinBorrar }) {
   const [borrando, setBorrando] = useState(null)
   const nombre = (id) => data.cursos.find((c) => c.id === id)
   const lista = [...data.grupos].sort((a, b) => (b.inicio || '9999').localeCompare(a.inicio || '9999'))
@@ -543,13 +545,13 @@ function Grupos({ data, hacer, abrirGrupo, editarGrupo, soloLeer }) {
                   <option value="abierto">Abierto</option><option value="lleno">Lleno</option><option value="cerrado">Cerrado</option>
                 </select>
                 <button className="btn btn-line sm" onClick={() => editarGrupo(g)}>Editar</button>
-                <button className="ib red" onClick={() => setBorrando(g)} aria-label="Borrar"><Icon n="trash" /></button></>}
+                {!sinBorrar && <button className="ib red" onClick={() => setBorrando(g)} aria-label="Borrar"><Icon n="trash" /></button>}</>}
               </div>
             </div>
           )
         })}
       </div>
-      {clasesG && <ClasesDrawer g={clasesG} curso={nombre(clasesG.curso_id)} onClose={() => setClasesG(null)} avisar={(t) => hacer(async () => {}, t)} />}
+      {clasesG && <ClasesDrawer g={clasesG} curso={nombre(clasesG.curso_id)} lectura={sinBorrar} onClose={() => setClasesG(null)} avisar={(t) => hacer(async () => {}, t)} />}
       {wa && <WhatsappForm g={wa} curso={nombre(wa.curso_id)} actual={waDe(wa)} onClose={() => setWa(null)}
         onSave={(f) => hacer(async () => { await guardarWhatsapp({ grupo_id: wa.id, ...f }); setWa(null) }, 'Grupo de WhatsApp registrado')} />}
       {borrando && (
@@ -1880,11 +1882,11 @@ function Equipo({ data, hacer, email }) {
   const [quitando, setQuitando] = useState(null)
   return (
     <>
-      <Seccion titulo="Equipo" ayuda="Quién entra al panel y qué ve. Gerente: todo. Vendedora: solo Ventas. Profesor: solo sus grupos (alumnos y asistencia). Al profesor también hay que ponerlo en Trabajadores (con el mismo correo) y asignarle su grupo." />
+      <Seccion titulo="Equipo" ayuda="Quién entra al panel y qué ve. Gerente: todo. Vendedora: solo Ventas (si hoy hace de asistente académico, actívale ese permiso en la última columna). Asistente académico: solo el módulo Académico (grupos, profesor, accesos, T1/T2 y certificados), sin pagos ni tarifas. Profesor: solo sus grupos (alumnos y asistencia). Al profesor también hay que ponerlo en Trabajadores (con el mismo correo) y asignarle su grupo." />
       {!hasBackend && <p className="banner">En modo demostración esto es solo de práctica.</p>}
       <div className="cons-wrap" style={{ maxWidth: 760 }}>
         <table className="cons-table" style={{ minWidth: 0 }}>
-          <thead><tr><th>Correo</th><th>Rol</th><th>Recibe interesados</th><th /></tr></thead>
+          <thead><tr><th>Correo</th><th>Rol</th><th>Recibe interesados</th><th>Hace de asistente académico</th><th /></tr></thead>
           <tbody>
             {(data.equipo || []).map((a) => (
               <tr key={a.email}>
@@ -1896,6 +1898,7 @@ function Equipo({ data, hacer, email }) {
                   </select>
                 </td>
                 <td>{a.rol === 'vendedora' ? <Switch on={a.recibe_interesados !== false} label={`Recibe interesados: ${a.email}`} onChange={(v) => hacer(() => recibeInteresados(a.email, v), v ? 'Recibirá interesados' : 'Ya no recibirá interesados')} /> : '—'}</td>
+                <td>{a.rol === 'vendedora' ? <Switch on={!!a.coordina} label={`Hace de asistente académico: ${a.email}`} onChange={(v) => hacer(() => ponerCoordina(a.email, v), v ? 'Verá el módulo Académico' : 'Ya no verá el módulo Académico')} /> : (a.rol === 'gerente' || !a.rol ? 'Sí (todo)' : a.rol === 'asistente' ? 'Es su puesto' : '—')}</td>
                 <td>{a.email !== email && <button className="ib red" onClick={() => setQuitando(a)} aria-label="Quitar"><Icon n="trash" /></button>}</td>
               </tr>
             ))}
@@ -2294,6 +2297,10 @@ function TrabajadorForm({ inicial, equipo, cursos, onClose, onSave }) {
           </>
         ) : (
           <>
+            <label>Correo de acceso al panel del profesor
+              <input id="tr-mail" type="email" autoComplete="off" value={f.email || ''} onChange={(e) => set('email', e.target.value)} placeholder="profesor@correo.com" />
+              <small>Al guardar, el sistema le da el rol Profesor automáticamente. Falta un solo paso: crear su usuario en Supabase → Authentication → Users (con Auto Confirm) con este mismo correo.</small>
+            </label>
             <label>Tarifa por hora dictada (S/) — cada profesor tiene la suya<input id="tr-tar" type="number" min="0" step="0.5" value={f.tarifa_hora} onChange={(e) => set('tarifa_hora', e.target.value)} /></label>
             <p className="note">Es la tarifa que se copia a cada grupo que le asignes (después se puede ajustar grupo por grupo).</p>
             <div>
@@ -2411,7 +2418,21 @@ function Trabajadores({ data, hacer }) {
   const lista = armarTrabajadores(data)
   const mes = new Date().toISOString().slice(0, 7)
   const nuevo = (puesto) => setForm({ nombre: '', puesto, cargo: '', email: '', documento: '', celular: '', sueldo_base: puesto === 'vendedor' ? SUELDO_DEF : 0, bono_pasajes: puesto === 'vendedor' ? BONO_PASAJES_DEF : 0, fecha_inicio: '', tarifa_hora: 0, cursos: [], comision_tramos: null, activo: true, notas: '' })
-  const guardar = (f) => hacer(async () => { await guardarTrabajador({ ...f, id: f.virtual ? undefined : f.id }); setForm(null); setSel(null) }, 'Guardado')
+  const guardar = (f) => hacer(async () => {
+    const mail = String(f.email || '').trim().toLowerCase()
+    if (f.puesto === 'instructor' && mail) {
+      if (!/^\S+@\S+\.\S+$/.test(mail)) throw new Error('Escribe un correo válido para el profesor.')
+      const ya = (data.equipo || []).find((e) => e.email === mail)
+      if (ya && ya.rol !== 'profesor') throw new Error(`Ese correo ya tiene el rol «${ya.rol}» en el equipo. Usa otro correo para el profesor.`)
+      const otro = (data.trabajadores || []).find((x) => String(x.email || '').toLowerCase() === mail && x.id !== f.id)
+      if (otro) throw new Error(`Ese correo ya está en la ficha de ${otro.nombre}.`)
+      await guardarTrabajador({ ...f, email: mail, id: f.virtual ? undefined : f.id })
+      if (!ya) await guardarMiembro({ email: mail, rol: 'profesor' })
+    } else {
+      await guardarTrabajador({ ...f, id: f.virtual ? undefined : f.id })
+    }
+    setForm(null); setSel(null)
+  }, 'Guardado')
   const formEl = form && <TrabajadorForm inicial={form} equipo={data.equipo} cursos={data.cursos} onClose={() => setForm(null)} onSave={guardar} />
 
   const t = sel ? lista.find((x) => (x.id || x.email) === sel) : null
@@ -2429,6 +2450,11 @@ function Trabajadores({ data, hacer }) {
         {t.puesto === 'vendedor' && t.email && <ReporteSemanal data={data} email={t.email} />}
         {t.puesto === 'vendedor' && t.email && <DocumentosDe data={data} t={t} hacer={hacer} />}
         {t.puesto === 'vendedor' && t.email && <PendientesDe data={data} email={t.email} hacer={hacer} />}
+        {t.puesto === 'instructor' && (() => {
+          const rolOk = (data.equipo || []).some((e) => e.rol === 'profesor' && e.email === t.email)
+          const nG = (data.asignaciones || []).filter((a) => a.trabajador_id === t.id).length
+          return <p className={rolOk && nG ? 'note' : 'banner'}>Acceso al panel del profesor: {t.email ? <b>{t.email}</b> : <b>sin correo</b>} · {rolOk ? '✅ rol Profesor activo' : '⚠️ aún no tiene el rol (edita sus datos y escribe su correo)'} · {nG ? `${nG} grupo${nG === 1 ? '' : 's'} asignado${nG === 1 ? '' : 's'}` : '⚠️ ningún grupo asignado (se asigna en Académico → Cronograma y accesos)'}. Si no ve sus grupos al entrar, revisa que su usuario exista en Supabase → Authentication con ese mismo correo.</p>
+        })()}
         {t.puesto === 'instructor' && <FichaProfesor data={data} t={t} hacer={hacer} />}
         {formEl}
         {borrando && <Confirmar texto={`¿Borrar la ficha de ${borrando.nombre}?`} onNo={() => setBorrando(null)} onSi={() => { const x = borrando; setBorrando(null); setSel(null); hacer(() => remove('trabajadores', x.id), 'Ficha borrada') }} />}
@@ -2456,6 +2482,7 @@ function Trabajadores({ data, hacer }) {
             <button key={x.id || x.email} className={`tcard ${x.activo === false ? 'off' : ''}`} onClick={() => setSel(x.id || x.email)}>
               <b>{x.nombre}</b><small>{x.cargo || PUESTOS[x.puesto]}{x.activo === false ? ' · inactivo' : ''}</small>
               {mv && <><span><i>{mv.cupos}</i> cupos · {soles(mv.vendido)} vendido</span><span>{!x.fecha_inicio ? <i>Falta el inicio de contrato</i> : x.fecha_inicio > hoyISO() ? <>Contrato inicia el <i>{fechaCorta(x.fecha_inicio)}</i></> : <>A pagar este mes: <i>{soles(Math.max(0, mv.aPagar - descuentosVendedora(data, x.email, mes, x).total))}</i></>}</span></>}
+              {x.puesto === 'instructor' && <span style={{ fontSize: 12 }}>{(data.equipo || []).some((e) => e.rol === 'profesor' && e.email === x.email) ? '✅ Con acceso al panel' : (x.email ? '⚠️ Falta darle acceso (crear su usuario)' : '⚠️ Sin correo de acceso')}</span>}
               {mp && <><span><i>{mp.cursos.length}</i> cursos · <i>{mp.nGrupos}</i> grupos · <i>{mp.horas} h</i></span><span>Pagado: <i>{soles(mp.totalPagado)}</i> · por pagar: <i>{soles(mp.porPagar)}</i></span></>}
             </button>
           )
@@ -2550,15 +2577,16 @@ const MODULOS = {
   ventas: { nombre: 'Ventas', icono: 'ventas', secciones: [['mi', 'Mi avance'], ['agenda', 'Agenda'], ['firmar', 'Firmar'], ['plan', 'Plan de trabajo'], ['interesados', 'Interesados'], ['prospectos', 'Prospectos'], ['inscritos', 'Inscritos'], ['quejas', 'Quejas y reclamos'], ['consultas', 'Consultas'], ['grupos', 'Grupos'], ['instalaciones', 'Instalaciones']] },
   web: { nombre: 'Web', icono: 'web', secciones: [['cursos', 'Cursos'], ['grupos', 'Horarios'], ['enlaces', 'Enlaces'], ['ajustes', 'Ajustes']] },
   gerencia: { nombre: 'Gerencia', icono: 'gerencia', secciones: [['resumen', 'Resumen'], ['fichas', 'Cursos'], ['trabajadores', 'Trabajadores'], ['contratos', 'Contratos'], ['horas', 'Horas trabajadas'], ['accesos', 'Accesos'], ['equipo', 'Equipo']] },
+  academico: { nombre: 'Académico', icono: 'academico', secciones: [['grupos', 'Grupos'], ['cronograma', 'Cronograma y accesos'], ['certificados', 'Certificados']] },
 }
-const POR_ROL = { gerente: ['gerencia', 'ventas', 'web'], vendedora: ['ventas'] }
-const ETIQUETA_ROL = { gerente: 'Gerente', vendedora: 'Vendedora' }
+const POR_ROL = { gerente: ['gerencia', 'ventas', 'web', 'academico'], vendedora: ['ventas'], asistente: ['academico'] }
+const ETIQUETA_ROL = { gerente: 'Gerente', vendedora: 'Vendedora', asistente: 'Asistente académico' }
 
-function Panel({ email, rol, onSalir }) {
+function Panel({ email, rol, coordina, onSalir }) {
   const gerente = rol === 'gerente'
-  const modulos = POR_ROL[rol] || []
+  const modulos = [...(POR_ROL[rol] || []), ...(coordina && rol === 'vendedora' ? ['academico'] : [])]
   const [modulo, setModulo] = useState(gerente ? 'gerencia' : (modulos[0] || 'ventas'))
-  const [tab, setTab] = useState(gerente ? 'resumen' : 'mi')
+  const [tab, setTab] = useState(gerente ? 'resumen' : (modulos[0] === 'academico' ? 'grupos' : 'mi'))
   const [data, setData] = useState({ cursos: [], grupos: [], enlaces: [], consultas: [], interesados: [], alumnos: [], matriculas: [], pagos: [], historial: [], prospectos: [], pendientes: [], notas_agenda: [], plantillas: [], documentos: [], quejas: [], trabajadores: [], instalaciones: [], gruposWa: [], asignaciones: [], pagos_trabajador: [], equipo: [], ajustes: {} })
   const [grupoForm, setGrupoForm] = useState(null)
   const [inscForm, setInscForm] = useState(null)
@@ -2586,7 +2614,7 @@ function Panel({ email, rol, onSalir }) {
   const nuevosInt = (data.interesados || []).filter((x) => x.estado === 'nuevo').length
   const nProsp = (data.prospectos || []).filter((x) => !['inscrito', 'perdido'].includes(x.estado)).length
   const nuevosCon = (data.consultas || []).filter((x) => x.estado === 'nuevo').length
-  const cuenta = { quejas: (data.quejas || []).filter((q) => q.estado === 'nueva').length, firmar: (data.documentos || []).filter((d) => d.vendedor === email && d.estado === 'enviado').length, agenda: (data.pendientes || []).filter((x) => x.vendedor === email && x.estado === 'pendiente').length + (data.prospectos || []).filter((p) => recontactoVencido(p)).length, prospectos: nProsp, inscritos: nInscritos, interesados: nuevosInt, consultas: nuevosCon, grupos: abiertos, cursos: data.cursos.length, enlaces: (data.enlaces || []).length, equipo: (data.equipo || []).length, trabajadores: armarTrabajadores(data).length, instalaciones: (data.instalaciones || []).filter((x) => x.estado === 'agendada' && x.fecha >= new Date().toISOString().slice(0, 10)).length }
+  const cuenta = { quejas: (data.quejas || []).filter((q) => q.estado === 'nueva').length, firmar: (data.documentos || []).filter((d) => d.vendedor === email && d.estado === 'enviado').length, agenda: (data.pendientes || []).filter((x) => x.vendedor === email && x.estado === 'pendiente').length + (data.prospectos || []).filter((p) => recontactoVencido(p)).length, prospectos: nProsp, inscritos: nInscritos, interesados: nuevosInt, consultas: nuevosCon, grupos: abiertos, certificados: (data.certificados || []).filter((c) => c.estado === 'vigente').length, cursos: data.cursos.length, enlaces: (data.enlaces || []).length, equipo: (data.equipo || []).length, trabajadores: armarTrabajadores(data).length, instalaciones: (data.instalaciones || []).filter((x) => x.estado === 'agendada' && x.fecha >= new Date().toISOString().slice(0, 10)).length }
   const nombreSec = (m, k, n) => n
   const verSecciones = MODULOS[modulo].secciones.filter(([k]) => !['mi', 'agenda', 'firmar', 'plan'].includes(k) || !gerente)
 
@@ -2631,7 +2659,7 @@ function Panel({ email, rol, onSalir }) {
           <p className="banner">Modo demostración: lo que cambies se guarda solo en este navegador. Para usarlo de verdad, conecta Supabase (mira el README).</p>
         )}
         {modulo === 'web' && tab === 'cursos' && <Cursos data={data} hacer={hacer} abrirGrupo={abrirGrupo} />}
-        {tab === 'grupos' && <Grupos data={data} hacer={hacer} abrirGrupo={abrirGrupo} editarGrupo={setGrupoForm} soloLeer={modulo !== 'web'} />}
+        {tab === 'grupos' && <Grupos data={data} hacer={hacer} abrirGrupo={abrirGrupo} editarGrupo={setGrupoForm} soloLeer={modulo !== 'web' && modulo !== 'academico'} sinBorrar={!gerente} />}
         {modulo === 'web' && tab === 'enlaces' && <Enlaces data={data} hacer={hacer} />}
         {modulo === 'web' && tab === 'ajustes' && <Ajustes data={data} hacer={hacer} />}
         {modulo === 'ventas' && tab === 'consultas' && <Consultas data={data} hacer={hacer} rolG={gerente} />}
@@ -2649,6 +2677,8 @@ function Panel({ email, rol, onSalir }) {
         {modulo === 'gerencia' && tab === 'resumen' && <Resumen data={data} />}
         {modulo === 'gerencia' && tab === 'fichas' && <CursosGerencia data={data} hacer={hacer} abrirGrupo={abrirGrupo} editarGrupo={setGrupoForm} irWeb={() => ir('web', 'cursos')} />}
         {modulo === 'gerencia' && tab === 'trabajadores' && <Trabajadores data={data} hacer={hacer} />}
+        {modulo === 'academico' && tab === 'cronograma' && <Cronograma data={data} hacer={hacer} avisar={avisar} />}
+        {modulo === 'academico' && tab === 'certificados' && <Certificados data={data} hacer={hacer} gerente={gerente} />}
         {modulo === 'gerencia' && tab === 'horas' && <Horas data={data} hacer={hacer} />}
         {modulo === 'gerencia' && tab === 'accesos' && <Accesos data={data} hacer={hacer} />}
         {modulo === 'gerencia' && tab === 'equipo' && <Equipo data={data} hacer={hacer} email={email} />}
@@ -2718,14 +2748,16 @@ export default function Admin() {
   const [estado, setEstado] = useState('cargando')
   const [email, setEmail] = useState('')
   const [rol, setRol] = useState('gerente')
+  const [coordina, setCoordina] = useState(false)
   async function revisar() {
-    if (!hasBackend) { const r = await getRol('demo@ccn.pe'); setRol(r || 'gerente'); if (r === 'vendedora' || r === 'profesor') setEmail('demo@ccn.pe'); setEstado('ok'); return }
+    if (!hasBackend) { const r = await getRol('demo@ccn.pe'); setRol(r || 'gerente'); setCoordina(await getCoordina('demo@ccn.pe')); if (r === 'vendedora' || r === 'profesor') setEmail('demo@ccn.pe'); setEstado('ok'); return }
     const { data } = await supabase.auth.getSession()
     const mail = data.session?.user?.email
     if (!mail) { setEstado('login'); return }
     setEmail(mail)
     const r = await getRol(mail)
     setRol(r || 'gerente')
+    setCoordina(r === 'vendedora' ? await getCoordina(mail) : false)
     setEstado(r ? 'ok' : 'sinpermiso')
   }
   useEffect(() => { revisar() }, [])
@@ -2741,5 +2773,5 @@ export default function Admin() {
     </Acceso>
   )
   if (rol === 'profesor') return <PanelProfesor email={email} onSalir={salir} />
-  return <Panel email={email} rol={rol} onSalir={salir} />
+  return <Panel email={email} rol={rol} coordina={coordina} onSalir={salir} />
 }
