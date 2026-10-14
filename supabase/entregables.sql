@@ -260,6 +260,16 @@ begin
   return new;
 end $$;
 
+-- REPARACIÓN: filas viejas quedaron todas como T2 (por el valor por defecto). Si un curso/programa no tiene T1, la primera pasa a T1.
+with r as (
+  select id, row_number() over (partition by curso_id, programa order by orden, creado) n
+    from public.entregables where activo
+)
+update public.entregables e set etapa = case when r.n = 1 then 'T1' else 'T2' end
+  from r
+ where e.id = r.id
+   and not exists (select 1 from public.entregables x where x.curso_id = e.curso_id and x.programa = e.programa and x.etapa = 'T1' and x.activo);
+
 -- SEMILLA (borrador): solo para los cursos que todavía no tienen evaluaciones.
 do $$
 declare
@@ -296,7 +306,7 @@ begin
     ) as t(curso, orden, etapa, titulo, programa)
   loop
     select id into cid from public.cursos where titulo ilike r.curso order by orden limit 1;
-    if cid is not null and not exists (select 1 from public.entregables e where e.curso_id = cid::text and e.orden = r.orden) then
+    if cid is not null and not exists (select 1 from public.entregables e where e.curso_id = cid::text and e.programa = r.programa and e.etapa = r.etapa and e.activo) then
       insert into public.entregables (curso_id, orden, etapa, titulo, programa) values (cid::text, r.orden, r.etapa, r.titulo, r.programa);
     end if;
   end loop;
@@ -340,6 +350,6 @@ create policy "alumno_notas_escribir" on public.alumno_notas for all to authenti
   using (public.es_gerente() or public.es_profesor_de(grupo_id))
   with check (public.es_gerente() or public.es_profesor_de(grupo_id));
 
-select c.titulo, count(e.id) as evaluaciones
+select c.titulo, count(e.id) as evaluaciones, string_agg(distinct e.etapa, '+' order by e.etapa) as etapas
   from public.cursos c left join public.entregables e on e.curso_id = c.id::text
  group by c.titulo, c.orden order by c.orden;

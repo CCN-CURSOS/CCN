@@ -1221,7 +1221,9 @@ section{padding-block:64px}
 .shell .vencido{color:#c0392b;font-weight:600}
 .shell .contacto{border:1px solid #e3e8f0;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:10px;margin:0}
 .shell .contacto legend{font-weight:700;color:#0F2547;padding:0 6px}
-.shell .chk{flex-direction:row!important;align-items:center;gap:8px}
+.shell .chk{flex-direction:row!important;align-items:flex-start;gap:10px;line-height:1.4;font-size:.9rem}
+.shell .chk input{flex:none;margin-top:3px}
+.shell .chk span{display:block;min-width:0}
 .shell .calendario{background:#fff;border:1px solid #e3e8f0;border-radius:14px;padding:14px;max-width:520px}
 .shell .cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;text-transform:capitalize}
 .shell .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}

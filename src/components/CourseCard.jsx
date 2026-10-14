@@ -24,6 +24,7 @@ export default function CourseCard({ c, grupo }) {
           {c.horas} h · {c.sesiones} sesiones
           {grupo?.inicio && <> · Inicio {fechaCorta(grupo.inicio)}</>}
         </p>
+        {grupo && (grupo.dias || grupo.horario) && <p className="cc-meta">{[grupo.dias, grupo.horario].filter(Boolean).join(' · ')}</p>}
         <div className="cc-precio">
           <b>{precioWeb(c.precio)}</b><small className="igv"> IGV incl.</small>
           {c.precio_antes > c.precio && <><span className="antes">{precioWeb(c.precio_antes)}</span><span className="dsct">-{Math.round((1 - c.precio / c.precio_antes) * 100)}%</span></>}

@@ -5,7 +5,7 @@ import Icon from '../components/Icons'
 import { Barras, Embudo } from '../components/Charts'
 import { lunesDe, semanaHoras, minutosJornada, jornadaSinSenal, fmtHM, MINIMO_SEMANA_MIN, metasDe, PUESTOS, SUELDO_DEF, BONO_PASAJES_DEF, descuentosVendedora, TARIFA_HORA_DEF, TRAMOS_DEF, tramosDe, metricasVendedor, metricasProfesor, nombreGrupoWa, gruposSinWhatsapp, metricasCurso, AVISO_INSTALACION, PROGRAMAS, ESTADOS_INSTALACION, programaSugerido, errorHorarioInstalacion, choqueInstalacion, horaCorta, hora12, proximoRecontacto, recontactoVencido, reporteSemana, alertasVenta } from '../lib/ventas'
 import { TIPOS_DOC, VARIABLES_DOC, renderDoc, plantillaDe, fechaLarga } from '../lib/docs'
-import { conIgv, precioWeb } from '../lib/igv'
+import { redondear, sinIgv } from '../lib/igv'
 import { Link } from 'react-router-dom'
 import { Logo } from '../components/Layout.jsx'
 import PanelProfesor, { ClasesDrawer } from './Profesor'
@@ -87,7 +87,7 @@ function Imagen({ url, onChange, color }) {
 
 /* ================= CURSOS ================= */
 const CURSO_VACIO = {
-  titulo: '', descripcion: '', color: 'g1', horas: 12, sesiones: 4, precio: 299, precio_antes: '',
+  titulo: '', descripcion: '', color: 'g1', horas: 12, sesiones: 4, precio: 229, precio_antes: '',
   programas: '', temario: [], extra: '', orden: 0, activo: true, destacado: false, imagen_url: '',
 }
 
@@ -111,8 +111,8 @@ function CursoForm({ inicial, total, enInicio, onSave, onClose }) {
       await onSave({
         ...f,
         titulo: f.titulo.trim(),
-        horas: Number(f.horas) || 0, sesiones: Number(f.sesiones) || 0, precio: Number(f.precio) || 0,
-        precio_antes: f.precio_antes === '' ? null : Number(f.precio_antes),
+        horas: Number(f.horas) || 0, sesiones: Number(f.sesiones) || 0, precio: redondear(f.precio),
+        precio_antes: f.precio_antes === '' ? null : redondear(f.precio_antes),
         orden: f.id ? f.orden : total + 1,
         temario: f.temario.map((t) => t.trim()).filter(Boolean),
       })
@@ -147,8 +147,8 @@ function CursoForm({ inicial, total, enInicio, onSave, onClose }) {
       <section className="fs">
         <h3>Precio y duración</h3>
         <div className="g2">
-          <label>Precio actual en S/ SIN IGV (con descuento)<input id="c-precio" type="number" min="0" value={f.precio} onChange={(e) => set('precio', e.target.value)} /><small>El IGV (18 %) se suma solo: el alumno ve y paga {precioWeb(f.precio)}.</small></label>
-          <label>Precio real en S/ SIN IGV (se muestra tachado, opcional)<input id="c-antes" type="number" min="0" value={f.precio_antes} onChange={(e) => set('precio_antes', e.target.value)} placeholder="Ej. 510 · déjalo vacío si no hay descuento" /></label>
+          <label>Precio FINAL en S/ (ya incluye IGV)<input id="c-precio" type="number" min="0" step="1" value={f.precio} onChange={(e) => set('precio', e.target.value)} onBlur={(e) => set('precio', e.target.value === '' ? '' : String(redondear(e.target.value)))} /><small>Es lo que ve y paga el alumno. No se le suma nada más. Se redondea al entero más cercano.</small></label>
+          <label>Precio tachado en S/ (final, opcional)<input id="c-antes" type="number" min="0" step="1" value={f.precio_antes} onChange={(e) => set('precio_antes', e.target.value)} onBlur={(e) => set('precio_antes', e.target.value === '' ? '' : String(redondear(e.target.value)))} placeholder="Ej. 573 · déjalo vacío si no hay descuento" /></label>
           <label>Horas<input id="c-horas" type="number" min="1" value={f.horas} onChange={(e) => set('horas', e.target.value)} /></label>
           <label>Sesiones<input id="c-ses" type="number" min="1" value={f.sesiones} onChange={(e) => set('sesiones', e.target.value)} /></label>
         </div>
@@ -219,12 +219,12 @@ function Cursos({ data, hacer, abrirGrupo }) {
                   <b>{c.titulo}</b>
                   <small>{c.horas} h · {c.sesiones} sesiones · {g ? `${g.inicio ? fechaCorta(g.inicio) : 'sin fecha'} (${g.estado})` : 'sin grupo abierto'}</small>
                 </div>
-                <label className="pr" data-l="Precio sin IGV" title={`Con IGV: ${soles(conIgv(precio[c.id] ?? c.precio))}`}>S/
+                <label className="pr" data-l="Precio final" title={`Incluye IGV · base ${soles(sinIgv(precio[c.id] ?? c.precio))}`}>S/
                   <input type="number" min="0" aria-label={`Precio de ${c.titulo}`}
                     value={precio[c.id] ?? c.precio}
                     onChange={(e) => setPrecio({ ...precio, [c.id]: e.target.value })}
                     onBlur={() => {
-                      const v = Number(precio[c.id])
+                      const v = redondear(precio[c.id])
                       if (precio[c.id] !== undefined && v !== c.precio && v >= 0) hacer(() => save('cursos', { id: c.id, precio: v }), 'Precio guardado')
                       setPrecio((p) => { const n = { ...p }; delete n[c.id]; return n })
                     }}
@@ -489,12 +489,12 @@ function WhatsappForm({ g, curso, actual, onClose, onSave }) {
         <label>Nombre del grupo en WhatsApp
           <input id="wa-nom" value={f.nombre} onChange={(e) => setF({ ...f, nombre: e.target.value })} />
         </label>
-        <p className="note">Formato: CÓDIGO-DÍAS-CURSO-HORA-FECHA. Puedes corregirlo antes de crear el grupo.{f.nombre !== sugerido && <> <button type="button" className="link" onClick={() => setF({ ...f, nombre: sugerido })}>Volver al sugerido</button></>}</p>
+        <p className="note">Formato: G##-DÍAS-CURSO-DD.MM (ej. G05-M/J-NOTION-24.11). Puedes corregirlo antes de crear el grupo.{f.nombre !== sugerido && <> <button type="button" className="link" onClick={() => setF({ ...f, nombre: sugerido })}>Volver al sugerido</button></>}</p>
         <label>Enlace de invitación
           <input id="wa-link" value={f.enlace} onChange={(e) => setF({ ...f, enlace: e.target.value })} placeholder="https://chat.whatsapp.com/…" />
         </label>
         <p className="note">Crea el grupo en WhatsApp, copia el enlace de invitación y pégalo aquí. Solo lo ve el equipo.</p>
-        <label className="chk"><input id="wa-admin" type="checkbox" checked={f.solo_admins} onChange={(e) => setF({ ...f, solo_admins: e.target.checked })} /> Ya configuré el grupo para que <b>solo los administradores</b> puedan escribir (hasta que empiece el curso)</label>
+        <label className="chk"><input id="wa-admin" type="checkbox" checked={f.solo_admins} onChange={(e) => setF({ ...f, solo_admins: e.target.checked })} /><span>Ya configuré el grupo en WhatsApp: solo los administradores pueden escribir hasta que empiece el curso.</span></label>
       </div>
     </Drawer>
   )
@@ -1016,6 +1016,7 @@ function Agenda({ data, email, hacer }) {
   const hechos = mios.filter((x) => x.estado === 'realizado').sort((a, b) => String(b.realizado_en).localeCompare(String(a.realizado_en)))
   const notas = (data.notas_agenda || []).filter((x) => !x.vendedor || x.vendedor === email)
   const vencidos = (data.prospectos || []).filter((p) => (!p.vendedor || p.vendedor === email) && recontactoVencido(p))
+  const wspFalta = gruposSinWhatsapp(data).map((g) => ({ g, nombre: nombreGrupoWa(g, (data.cursos || []).find((c) => String(c.id) === String(g.curso_id))) }))
   return (
     <>
       <Seccion titulo="Mi agenda" ayuda="Tus pendientes, notas y el calendario con los clientes a los que tienes que volver a contactar.">
@@ -1025,10 +1026,23 @@ function Agenda({ data, email, hacer }) {
       {data.pendientesError && hasBackend && <p className="banner">Falta pegar <b>crm.sql</b> en Supabase. Mensaje: {data.pendientesError}</p>}
       {vencidos.length > 0 && <div className="alertas"><p className="alerta"><b>Se te pasó volver a contactar a:</b> {vencidos.map((p) => p.nombres).join(', ')}. Cada cliente sin respuesta es una venta que se puede perder.</p></div>}
       <div className="tabs2" role="tablist">
-        {[['pendientes', `Pendientes (${abiertos.length})`], ['realizados', `Realizados (${hechos.length})`], ['notas', 'Notas'], ['calendario', 'Calendario']].map(([k, n]) => (
+        {[['pendientes', `Pendientes (${abiertos.length + wspFalta.length})`], ['realizados', `Realizados (${hechos.length})`], ['notas', 'Notas'], ['calendario', 'Calendario']].map(([k, n]) => (
           <button key={k} role="tab" aria-selected={sub === k} onClick={() => setSub(k)}>{n}</button>
         ))}
       </div>
+      {sub === 'pendientes' && wspFalta.length > 0 && (
+        <ul className="pend">
+          {wspFalta.map(({ g, nombre }) => (
+            <li key={'wsp' + g.id} className="vencido">
+              <span aria-hidden="true">💬</span>
+              <div>
+                <b>Crear el grupo de WhatsApp de {g.codigo}</b>
+                <small>Nombre: {nombre} · {g.inicio ? `inicia el ${fechaCorta(g.inicio)}` : 'sin fecha de inicio'}. Se quita solo cuando lo registras en Grupos.</small>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
       {sub === 'pendientes' && <ListaPendientes lista={abiertos} email={email} hacer={hacer} onEditar={(x) => setForm(x)} />}
       {sub === 'realizados' && <><p className="note">Los pendientes realizados quedan como registro: ya no se pueden editar ni borrar.</p><ListaPendientes lista={hechos} email={email} hacer={hacer} onEditar={() => {}} /></>}
       {sub === 'calendario' && <Calendario data={data} email={email} />}
@@ -1470,7 +1484,7 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
 
   const elegidos = sel.map((id) => grupos.find((g) => String(g.id) === id)).filter(Boolean)
   const pideReq = elegidos.some((g) => programaSugerido(cursoDe(g.curso_id)?.titulo || ''))
-  const sugerido = conIgv(elegidos.reduce((t, g) => t + Number(cursoDe(g.curso_id)?.precio || 0), 0))   // precio de lista + IGV
+  const sugerido = elegidos.reduce((t, g) => t + Number(cursoDe(g.curso_id)?.precio || 0), 0)   // precio de lista (final, incluye IGV)
   useEffect(() => { if (!precioManual) setPrecio(sugerido ? String(sugerido) : '') }, [sugerido, precioManual])
 
   function buscarAlumno(doc) {
@@ -1566,7 +1580,7 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
         <label>Precio acordado {elegidos.length > 1 ? 'por todo el paquete' : ''} (S/, IGV incluido)
           <input id="i-precio" type="number" min="0" step="0.01" value={precio} onChange={(e) => { setPrecio(e.target.value); setPrecioManual(true) }} />
         </label>
-        {sugerido > 0 && Number(precio) !== sugerido && <p className="note">Precio de lista con IGV: {soles(sugerido)}. {Number(precio) < sugerido && !esClubSel ? 'Estás dando descuento.' : ''}</p>}
+        {sugerido > 0 && Number(precio) !== sugerido && <p className="note">Precio de lista (IGV incl.): {soles(sugerido)}. {Number(precio) < sugerido && !esClubSel ? 'Estás dando descuento.' : ''}</p>}
         {sugerido > 0 && Number(precio) < sugerido - 0.005 && !esClubSel && (
           <div className="fs descuento">
             <p className="note"><b>El precio es fijo.</b> Un descuento solo se da con autorización previa de gerencia.</p>
@@ -1796,7 +1810,6 @@ function Resumen({ data }) {
   })
   const alertas = data.grupos.filter((g) => g.estado === 'abierto' && g.inicio && g.inicio >= hoy && g.inicio <= en21 && (g.inscritos || 0) < (g.minimo || 5))
   const llenos = data.grupos.filter((g) => g.estado === 'lleno')
-  const sinWa = gruposSinWhatsapp(data)
   const nuevos = (data.interesados || []).filter((x) => x.estado === 'nuevo').length
   const intMes = (data.interesados || []).filter((x) => !mes || String(x.creado || '').slice(0, 7) === mes)
   const correos = [...new Set([...(data.equipo || []).filter((e) => e.rol === 'vendedora').map((e) => e.email), ...vivas.map((x) => x.vendedor).filter(Boolean)])]
@@ -1846,9 +1859,8 @@ function Resumen({ data }) {
           </div>
         </>
       )}
-      {(alertas.length > 0 || llenos.length > 0 || sinWa.length > 0) && (
+      {(alertas.length > 0 || llenos.length > 0) && (
         <div className="alertas">
-          {sinWa.map((g) => <p key={'w' + g.id} className="alerta"><b>{g.codigo}</b> {cursoDe(g.curso_id)?.titulo} aún no tiene grupo de WhatsApp.</p>)}
           {alertas.map((g) => <p key={g.id} className="alerta"><b>{g.codigo}</b> {cursoDe(g.curso_id)?.titulo} empieza el {fechaCorta(g.inicio)} con {g.inscritos || 0} de {g.minimo || 5} inscritos.</p>)}
           {llenos.map((g) => <p key={g.id} className="alerta ok"><b>{g.codigo}</b> {cursoDe(g.curso_id)?.titulo} está lleno.</p>)}
         </div>

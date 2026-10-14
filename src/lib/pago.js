@@ -3,7 +3,7 @@
    Mañana: agregar "izipay" (cobro con tarjeta/Yape) y "sunat" (boleta/factura electrónica) SIN tocar el carrito ni el checkout:
    solo se registra un proveedor nuevo en PROVEEDORES y se cambia PROVEEDOR_ACTIVO. */
 import { wa, fechaCorta } from './data.js'
-import { IGV_TASA, conIgv, igvDe } from './igv.js'
+import { IGV_TASA, sinIgv, igvDe } from './igv.js'
 
 export const PROVEEDOR_ACTIVO = 'whatsapp'
 
@@ -12,14 +12,14 @@ export const soles = (n) => 'S/' + (Number.isInteger(r2(n)) ? r2(n) : r2(n).toFi
 
 const codigoPedido = () => 'P-' + Date.now().toString(36).toUpperCase().slice(-6)
 
-/* Arma el pedido a partir de los cursos del carrito. Precios base SIN IGV; el total lleva IGV. */
+/* Arma el pedido a partir de los cursos del carrito. El precio de cada curso es FINAL (ya incluye IGV); base e IGV se derivan. */
 export function armarPedido({ cliente, cursos, grupoDe }) {
   const items = cursos.map((c) => {
     const g = grupoDe(c.id)
-    return { curso_id: String(c.id), titulo: c.titulo, inicio: g?.inicio || '', base: r2(c.precio), igv: igvDe(c.precio), total: conIgv(c.precio) }
+    return { curso_id: String(c.id), titulo: c.titulo, inicio: g?.inicio || '', horario: [g?.dias, g?.horario].filter(Boolean).join(' '), base: sinIgv(c.precio), igv: igvDe(c.precio), total: r2(c.precio) }
   })
-  const subtotal = r2(items.reduce((s, i) => s + i.base, 0))
-  const total = conIgv(subtotal)
+  const total = r2(items.reduce((s, i) => s + i.total, 0))
+  const subtotal = sinIgv(total)
   return {
     codigo: codigoPedido(), cliente, items,
     subtotal, igv: r2(total - subtotal), total, igv_tasa: IGV_TASA, moneda: 'PEN',
@@ -36,7 +36,7 @@ export const PROVEEDORES = {
     boton: 'INSCRÍBETE',
     /* Devuelve { tipo: 'redirect', url } -> el checkout manda al visitante a esa dirección. */
     async iniciar(p) {
-      const lineas = p.items.map((i) => `• ${i.titulo}${i.inicio ? ` (inicio ${fechaCorta(i.inicio)})` : ''} · ${soles(i.total)}`).join('\n')
+      const lineas = p.items.map((i) => `• ${i.titulo}${i.inicio ? ` (inicio ${fechaCorta(i.inicio)}${i.horario ? ` · ${i.horario}` : ''})` : ''} · ${soles(i.total)}`).join('\n')
       const msg = `Hola, quiero inscribirme en ${p.items.length > 1 ? 'estos cursos' : 'este curso'}:\n${lineas}\nTotal: ${soles(p.total)} (IGV incluido)\nPedido: ${p.codigo}\nMis datos: ${nombreCompleto(p.cliente)} · Celular: ${p.cliente.celular}`
       return { tipo: 'redirect', url: wa(msg) }
     },

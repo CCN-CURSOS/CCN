@@ -5,7 +5,7 @@ import { Header, Footer } from '../components/Layout.jsx'
 import { FORM_VACIO, validar } from '../components/Secciones.jsx'
 import { useCarrito, quitar, vaciar, limpiarInvalidos } from '../lib/carrito.js'
 import { armarPedido, iniciarPago, soles, PROVEEDORES, PROVEEDOR_ACTIVO } from '../lib/pago.js'
-import { conIgv, igvDe } from '../lib/igv.js'
+import { sinIgv, igvDe } from '../lib/igv.js'
 
 /* Cursos del carrito con su catálogo (sin los que ya no existen o están llenos: esos van por lista de espera) */
 function useItems() {
@@ -14,9 +14,15 @@ function useItems() {
   useEffect(() => { loadCatalog().then(setData).catch(() => setData({ cursos: [], grupos: [] })) }, [])
   const grupoDe = (cid) => data?.grupos.filter((g) => g.curso_id === cid).sort((a, b) => (a.inicio || '9999').localeCompare(b.inicio || '9999'))[0]
   const cursos = useMemo(() => (data ? ids.map((id) => data.cursos.find((c) => String(c.id) === id)).filter((c) => c && grupoDe(c.id)?.estado !== 'lleno') : []), [data, ids]) // eslint-disable-line
-  useEffect(() => { if (data) limpiarInvalidos(cursos.map((c) => c.id)) }, [data, cursos])
-  const subtotal = cursos.reduce((s, c) => s + Number(c.precio || 0), 0)
-  return { data, cursos, grupoDe, subtotal, total: conIgv(subtotal), igv: igvDe(subtotal) }
+  // El Club Ofimática ya incluye Word, Excel y PowerPoint: si lleva el Club, se quitan esos cursos sueltos para no pagar doble.
+  const esClub = (c) => /^club/i.test(c.titulo || '')
+  const incluidoEnClub = (c) => /^(word|excel|powerpoint)$/i.test((c.titulo || '').trim())
+  const conClub = cursos.some(esClub)
+  const sobran = conClub ? cursos.filter(incluidoEnClub) : []
+  const cursosOk = conClub ? cursos.filter((c) => !incluidoEnClub(c)) : cursos
+  useEffect(() => { if (data) limpiarInvalidos(cursosOk.map((c) => c.id)) }, [data, cursosOk.length]) // eslint-disable-line
+  const subtotal = cursosOk.reduce((s, c) => s + Number(c.precio || 0), 0)
+  return { data, cursos: cursosOk, conClub, grupoDe, subtotal: sinIgv(subtotal), total: subtotal, igv: igvDe(subtotal) }
 }
 
 function Resumen({ subtotal, total, igv, n }) {
@@ -33,13 +39,14 @@ function Resumen({ subtotal, total, igv, n }) {
 }
 
 export function Carrito() {
-  const { data, cursos, grupoDe, subtotal, total, igv } = useItems()
+  const { data, cursos, conClub, grupoDe, subtotal, total, igv } = useItems()
   useEffect(() => { document.title = 'Tu carrito · CCN' }, [])
   return (
     <>
       <Header />
       <main className="insc"><div className="wrap">
         <div className="head cform-head"><span className="eyebrow">Carrito</span><h1 className="insc-h1">Tu carrito</h1></div>
+        {conClub && <p className="note">🎓 El Club Ofimática ya incluye Word, Excel y PowerPoint, así que no los cobramos por separado.</p>}
         {!data ? <p className="note">Cargando…</p> : cursos.length === 0 ? (
           <div className="cart-vacio"><p>Aún no agregaste cursos.</p><Link className="btn btn-wa" to="/cursos">Ver cursos</Link></div>
         ) : (
@@ -52,9 +59,9 @@ export function Carrito() {
                     <span className="cart-dot" style={{ background: `var(--${c.color})` }} aria-hidden="true" />
                     <div className="cart-info">
                       <Link to={`/cursos/${c.id}`}><b>{c.titulo}</b></Link>
-                      <small>{c.horas} h · {c.sesiones} sesiones · Online en vivo{g?.inicio ? ` · Inicio ${fechaCorta(g.inicio)}` : ''}</small>
+                      <small>{c.horas} h · {c.sesiones} sesiones · Online en vivo{g?.inicio ? ` · Inicio ${fechaCorta(g.inicio)}` : ''}{g && (g.dias || g.horario) ? ` · ${[g.dias, g.horario].filter(Boolean).join(' ')}` : ''}</small>
                     </div>
-                    <div className="cart-precio"><b>{soles(conIgv(c.precio))}</b><small>IGV incl.</small></div>
+                    <div className="cart-precio"><b>{soles(c.precio)}</b><small>IGV incl.</small></div>
                     <button type="button" className="cart-x" onClick={() => quitar(c.id)} aria-label={`Quitar ${c.titulo}`}>Quitar</button>
                   </li>
                 )
@@ -164,7 +171,7 @@ export function Checkout() {
             </form>
             <aside>
               <ul className="cart-mini">
-                {cursos.map((c) => <li key={c.id}><span>{c.titulo}</span><b>{soles(conIgv(c.precio))}</b></li>)}
+                {cursos.map((c) => <li key={c.id}><span>{c.titulo}</span><b>{soles(c.precio)}</b></li>)}
               </ul>
               <Resumen subtotal={subtotal} total={total} igv={igv} n={cursos.length} />
               <Link className="cart-mas" to="/carrito">Editar carrito</Link>

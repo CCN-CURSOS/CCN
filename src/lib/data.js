@@ -71,23 +71,23 @@ export const COLORES = {
 
 /* ---------- Datos de ejemplo (modo demostración, sin Supabase) ---------- */
 const SEED_CURSOS = [
-  { id: 'c1', titulo: 'IA aplicada a negocios', color: 'g1', horas: 12, sesiones: 4, precio: 299, orden: 1, activo: true, destacado: true, imagen_url: '', precio_antes: null,
+  { id: 'c1', titulo: 'IA aplicada a negocios', color: 'g1', horas: 12, sesiones: 4, precio: 359, orden: 1, activo: true, destacado: true, imagen_url: '', precio_antes: null,
     descripcion: 'Usa la IA para vender, atender y organizar tu negocio. Terminas con un asistente propio.',
     programas: 'ChatGPT, Claude, Gemini, Canva, Google Sheets',
     temario: ['Presentación de las herramientas', 'IA para vender y comunicar', 'IA para organizar tu negocio', 'Tu asistente propio', 'Proyecto y presentación'],
     extra: 'automatización, medir el ahorro y privacidad' },
-  { id: 'c2', titulo: 'Crea y publica tu primera página web', color: 'g2', horas: 24, sesiones: 8, precio: 299, orden: 2, activo: true, destacado: true, imagen_url: '', precio_antes: null,
+  { id: 'c2', titulo: 'Crea y publica tu primera página web', color: 'g2', horas: 24, sesiones: 8, precio: 359, orden: 2, activo: true, destacado: true, imagen_url: '', precio_antes: null,
     descripcion: 'Construyes tu página desde cero y la publicas con dominio propio y botón de WhatsApp.',
     programas: 'VS Code, GitHub, Vercel, Chrome',
     temario: ['Cómo funciona la web', 'HTML: la estructura', 'CSS: el estilo', 'Diseño de una landing que convierte', 'JavaScript básico', 'Publicar en internet', 'Aparecer en Google y medir visitas', 'Proyecto y presentación'],
     extra: 'Git, rendimiento, seguridad y cómo cotizar una web' },
-  { id: 'c5', titulo: 'Notion para tu negocio', color: 'g5', horas: 12, sesiones: 4, precio: 299, orden: 3, activo: true, destacado: true, imagen_url: '', precio_antes: null,
+  { id: 'c5', titulo: 'Notion para tu negocio', color: 'g5', horas: 12, sesiones: 4, precio: 229, orden: 3, activo: true, destacado: true, imagen_url: '', precio_antes: null,
     descripcion: 'Ordenas clientes, tareas y ventas en un solo espacio de trabajo listo para usar.',
     programas: 'Notion (plan gratuito)', temario: [], extra: '' },
 ]
 
 const SEED_ENLACES = [
-  { id: 'e1', titulo: 'VER LOS CURSOS', subtitulo: 'Online · desde S/299', url: '/cursos', tipo: 'enlace', destacado: true, orden: 1, activo: true, clics: 0 },
+  { id: 'e1', titulo: 'VER LOS CURSOS', subtitulo: 'Online · desde S/229', url: '/cursos', tipo: 'enlace', destacado: true, orden: 1, activo: true, clics: 0 },
   { id: 'e2', titulo: 'ESCRÍBENOS POR WHATSAPP', subtitulo: 'Inscripciones y consultas', url: '', tipo: 'whatsapp', destacado: false, orden: 2, activo: true, clics: 0 },
   { id: 'e3', titulo: 'INSTAGRAM', subtitulo: 'Pon aquí tu @usuario', url: 'https://instagram.com/', tipo: 'enlace', destacado: false, orden: 3, activo: false, clics: 0 },
   { id: 'e4', titulo: 'TIKTOK', subtitulo: 'Pon aquí tu @usuario', url: 'https://tiktok.com/', tipo: 'enlace', destacado: false, orden: 4, activo: false, clics: 0 },

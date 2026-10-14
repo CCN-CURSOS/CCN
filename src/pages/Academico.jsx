@@ -7,6 +7,8 @@ import { cronogramaGrupo, textoCronograma, pdfCronograma, fechaHora, soloFecha, 
 /* Módulo Académico (gerencia y coordinación): cronograma exacto de T1 y T2 por grupo, enlaces de entrega y aviso de las 72 h */
 export function Cronograma({ data, hacer, avisar }) {
   const [ver, setVer] = useState('activos')
+  const [mins, setMins] = useState(() => new Set())
+  const alternar = (id) => setMins((m) => { const n = new Set(m); n.has(id) ? n.delete(id) : n.add(id); return n })
   const clasesDe = useMemo(() => {
     const m = {}
     ;(data.clases || []).forEach((c) => { (m[String(c.grupo_id)] ||= []).push(c) })
@@ -54,12 +56,18 @@ export function Cronograma({ data, hacer, avisar }) {
       </details>
       {sinClases.length > 0 && <p className="banner">Sin clases generadas (no se puede calcular el cronograma): {sinClases.map((g) => g.codigo || 'grupo').join(', ')}. Gerencia las genera en Web → Horarios → «Generar clases».</p>}
       {!grupos.length && <div className="vacio"><p>No hay grupos con clases en este filtro.</p></div>}
-      {grupos.map(({ g, cl }) => <GrupoCronograma key={g.id} g={g} cl={cl} data={data} hacer={hacer} avisar={avisar} instructor={instructorDe(String(g.id))} disponibles={disponibles} />)}
+      {grupos.length > 1 && (
+        <div style={{ display: 'flex', gap: 8, margin: '10px 0 0' }}>
+          <button className="btn btn-line sm" onClick={() => setMins(new Set(grupos.map(({ g }) => String(g.id))))}>Minimizar todos</button>
+          <button className="btn btn-line sm" onClick={() => setMins(new Set())}>Expandir todos</button>
+        </div>
+      )}
+      {grupos.map(({ g, cl }) => <GrupoCronograma key={g.id} g={g} cl={cl} data={data} hacer={hacer} avisar={avisar} instructor={instructorDe(String(g.id))} disponibles={disponibles} min={mins.has(String(g.id))} alternar={() => alternar(String(g.id))} />)}
     </>
   )
 }
 
-function GrupoCronograma({ g, cl, data, hacer, avisar, instructor, disponibles }) {
+function GrupoCronograma({ g, cl, data, hacer, avisar, instructor, disponibles, min, alternar }) {
   const curso = (data.cursos || []).find((c) => String(c.id) === String(g.curso_id))
   const ents = (data.entregables || []).filter((e) => String(e.curso_id) === String(g.curso_id))
   const cfg = (data.grupo_evaluaciones || []).filter((x) => String(x.grupo_id) === String(g.id))
@@ -91,7 +99,7 @@ function GrupoCronograma({ g, cl, data, hacer, avisar, instructor, disponibles }
     <section className="fs" style={{ marginTop: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         <div>
-          <h3 style={{ margin: 0 }}>{g.codigo ? `${g.codigo} · ` : ''}{titulo}</h3>
+          <h3 style={{ margin: 0 }}><button type="button" className="link" onClick={alternar} aria-expanded={!min} aria-label={min ? `Expandir ${titulo}` : `Minimizar ${titulo}`} style={{ marginRight: 6, fontSize: '1rem' }}>{min ? '▸' : '▾'}</button>{g.codigo ? `${g.codigo} · ` : ''}{titulo}</h3>
           <p className="note" style={{ margin: '4px 0 0' }}>{[g.dias, g.horario].filter(Boolean).join(' · ')} · {cl.length} clases · {instructor ? '' : '⚠️ sin profesor asignado'}</p>
           <p className="note" style={{ margin: '2px 0 0' }}>Primera clase {fechaHora(cl[0].inicio)} · <b>Última clase {fechaHora(ultima.inicio)}</b> · Certificados hasta {fechaHora(tope)}</p>
         </div>
@@ -102,6 +110,7 @@ function GrupoCronograma({ g, cl, data, hacer, avisar, instructor, disponibles }
           <button className="btn btn-line sm" onClick={bajarPdf}>Descargar PDF</button>
         </div>
       </div>
+      {!min && <>
       <PendientesAsistencia g={g} sinAsistencia={sinAsistencia.filter((c) => !reabierta(c))} reabiertas={cl.filter((c) => reabierta(c))} hacer={hacer} />
       <div className="cform" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 10, margin: '10px 0' }}>
         <label>Profesor
@@ -143,6 +152,7 @@ function GrupoCronograma({ g, cl, data, hacer, avisar, instructor, disponibles }
           </tbody>
         </table></div>
       )}
+      </>}
     </section>
   )
 }

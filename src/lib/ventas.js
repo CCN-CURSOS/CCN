@@ -118,20 +118,17 @@ export function historialVendedor(data, email, limite = 40) {
   return ev.filter((e) => e.t).sort((a, b) => String(b.t).localeCompare(String(a.t))).slice(0, limite)
 }
 
-/* ---------- Nombre sugerido del grupo de WhatsApp: CÓDIGO-DÍAS-CURSO-HORA-FECHA (ej. G01-LJ-NOTION-1930-23NOV) ---------- */
+/* ---------- Nombre sugerido del grupo de WhatsApp: G##-DÍAS-CURSO-DD.MM (ej. G05-M/J-NOTION-24.11) ---------- */
 const sinTildes = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 export function nombreGrupoWa(g, curso) {
   const dl = sinTildes(g.dias).toLowerCase()
   const mapa = [['lunes', 'L'], ['martes', 'M'], ['miercoles', 'X'], ['jueves', 'J'], ['viernes', 'V'], ['sabado', 'S'], ['domingo', 'D']]
-  const orden = mapa.map(([n, l]) => ({ l, i: dl.indexOf(n) })).filter((x) => x.i >= 0).sort((a, b) => a.i - b.i).map((x) => x.l).join('')
+  const orden = mapa.map(([n, l]) => ({ l, i: dl.indexOf(n) })).filter((x) => x.i >= 0).sort((a, b) => a.i - b.i).map((x) => x.l).join('/')
   const palabras = sinTildes(curso?.titulo).toUpperCase().replace(/[^A-Z0-9 ]/g, '').split(' ').filter(Boolean)
   const nombre = palabras[0] === 'CREA' ? 'WEB' : palabras[0] === 'CLAUDE' ? 'CLAUDE' : (palabras[0] || '')
-  const h = /(\d{1,2})(?::(\d{2}))?\s*([ap])?\.?\s*m?\b/i.exec(sinTildes(g.horario).replace(/\./g, ''))
-  let hora = ''
-  if (h) { let hh = Number(h[1]); if ((h[3] || '').toLowerCase() === 'p' && hh < 12) hh += 12; hora = String(hh).padStart(2, '0') + (h[2] || '00') }
   const d = g.inicio ? new Date(g.inicio + 'T00:00:00') : null
-  const fecha = d ? `${d.getDate()}${['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SET', 'OCT', 'NOV', 'DIC'][d.getMonth()]}` : ''
-  return [g.codigo, orden, nombre, hora, fecha].filter(Boolean).join('-')
+  const fecha = d ? `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}` : ''
+  return [g.codigo, orden, nombre, fecha].filter(Boolean).join('-')
 }
 export const gruposSinWhatsapp = (data) => (data.grupos || []).filter((g) => g.codigo && g.estado !== 'cerrado' && !(data.gruposWa || []).some((w) => String(w.grupo_id) === String(g.id)))
 

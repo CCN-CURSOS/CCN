@@ -78,7 +78,7 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Registras a cada prospecto y llenas Contacto 1 y Contacto 2 (en qué quedó y si hay que volver a contactar, con fecha).
 - Usas tu Agenda: pendientes, notas y calendario.
 - Inscribes a los alumnos (Ventas → Inscritos). El sistema genera solo el código de alumno.
-- Las inscripciones que llegan desde la web (carrito) entran como interesados y se abre un WhatsApp con el pedido (código P-…, cursos y total con IGV). Los atiendes en el mismo orden: respondes, confirmas el pago y los inscribes. Quien lleva varios cursos llena sus datos una sola vez.
+- Las inscripciones que llegan desde la web (carrito) entran como interesados y se abre un WhatsApp con el pedido (código P-…, cursos y total, IGV incluido). Los atiendes en el mismo orden: respondes, confirmas el pago y los inscribes. Quien lleva varios cursos llena sus datos una sola vez.
 - Programas las instalaciones de programas dentro de las ventanas permitidas; las instalaciones las hace gerencia.
 - Creas y administras los grupos de WhatsApp de cada curso.
 - Atiendes y registras quejas y reclamos.
@@ -118,7 +118,7 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Los pagos entran SOLO a las cuentas oficiales de CCN, nunca a cuentas personales.
 - Devoluciones: en primera instancia la respuesta es NO.
 - Club Ofimática: es un paquete (Word + Excel + PowerPoint), cuenta como 1 cupo.
-- Los precios del sistema NO incluyen IGV: el sistema suma el 18 % automáticamente. Dile al alumno el total que muestra el sistema.
+- Los precios del sistema son FINALES e incluyen IGV: no se suma nada. Dile al alumno el precio que muestra el sistema.
 - EVALUACIONES T1 Y T2 Y CERTIFICADO: cada curso tiene dos trabajos obligatorios: T1 (a mitad del curso) y T2 (proyecto final). El T1 se entrega dentro de los 3 días después de la clase en que se anuncia; el T2, a más tardar 48 horas antes de la última clase. La última clase es de repaso: el profesor revisa los trabajos que elija con los alumnos y resuelve preguntas. Quien no entrega a tiempo o no aprueba NO accede al certificado (si cumplió la asistencia mínima, recibe la constancia). El certificado sale dentro de las 72 horas después de la última clase. Debes decirlo al vender; también está en los términos y condiciones. Para el certificado además se pide asistencia mínima y participación.
 - BENEFICIO: las clases se graban y los alumnos del grupo pueden volver a verlas.
 

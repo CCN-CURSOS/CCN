@@ -108,11 +108,11 @@ export function SeccionHorarios({ cursos, grupos }) {
       <div>
         <span className="eyebrow">Horarios</span>
         <h2>Elige el curso y organiza tu semana</h2>
-        <p style={{ marginTop: 14 }}>La fecha y el horario de cada curso aparecen aquí. Si necesitas otro horario, escríbenos y te informamos las próximas fechas.</p>
+        <p style={{ marginTop: 14 }}>Cada curso es independiente: elige el que quieras y mira aquí sus próximos días, horario e inicio. Si necesitas otro horario, escríbenos y te informamos las próximas fechas.</p>
         <a className="btn btn-wa" style={{ marginTop: 8 }} href={wa('Hola, quiero que me avisen los próximos horarios de CCN')} target="_blank" rel="noopener noreferrer">Reservar por WhatsApp</a>
       </div>
       <div className="tablebox"><table className="table">
-        <thead><tr><th>Curso online</th><th>Días</th><th>Horario</th><th>Inicio</th><th>Tiempo</th></tr></thead>
+        <thead><tr><th>Curso online</th><th>Días</th><th>Horario</th><th>Inicio</th><th>Tiempo</th><th></th></tr></thead>
         <tbody>
           {filas.map(({ c, g }, i) => (
             <tr key={c.id + i}>
@@ -121,6 +121,7 @@ export function SeccionHorarios({ cursos, grupos }) {
               <td>{g?.horario || <span className="soon">Por definir</span>}</td>
               <td>{g?.inicio ? fechaCorta(g.inicio) : <span className="soon">Próximamente</span>}</td>
               <td>{c.horas} h</td>
+              <td><Link className="btn btn-teal sm" to={`/cursos/${c.id}`}>{g?.estado === 'lleno' ? 'LISTA DE ESPERA' : 'INSCRÍBETE'}</Link></td>
             </tr>
           ))}
         </tbody>
