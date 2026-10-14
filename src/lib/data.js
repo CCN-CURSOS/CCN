@@ -1164,3 +1164,14 @@ export async function cerrarReapertura(claseId) {
   const { error } = await supabase.rpc('cerrar_reapertura', { p_clase: claseId })
   if (error) throw new Error(error.message)
 }
+
+/* Horario "19:00 - 21:00" -> "7:00 p. m. - 9:00 p. m." (solo para mostrar; lo guardado no cambia) */
+export function fmtHorario(t) {
+  return String(t ?? '')
+    .replace(/\s*[–—]\s*/g, ' - ')
+    .replace(/\b(\d{1,2}):(\d{2})(?!\s*[ap]\.?\s*m)/gi, (_, h, m) => {
+      const n = Number(h)
+      if (n > 23) return _
+      return `${n % 12 || 12}:${m} ${n >= 12 ? 'p. m.' : 'a. m.'}`
+    })
+}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { wa, fechaCorta, COLORES, crearConsulta } from '../lib/data.js'
+import { wa, fechaCorta, fmtHorario, COLORES, crearConsulta } from '../lib/data.js'
 
 // Herramientas con las que se trabaja. Los logos son los archivos oficiales de cada marca,
 // guardados en public/logos/ (ej. public/logos/notion.svg). Si el archivo no existe,
@@ -118,7 +118,7 @@ export function SeccionHorarios({ cursos, grupos }) {
             <tr key={c.id + i}>
               <td><span className="dot" style={{ background: COLORES[c.color]?.hex }} />{c.titulo}</td>
               <td>{g?.dias || <span className="soon">Por definir</span>}</td>
-              <td>{g?.horario || <span className="soon">Por definir</span>}</td>
+              <td>{g?.horario ? fmtHorario(g.horario) : <span className="soon">Por definir</span>}</td>
               <td>{g?.inicio ? fechaCorta(g.inicio) : <span className="soon">Próximamente</span>}</td>
               <td>{c.horas} h</td>
               <td><Link className="btn btn-teal sm" to={`/cursos/${c.id}`}>{g?.estado === 'lleno' ? 'LISTA DE ESPERA' : 'INSCRÍBETE'}</Link></td>

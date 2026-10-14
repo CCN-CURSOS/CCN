@@ -13,7 +13,7 @@ import Certificados from './Certificados'
 import { Cronograma } from './Academico.jsx'
 import {
   hasBackend, supabase, loadAll, save, remove, CATEGORIAS_ACCESO, saveAjuste, getRol, fechaCorta, subirImagen, telefono, setNumero, COLORES, MAX_INICIO, consultasCSV, interesadosCSV, marcarConsulta,
-  subirComprobante, urlComprobante, crearInscripcion, agregarPago, estadoInscripcion, borrarInscripcion, armarInscripciones, inscritosCSV, guardarMiembro, ponerCoordina, getCoordina, quitarMiembro, ROLES, seguimientoInteresado, reasignarInteresado, recibeInteresados, guardarProspecto, borrarProspecto, guardarTrabajador, guardarWhatsapp, asignarGrupo, pagarTrabajador, guardarInstalacion, ESTADOS_PROSPECTO, ORIGENES, guardarPendiente, marcarPendiente, borrarPendiente, guardarNota, borrarNota, guardarPlantilla, enviarDocumentos, firmarDocumento, borrarDocumento, guardarQueja, atenderQueja, numeroGerencia,
+  subirComprobante, urlComprobante, crearInscripcion, agregarPago, estadoInscripcion, borrarInscripcion, armarInscripciones, inscritosCSV, guardarMiembro, ponerCoordina, getCoordina, quitarMiembro, ROLES, seguimientoInteresado, reasignarInteresado, recibeInteresados, guardarProspecto, borrarProspecto, guardarTrabajador, guardarWhatsapp, asignarGrupo, pagarTrabajador, guardarInstalacion, ESTADOS_PROSPECTO, ORIGENES, guardarPendiente, marcarPendiente, borrarPendiente, guardarNota, borrarNota, guardarPlantilla, enviarDocumentos, firmarDocumento, borrarDocumento, guardarQueja, atenderQueja, numeroGerencia, fmtHorario
 } from '../lib/data.js'
 
 /* ================= piezas pequeñas ================= */
@@ -485,7 +485,7 @@ function WhatsappForm({ g, curso, actual, onClose, onSave }) {
     <Drawer titulo={`WhatsApp · ${g.codigo}`} onClose={onClose}
       pie={<><button className="btn btn-line" onClick={onClose}>Cancelar</button><button className="btn btn-teal" onClick={() => onSave(f)}>Guardar</button></>}>
       <div className="fs">
-        <p className="note"><b>{curso?.titulo}</b> · {g.inicio ? fechaCorta(g.inicio) : 'sin fecha'} · {g.dias || 'días por definir'} · {g.horario || 'horario por definir'}</p>
+        <p className="note"><b>{curso?.titulo}</b> · {g.inicio ? fechaCorta(g.inicio) : 'sin fecha'} · {g.dias || 'días por definir'} · {g.horario ? fmtHorario(g.horario) : 'horario por definir'}</p>
         <label>Nombre del grupo en WhatsApp
           <input id="wa-nom" value={f.nombre} onChange={(e) => setF({ ...f, nombre: e.target.value })} />
         </label>
@@ -530,7 +530,7 @@ function Grupos({ data, hacer, abrirGrupo, editarGrupo, soloLeer, sinBorrar }) {
                 <span className="sw" style={{ background: c ? `var(--${c.color})` : 'var(--line)' }} />
                 <div>
                   <b>{g.codigo && <span className="cod">{g.codigo}</span>}{c?.titulo || 'Curso eliminado'}</b>
-                  <small>{g.inicio ? fechaCorta(g.inicio) : 'Sin fecha'} · {g.dias || 'días por definir'} · {g.horario || 'horario por definir'}</small>
+                  <small>{g.inicio ? fechaCorta(g.inicio) : 'Sin fecha'} · {g.dias || 'días por definir'} · {g.horario ? fmtHorario(g.horario) : 'horario por definir'}</small>
                   {g.codigo && (waDe(g)
                     ? <small className="wa ok">WhatsApp: <a href={waDe(g).enlace} target="_blank" rel="noopener noreferrer">{waDe(g).nombre}</a>{waDe(g).creado_por && <> · {waDe(g).creado_por.split('@')[0]}</>} · {waDe(g).solo_admins ? '🔒 solo admins' : '⚠️ falta dejarlo en solo admins'}</small>
                     : <small className="wa falta">Falta crear el grupo de WhatsApp</small>)}
@@ -2172,7 +2172,7 @@ function FichaCurso({ data, curso, hacer, onVolver, abrirGrupo, editarGrupo, irW
             <tr key={g.id}>
               <td><span className="cod">{g.codigo || '—'}</span></td>
               <td>{fecha(g.inicio)}</td>
-              <td>{g.dias || '—'}<small className="paq">{g.horario || ''}</small></td>
+              <td>{g.dias || '—'}<small className="paq">{fmtHorario(g.horario || '')}</small></td>
               <td><div className="barra" title={`${g.inscritos || 0} de ${g.minimo || 5} mínimo`}><i style={{ width: `${Math.min(100, ((g.inscritos || 0) / (g.minimo || 5)) * 100)}%` }} /></div><small>{g.inscritos || 0}/{g.minimo || 5} mín. · máx. {g.maximo || 20}</small></td>
               <td>{g.estado === 'abierto' ? 'Abierto' : g.estado === 'lleno' ? 'Lleno' : 'Cerrado'}</td>
               <td>{w ? <a href={w.enlace} target="_blank" rel="noopener noreferrer">{w.nombre}</a> : <span className="wa falta">Falta crear</span>}</td>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Logo } from '../components/Layout.jsx'
 import Icon from '../components/Icons'
-import { hasBackend, cargarProfesor, cargarClasesGrupo, guardarClases, guardarAsistencias, historialAsistencia, fechaCorta, cargarEntregasGrupo, guardarEntrega, cargarAccesosGrupo, cargarMaterialGrupo, guardarMaterial, quitarMaterial, cargarNotasGrupo, guardarNotaAlumno } from '../lib/data.js'
+import { hasBackend, cargarProfesor, cargarClasesGrupo, guardarClases, guardarAsistencias, historialAsistencia, fechaCorta, fmtHorario, cargarEntregasGrupo, guardarEntrega, cargarAccesosGrupo, cargarMaterialGrupo, guardarMaterial, quitarMaterial, cargarNotasGrupo, guardarNotaAlumno } from '../lib/data.js'
 import { cronogramaGrupo, fechaHora } from '../lib/cronograma.js'
 import {
   DIAS_SEMANA, diasDeTexto, horaDeTexto, generarFechas, aTs, fechaClase, horaClase, fechaISOLima, horaHHMM, horasDeClase, ventana,
@@ -465,7 +465,7 @@ function AccesosGrupo({ g, bundle }) {
     <>
       <p className="note">Aquí están los enlaces de tu grupo. Los pone el asistente académico; si falta alguno o está mal, avísale.</p>
       <div className="lst">
-        <Fila icono="🎥" titulo="Sala de Zoom" detalle={[g.dias, g.horario].filter(Boolean).join(' · ')} url={d.a.zoom} />
+        <Fila icono="🎥" titulo="Sala de Zoom" detalle={fmtHorario([g.dias, g.horario].filter(Boolean).join(' · '))} url={d.a.zoom} />
         {d.filas.map((f) => <Fila key={f.e.id} icono="📁" titulo={`Entrega ${f.etapa}${f.programa ? ` · ${f.programa}` : ''}`} detalle={`${f.e.titulo}${f.limite ? ` · límite ${fechaHora(f.limite)}` : ''}`} url={f.enlace} />)}
         <Fila icono="🎬" titulo="Clases grabadas" detalle="Solo para los alumnos del grupo" url={d.a.grabaciones} />
       </div>
@@ -777,7 +777,7 @@ export default function PanelProfesor({ email, onSalir }) {
                   <button key={g.id} className="tcard" onClick={() => setSel(g.id)}>
                     <b>{g.codigo && <span className="cod">{g.codigo}</span>}{c?.titulo || 'Curso'}</b>
                     <small>{g.inicio ? 'Inicia el ' + fechaCorta(g.inicio) : 'Sin fecha'} · {g.dias || 'días por definir'}</small>
-                    <span>{g.horario || 'Horario por definir'} · <i>{g.inscritos ?? 0}</i> inscritos</span>
+                    <span>{g.horario ? fmtHorario(g.horario) : 'Horario por definir'} · <i>{g.inscritos ?? 0}</i> inscritos</span>
                   </button>
                 )
               })}

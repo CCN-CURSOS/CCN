@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useState as useEstado } from 'react'
-import { guardarEvaluacionGrupo, guardarAccesosGrupo, asignarInstructor, quitarInstructor, reabrirAsistencia, cerrarReapertura } from '../lib/data.js'
+import { guardarEvaluacionGrupo, guardarAccesosGrupo, asignarInstructor, quitarInstructor, reabrirAsistencia, cerrarReapertura, fmtHorario } from '../lib/data.js'
 import { reabierta } from '../lib/clases.js'
 import { cronogramaGrupo, textoCronograma, pdfCronograma, fechaHora, soloFecha, isoLima, HORAS_CERTIFICADO } from '../lib/cronograma.js'
 
@@ -85,12 +85,12 @@ function GrupoCronograma({ g, cl, data, hacer, avisar, instructor, disponibles, 
   const cambiarProfe = (id) => hacer(() => (id ? asignarInstructor(g.id, id) : quitarInstructor(g.id)), id ? 'Profesor asignado' : 'Profesor quitado')
 
   async function copiar() {
-    const t = textoCronograma({ curso: titulo, codigo: g.codigo || '', horario: [g.dias, g.horario].filter(Boolean).join(' · '), instructor: instructor?.nombre || '', filas })
+    const t = textoCronograma({ curso: titulo, codigo: g.codigo || '', horario: fmtHorario([g.dias, g.horario].filter(Boolean).join(' · ')), instructor: instructor?.nombre || '', filas })
     try { await navigator.clipboard.writeText(t); avisar && avisar('Cronograma copiado, pégalo en el WhatsApp del profesor') }
     catch (e) { window.prompt('Copia este texto:', t) }
   }
   async function bajarPdf() {
-    try { await pdfCronograma({ curso: titulo, codigo: g.codigo || '', horario: [g.dias, g.horario].filter(Boolean).join(' · '), instructor: instructor?.nombre || '', clases: cl, filas, zoom: acc.zoom }) }
+    try { await pdfCronograma({ curso: titulo, codigo: g.codigo || '', horario: fmtHorario([g.dias, g.horario].filter(Boolean).join(' · ')), instructor: instructor?.nombre || '', clases: cl, filas, zoom: acc.zoom }) }
     catch (e) { avisar && avisar('No se pudo generar el PDF', true) }
   }
   const guardar = (f, cambios) => hacer(() => guardarEvaluacionGrupo({ grupo_id: g.id, entregable_id: f.e.id, enlace: f.enlace, fecha_limite: f.manual ? isoLima(f.limite) : null, ...cambios }), 'Guardado')
@@ -100,7 +100,7 @@ function GrupoCronograma({ g, cl, data, hacer, avisar, instructor, disponibles, 
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         <div>
           <h3 style={{ margin: 0 }}><button type="button" className="link" onClick={alternar} aria-expanded={!min} aria-label={min ? `Expandir ${titulo}` : `Minimizar ${titulo}`} style={{ marginRight: 6, fontSize: '1rem' }}>{min ? '▸' : '▾'}</button>{g.codigo ? `${g.codigo} · ` : ''}{titulo}</h3>
-          <p className="note" style={{ margin: '4px 0 0' }}>{[g.dias, g.horario].filter(Boolean).join(' · ')} · {cl.length} clases · {instructor ? '' : '⚠️ sin profesor asignado'}</p>
+          <p className="note" style={{ margin: '4px 0 0' }}>{fmtHorario([g.dias, g.horario].filter(Boolean).join(' · '))} · {cl.length} clases · {instructor ? '' : '⚠️ sin profesor asignado'}</p>
           <p className="note" style={{ margin: '2px 0 0' }}>Primera clase {fechaHora(cl[0].inicio)} · <b>Última clase {fechaHora(ultima.inicio)}</b> · Certificados hasta {fechaHora(tope)}</p>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>

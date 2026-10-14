@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { loadCatalog, crearInteresado, fechaCorta } from '../lib/data.js'
+import { loadCatalog, crearInteresado, fechaCorta, fmtHorario } from '../lib/data.js'
 import { Header, Footer } from '../components/Layout.jsx'
 import { FORM_VACIO, validar } from '../components/Secciones.jsx'
 import { useCarrito, quitar, vaciar, limpiarInvalidos } from '../lib/carrito.js'
@@ -58,7 +58,7 @@ export function Carrito() {
                     <span className="cart-dot" style={{ background: `var(--${c.color})` }} aria-hidden="true" />
                     <div className="cart-info">
                       <Link to={`/cursos/${c.id}`}><b>{c.titulo}</b></Link>
-                      <small>{c.horas} h · {c.sesiones} sesiones · Online en vivo{g?.inicio ? ` · Inicio ${fechaCorta(g.inicio)}` : ''}{g && (g.dias || g.horario) ? ` · ${[g.dias, g.horario].filter(Boolean).join(' ')}` : ''}</small>
+                      <small>{c.horas} h · {c.sesiones} sesiones · Online en vivo{g?.inicio ? ` · Inicio ${fechaCorta(g.inicio)}` : ''}{g && (g.dias || g.horario) ? ` · ${fmtHorario([g.dias, g.horario].filter(Boolean).join(' '))}` : ''}</small>
                     </div>
                     <div className="cart-precio"><b>{soles(c.precio)}</b></div>
                     <button type="button" className="cart-x" onClick={() => quitar(c.id)} aria-label={`Quitar ${c.titulo}`}>Quitar</button>

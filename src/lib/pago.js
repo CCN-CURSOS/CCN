@@ -2,7 +2,7 @@
    Hoy: "whatsapp" (el pedido se manda por WhatsApp y se confirma/cobra ahí).
    Mañana: agregar "izipay" (cobro con tarjeta/Yape) y "sunat" (boleta/factura electrónica) SIN tocar el carrito ni el checkout:
    solo se registra un proveedor nuevo en PROVEEDORES y se cambia PROVEEDOR_ACTIVO. */
-import { wa, fechaCorta } from './data.js'
+import { wa, fechaCorta, fmtHorario } from './data.js'
 import { IGV_TASA, sinIgv, igvDe } from './igv.js'
 
 export const PROVEEDOR_ACTIVO = 'whatsapp'
@@ -16,7 +16,7 @@ const codigoPedido = () => 'P-' + Date.now().toString(36).toUpperCase().slice(-6
 export function armarPedido({ cliente, cursos, grupoDe }) {
   const items = cursos.map((c) => {
     const g = grupoDe(c.id)
-    return { curso_id: String(c.id), titulo: c.titulo, inicio: g?.inicio || '', horario: [g?.dias, g?.horario].filter(Boolean).join(' '), base: sinIgv(c.precio), igv: igvDe(c.precio), total: r2(c.precio) }
+    return { curso_id: String(c.id), titulo: c.titulo, inicio: g?.inicio || '', horario: fmtHorario([g?.dias, g?.horario].filter(Boolean).join(' ')), base: sinIgv(c.precio), igv: igvDe(c.precio), total: r2(c.precio) }
   })
   const total = r2(items.reduce((s, i) => s + i.total, 0))
   const subtotal = sinIgv(total)

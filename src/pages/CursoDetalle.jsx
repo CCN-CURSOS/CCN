@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { loadCatalog, wa, fechaCorta } from '../lib/data.js'
+import { loadCatalog, wa, fechaCorta, fmtHorario } from '../lib/data.js'
 import CourseCard from '../components/CourseCard.jsx'
 import { precioWeb } from '../lib/igv.js'
 import { useCarrito } from '../lib/carrito.js'
@@ -112,7 +112,7 @@ export default function CursoDetalle() {
                 </div>
                 <dl>
                   {grupo?.inicio && <div><dt>Inicio</dt><dd>{fechaCorta(grupo.inicio)}</dd></div>}
-                  {grupo && (grupo.dias || grupo.horario) && <div><dt>Horario</dt><dd>{[grupo.dias, grupo.horario].filter(Boolean).join(' · ')}</dd></div>}
+                  {grupo && (grupo.dias || grupo.horario) && <div><dt>Horario</dt><dd>{fmtHorario([grupo.dias, grupo.horario].filter(Boolean).join(' · '))}</dd></div>}
                   <div><dt>Duración</dt><dd>{curso.horas} h · {curso.sesiones} sesiones</dd></div>
                   <div><dt>Modalidad</dt><dd>Online en vivo</dd></div>
                   {grupo?.mostrar_inscritos && <div><dt>Inscritos</dt><dd>{grupo.inscritos}</dd></div>}
