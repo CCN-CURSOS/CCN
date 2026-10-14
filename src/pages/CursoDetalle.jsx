@@ -107,7 +107,7 @@ export default function CursoDetalle() {
             <aside className="cd-side" style={{ top: alto + 96 }}>
               <div className="cd-box">
                 <div className="cd-precio">
-                  <b>{precioWeb(curso.precio)}</b><small className="igv"> IGV incl.</small>
+                  <b>{precioWeb(curso.precio)}</b>
                   {curso.precio_antes > curso.precio && <><span className="antes">{precioWeb(curso.precio_antes)}</span><span className="dsct">-{Math.round((1 - curso.precio / curso.precio_antes) * 100)}% DSCT.</span></>}
                 </div>
                 <dl>

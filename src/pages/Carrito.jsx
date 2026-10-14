@@ -30,8 +30,7 @@ function Resumen({ subtotal, total, igv, n }) {
     <div className="cart-sum">
       <h3>Resumen</h3>
       <dl>
-        <div><dt>Subtotal ({n} {n === 1 ? 'curso' : 'cursos'})</dt><dd>{soles(subtotal)}</dd></div>
-        <div><dt>IGV (18 %)</dt><dd>{soles(igv)}</dd></div>
+        <div><dt>{n} {n === 1 ? 'curso' : 'cursos'}</dt><dd>{soles(total)}</dd></div>
         <div className="tot"><dt>Total</dt><dd>{soles(total)}</dd></div>
       </dl>
     </div>
@@ -61,7 +60,7 @@ export function Carrito() {
                       <Link to={`/cursos/${c.id}`}><b>{c.titulo}</b></Link>
                       <small>{c.horas} h · {c.sesiones} sesiones · Online en vivo{g?.inicio ? ` · Inicio ${fechaCorta(g.inicio)}` : ''}{g && (g.dias || g.horario) ? ` · ${[g.dias, g.horario].filter(Boolean).join(' ')}` : ''}</small>
                     </div>
-                    <div className="cart-precio"><b>{soles(c.precio)}</b><small>IGV incl.</small></div>
+                    <div className="cart-precio"><b>{soles(c.precio)}</b></div>
                     <button type="button" className="cart-x" onClick={() => quitar(c.id)} aria-label={`Quitar ${c.titulo}`}>Quitar</button>
                   </li>
                 )

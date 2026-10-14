@@ -37,7 +37,7 @@ export const PROVEEDORES = {
     /* Devuelve { tipo: 'redirect', url } -> el checkout manda al visitante a esa dirección. */
     async iniciar(p) {
       const lineas = p.items.map((i) => `• ${i.titulo}${i.inicio ? ` (inicio ${fechaCorta(i.inicio)}${i.horario ? ` · ${i.horario}` : ''})` : ''} · ${soles(i.total)}`).join('\n')
-      const msg = `Hola, quiero inscribirme en ${p.items.length > 1 ? 'estos cursos' : 'este curso'}:\n${lineas}\nTotal: ${soles(p.total)} (IGV incluido)\nPedido: ${p.codigo}\nMis datos: ${nombreCompleto(p.cliente)} · Celular: ${p.cliente.celular}`
+      const msg = `Hola, quiero inscribirme en ${p.items.length > 1 ? 'estos cursos' : 'este curso'}:\n${lineas}\nTotal: ${soles(p.total)}\nPedido: ${p.codigo}\nMis datos: ${nombreCompleto(p.cliente)} · Celular: ${p.cliente.celular}`
       return { tipo: 'redirect', url: wa(msg) }
     },
   },
