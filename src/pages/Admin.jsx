@@ -11,9 +11,10 @@ import { Logo } from '../components/Layout.jsx'
 import PanelProfesor, { ClasesDrawer } from './Profesor'
 import Certificados from './Certificados'
 import { Cronograma } from './Academico.jsx'
+import { pdfTerminos } from '../lib/bienvenida.js'
 import {
   hasBackend, supabase, loadAll, save, remove, CATEGORIAS_ACCESO, saveAjuste, getRol, fechaCorta, subirImagen, telefono, setNumero, COLORES, MAX_INICIO, consultasCSV, interesadosCSV, marcarConsulta,
-  subirComprobante, urlComprobante, crearInscripcion, agregarPago, estadoInscripcion, borrarInscripcion, armarInscripciones, inscritosCSV, guardarMiembro, ponerCoordina, getCoordina, quitarMiembro, ROLES, seguimientoInteresado, reasignarInteresado, recibeInteresados, guardarProspecto, borrarProspecto, guardarTrabajador, guardarWhatsapp, asignarGrupo, pagarTrabajador, guardarInstalacion, ESTADOS_PROSPECTO, ORIGENES, guardarPendiente, marcarPendiente, borrarPendiente, guardarNota, borrarNota, guardarPlantilla, enviarDocumentos, firmarDocumento, borrarDocumento, guardarQueja, atenderQueja, numeroGerencia, fmtHorario
+  subirComprobante, urlComprobante, crearInscripcion, agregarPago, estadoInscripcion, borrarInscripcion, enviarBienvenidaCorreo, armarInscripciones, inscritosCSV, guardarMiembro, ponerCoordina, getCoordina, quitarMiembro, ROLES, seguimientoInteresado, reasignarInteresado, recibeInteresados, guardarProspecto, borrarProspecto, guardarTrabajador, guardarWhatsapp, asignarGrupo, pagarTrabajador, guardarInstalacion, ESTADOS_PROSPECTO, ORIGENES, guardarPendiente, marcarPendiente, borrarPendiente, guardarNota, borrarNota, guardarPlantilla, enviarDocumentos, firmarDocumento, borrarDocumento, guardarQueja, atenderQueja, numeroGerencia, fmtHorario
 } from '../lib/data.js'
 
 /* ================= piezas pequeñas ================= */
@@ -1496,7 +1497,7 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
     const buscar = (re) => grupos.find((g) => re.test(cursoDe(g.curso_id)?.titulo || ''))
     const gs = [buscar(/word/i), buscar(/excel/i), buscar(/power\s*point/i)]
     if (gs.some((g) => !g)) { setErr('Para el Club Ofimática tiene que haber un grupo abierto de Word, de Excel y de PowerPoint.'); return }
-    setErr(''); setSel(gs.map((g) => String(g.id))); setPaquete('Club Ofimática'); setPrecio('450'); setPrecioManual(true)
+    setErr(''); setSel(gs.map((g) => String(g.id))); setPaquete('Club Ofimática'); setPrecio('459'); setPrecioManual(true)
   }
   const alternar = (id) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
 
@@ -1573,7 +1574,7 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
             )
           })}
         </div>
-        <button type="button" className="btn btn-line sm" onClick={hacerClub}>🎓 Club Ofimática (Word + Excel + PowerPoint · S/ 450 · cuenta como 1 cupo)</button>
+        <button type="button" className="btn btn-line sm" onClick={hacerClub}>🎓 Club Ofimática (Word + Excel + PowerPoint · S/ 459 · cuenta como 1 cupo)</button>
         {elegidos.length > 1 && (
           <label>Nombre del paquete<input id="i-paq" value={paquete} onChange={(e) => setPaquete(e.target.value)} placeholder="Ej.: Club Ofimática" /></label>
         )}
@@ -1654,7 +1655,16 @@ function Inscritos({ data, hacer, rol, nuevaInscripcion, registrarPago }) {
   const [q, setQ] = useState('')
   const [foto, setFoto] = useState('')
   const [borrando, setBorrando] = useState(null)
+  const [enviando, setEnviando] = useState('')
   const gerente = rol === 'gerente'
+  async function bienvenida(x) {
+    const a = x.alumno || {}
+    const reenvio = x.activas.length > 0 && x.activas.every((m) => m.bienvenida_en)
+    if (!window.confirm(`¿${reenvio ? 'Reenviar' : 'Enviar'} el correo de bienvenida a ${a.nombres} (${a.email})?${x.saldo > 0 ? `\n\nOjo: aún debe ${soles(x.saldo)}. El correo saldrá SIN el link de Zoom hasta que complete el pago.` : ''}`)) return
+    setEnviando(x.id)
+    await hacer(async () => { await enviarBienvenidaCorreo(x.id, await pdfTerminos()) }, 'Bienvenida enviada ✉️')
+    setEnviando('')
+  }
   const meses = [...new Set(todas.map((x) => x.mes).filter(Boolean))].sort().reverse()
   const grupos = [...data.grupos].filter((g) => g.codigo).sort((a, b) => a.codigo.localeCompare(b.codigo))
   const nombreCurso = (id) => data.cursos.find((c) => String(c.id) === String(id))?.titulo || ''
@@ -1742,6 +1752,11 @@ function Inscritos({ data, hacer, rol, nuevaInscripcion, registrarPago }) {
                     <td><span className={`pill ${x.estado}`}>{ESTADO_TXT[x.estado]}</span></td>
                     <td className="acc">
                       {x.estado !== 'anulada' && x.saldo > 0 && <button className="btn btn-line sm" onClick={() => registrarPago(x)}>+ Pago</button>}
+                      {x.estado !== 'anulada' && x.pagado > 0 && (a.email || '').includes('@') && (
+                        <button className="btn btn-line sm" disabled={enviando === x.id} onClick={() => bienvenida(x)} title={x.activas.every((m) => m.bienvenida_en) ? 'Ya se envió: reenviar' : 'Enviar correo de bienvenida'}>
+                          {enviando === x.id ? 'Enviando…' : x.activas.length > 0 && x.activas.every((m) => m.bienvenida_en) ? '✉️ Reenviar' : '✉️ Bienvenida'}
+                        </button>
+                      )}
                       {gerente && (x.estado === 'anulada'
                         ? <button className="btn btn-line sm" onClick={() => hacer(() => estadoInscripcion(x.id, 'activa'), 'Inscripción reactivada')}>Reactivar</button>
                         : <button className="btn btn-line sm" onClick={() => hacer(() => estadoInscripcion(x.id, 'anulada'), 'Inscripción anulada')}>Anular</button>)}

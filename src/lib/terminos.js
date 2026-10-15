@@ -1,0 +1,16 @@
+/* Términos y condiciones de CCN: una sola fuente para la página /terminos y el PDF de la bienvenida. */
+export const TERMINOS = [
+  'Cualquier consulta adicional deberá hacerse a través de los canales de contacto oficiales de CCN.',
+  'Si el alumno requiere de forma imprevista una reprogramación o cambio de curso, deberá comunicarse oportunamente con el equipo de CCN. Podrá hacerlo hasta dos (02) días hábiles antes del día de inicio del curso, a través de cualquier canal de contacto oficial de CCN.',
+  'Una vez iniciado el curso y como máximo hasta la mitad del mismo, si el alumno desea cambiar de horario, temporada o curso en el que se inscribió, deberá pagar una penalidad de S/ 50 soles o $14 dólares americanos, según sea el caso.',
+  'El alumno se compromete a pagar la totalidad del valor monetario del curso en las fechas establecidas por el equipo de CCN.',
+  'La separación de vacante se completa pagando el saldo del curso a más tardar un (01) día antes de su inicio, para poder brindarle sus accesos. Excepcionalmente puede pagarse el mismo día del inicio, hasta tres (03) horas antes de la hora de la clase. Si el curso inicia y el pago no se ha realizado, no se brindan los accesos y el alumno es retirado del grupo de WhatsApp hasta que pague.',
+  'Todo pago se realiza únicamente a las cuentas oficiales de CCN que te indique el equipo por los canales oficiales.',
+  'Cada curso abre con un mínimo de cinco (5) participantes por horario y tiene un máximo de veinte (20). Si no se llega al mínimo, CCN podrá postergar el inicio del curso entre 1 y 2 semanas, según la cantidad de participantes que falten.',
+  'Para recibir el certificado del curso, el alumno debe cumplir la asistencia mínima, participar en las clases y aprobar las dos evaluaciones del curso: el trabajo T1 (a mitad del curso) y el trabajo T2 (proyecto final). Las fechas de cada entrega se informan en el cronograma del grupo: el T1 se entrega dentro de los tres (03) días posteriores a la clase en que se anuncia y el T2 a más tardar cuarenta y ocho (48) horas antes de la última clase. El alumno que no entregue a tiempo o no apruebe no accede al certificado; si cumplió la asistencia mínima, recibe la constancia de participación.',
+  'La última clase del curso es de repaso: el profesor revisa con los alumnos los trabajos que elija y se resuelven preguntas. El certificado se emite dentro de las setenta y dos (72) horas posteriores a la última clase y se envía al correo registrado por el alumno, por lo que debe escribirlo correctamente al inscribirse. Cada certificado y cada constancia llevan un código QR con el que cualquier persona puede verificarlos.',
+  'Las clases se graban y quedan disponibles para los alumnos del grupo durante un tiempo limitado como beneficio del curso. Está prohibido compartirlas, copiarlas o publicarlas.',
+  'Los precios publicados son finales; no se suma ningún monto adicional. CCN, a través de FIDTAIL PERU S.A.C. (RUC 20608933019), emite boleta o factura electrónica por tu pago.',
+  'El material producido por el alumno para la obtención de todo tipo de constancia o certificado podrá ser usado por CCN con fines publicitarios, acreditando la autoría del material al alumno correspondiente.',
+  'No se realizan devoluciones.',
+]

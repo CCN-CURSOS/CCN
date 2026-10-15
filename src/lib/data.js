@@ -993,6 +993,20 @@ export async function enviarCertificadoCorreo(c, pdfBlob) {
   return data
 }
 
+/* Envía el correo de bienvenida (datos, grupo de WhatsApp, Zoom y Términos en PDF) de una inscripción. Edge Function `enviar-bienvenida` + Resend. */
+export async function enviarBienvenidaCorreo(paqueteId, pdfBlob) {
+  if (!hasBackend) {
+    const db = demoRead(); const ahora = new Date().toISOString()
+    db.matriculas.filter((m) => m.paquete_id === paqueteId).forEach((m) => { m.bienvenida_en = ahora }); demoWrite(db)
+    return { ok: true, demo: true }
+  }
+  const pdf_base64 = await new Promise((res, rej) => { const f = new FileReader(); f.onload = () => res(String(f.result).split(',')[1]); f.onerror = rej; f.readAsDataURL(pdfBlob) })
+  const { data, error } = await supabase.functions.invoke('enviar-bienvenida', { body: { paquete_id: paqueteId, pdf_base64 } })
+  if (error) { let m = error.message; try { const j = await error.context?.json?.(); if (j?.error) m = j.error } catch (e) { /* sin detalle */ } throw new Error(m) }
+  if (data?.error) throw new Error(data.error)
+  return data
+}
+
 export async function anularCertificado(id, estado = 'anulado') {
   if (!hasBackend) { const db = demoRead(); const c = db.certificados.find((x) => x.id === id); if (c) c.estado = estado; demoWrite(db); return }
   const { error } = await supabase.from('certificados').update({ estado }).eq('id', id)
