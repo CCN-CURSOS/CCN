@@ -337,6 +337,13 @@ export async function save(tabla, row) {
     return
   }
   if (!limpio.id) delete limpio.id
+  if (limpio.id) {
+    // Edición parcial (p. ej. solo "activo"): UPDATE directo, porque un upsert con campos faltantes rompe las columnas obligatorias.
+    const { id, ...campos } = limpio
+    const r = await supabase.from(tabla).update(campos).eq('id', id).select('id')
+    if (r.error) throw r.error
+    if (r.data && r.data.length) return
+  }
   const { error } = await supabase.from(tabla).upsert(limpio)
   if (error) throw error
 }
