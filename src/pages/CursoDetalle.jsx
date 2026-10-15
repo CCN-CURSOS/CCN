@@ -12,7 +12,7 @@ const Flecha = () => (
 
 const POR_QUE = [
   ['Clases en vivo', 'Aprendes con el instructor en tiempo real y resuelves tus dudas al instante.'],
-  ['Proyecto real', 'En cada curso trabajas con tu propio negocio o idea, no con ejemplos de libro.'],
+  ['Proyecto real', 'En cada curso trabajas con un proyecto propio que puedes usar, no con ejemplos de libro.'],
   ['Profesores capacitados', 'Te guían paso a paso y más de la mitad de cada clase es práctica.'],
   ['Certificado', 'Recibes un certificado al terminar el curso.'],
 ]
@@ -124,7 +124,7 @@ export default function CursoDetalle() {
                 <ul className="cd-incl">
                   <li>Clases en vivo con el instructor</li>
                   <li>Más de la mitad de cada clase es práctica</li>
-                  <li>Proyecto real de tu propio negocio</li>
+                  <li>Proyecto real aplicado a tu día a día</li>
                   {curso.extra && <li>Nivel extra CCN</li>}
                   <li>Reto de 7 días y ruta para seguir aprendiendo</li>
                   <li>Certificado al terminar el curso</li>

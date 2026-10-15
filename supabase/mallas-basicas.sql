@@ -24,7 +24,7 @@ update public.cursos set temario = array[
 
 update public.cursos set temario = array[
   'Primeros pasos en Notion','Bloques y formato','Bases de datos I','Bases de datos II',
-  'Conectar información','Organizar tu negocio o tus estudios','Panel de control y trabajo en equipo','Proyecto final y presentación'] where titulo = 'Notion desde 0';
+  'Conectar información','Organizar tus estudios, trabajo y proyectos','Panel de control y trabajo en equipo','Proyecto final y presentación'] where titulo = 'Notion desde 0';
 
 update public.cursos set temario = array[
   'Entorno de Illustrator','Formas y selección','Herramienta Pluma','Color y degradados',

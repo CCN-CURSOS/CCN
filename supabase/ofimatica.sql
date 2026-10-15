@@ -14,7 +14,7 @@ update public.cursos set horas = 14, sesiones = 6, programas = 'Microsoft Word',
 where titulo = 'Word';
 
 update public.cursos set horas = 14, sesiones = 6, programas = 'Microsoft Excel',
-  descripcion = 'Aprende Excel desde cero: tablas, fórmulas y reportes para tu trabajo o tu negocio. Terminas con un archivo propio que se calcula solo.',
+  descripcion = 'Aprende Excel desde cero: tablas, fórmulas y reportes para tu trabajo, tus estudios o tu día a día. Terminas con un archivo propio que se calcula solo.',
   temario = array[
     'Entorno de Excel, celdas y formatos',
     'Fórmulas y funciones básicas',
@@ -34,7 +34,7 @@ update public.cursos set horas = 14, sesiones = 6, programas = 'Microsoft PowerP
     'Tablas, gráficos y esquemas',
     'Transiciones, animaciones, audio, video y enlaces',
     'Presentar con seguridad y proyecto final'],
-  extra = 'plantillas de presentación para tu negocio o tu trabajo'
+  extra = 'plantillas de presentación para tu trabajo o tus estudios'
 where titulo = 'PowerPoint';
 
 update public.cursos set horas = 42, sesiones = 18, programas = 'Microsoft Word, Excel y PowerPoint',
@@ -58,5 +58,5 @@ update public.cursos set horas = 42, sesiones = 18, programas = 'Microsoft Word,
     'POWERPOINT · Tablas, gráficos y esquemas',
     'POWERPOINT · Transiciones, animaciones, audio, video y enlaces',
     'POWERPOINT · Presentar con seguridad y proyecto final'],
-  extra = 'plantillas para tu trabajo o tu negocio en los tres programas'
+  extra = 'plantillas para tu trabajo o tus estudios en los tres programas'
 where titulo = 'Club Ofimática';

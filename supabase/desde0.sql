@@ -10,7 +10,7 @@ update public.cursos set horas = 16, sesiones = 8,
     'Bases de datos I: propiedades y vistas (tabla, tablero, calendario y galería)',
     'Bases de datos II: filtros, orden, agrupación y plantillas',
     'Conectar información: relaciones, rollups y fórmulas básicas',
-    'Organizar tu negocio o tus estudios: tareas, proyectos, clientes y finanzas',
+    'Organizar tus estudios, trabajo y proyectos: tareas, clientes y finanzas',
     'Panel de control y trabajo en equipo: compartir, permisos y comentarios',
     'Proyecto final y presentación'],
   extra = 'plantillas listas y una revisión semanal para decidir qué hacer cada lunes'

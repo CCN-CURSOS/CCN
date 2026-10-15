@@ -10,12 +10,12 @@ update public.cursos set horas = 14, sesiones = 6,
     'Redactar y mejorar textos: correos, mensajes, publicaciones y resúmenes',
     'Analizar documentos y datos: PDF, Excel, imágenes y tablas',
     'Proyectos y tareas repetitivas: instrucciones guardadas y flujos de trabajo',
-    'Proyecto final aplicado a tu negocio o tus estudios'],
+    'Proyecto final aplicado a tu trabajo o tus estudios'],
   extra = 'biblioteca de instrucciones listas para copiar y usar'
 where titulo = 'Claude para principiantes';
 
 update public.cursos set horas = 14, sesiones = 6,
-  descripcion = 'Aprende Canva desde cero y crea publicaciones, presentaciones y material de marca para tu negocio sin ser diseñador.',
+  descripcion = 'Aprende Canva desde cero y crea publicaciones, presentaciones y material de marca para lo que necesites, sin ser diseñador.',
   programas = 'Canva (plan gratuito)',
   temario = array[
     'Primeros pasos en Canva: cuenta, interfaz, plantillas y formatos',
