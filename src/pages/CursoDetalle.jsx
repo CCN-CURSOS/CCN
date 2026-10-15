@@ -23,6 +23,7 @@ export default function CursoDetalle() {
   const [barra, setBarra] = useState(false)
   const [alto, setAlto] = useState(76)
   const carro = useCarrito()
+  const [aviso, setAviso] = useState(false)
 
   useEffect(() => { loadCatalog().then(setData).catch(() => setData({ cursos: [], grupos: [], error: true })) }, [])
   useEffect(() => {
@@ -62,7 +63,9 @@ export default function CursoDetalle() {
       <div className={`cd-bar ${barra ? 'on' : ''}`} style={{ top: alto }} aria-hidden={!barra}>
         <div className="wrap cd-bar-in">
           <div><b>{curso.titulo}</b><span>S/{curso.precio}{curso.precio_antes > curso.precio && <s>S/{curso.precio_antes}</s>}</span></div>
-          <Link className="cd-btn" to={`/inscripcion/${curso.id}`} tabIndex={barra ? 0 : -1}>{cta} <Flecha /></Link>
+          {lleno
+            ? <Link className="cd-btn" to={`/inscripcion/${curso.id}`} tabIndex={barra ? 0 : -1}>{cta} <Flecha /></Link>
+            : <button type="button" className="cd-btn" tabIndex={barra ? 0 : -1} onClick={() => { carro.agregar(curso.id); setAviso(true) }}>{cta} <Flecha /></button>}
         </div>
       </div>
       <main className="cd">
@@ -126,10 +129,17 @@ export default function CursoDetalle() {
                   <li>Reto de 7 días y ruta para seguir aprendiendo</li>
                   <li>Certificado al terminar el curso</li>
                 </ul>
-                <Link className="cd-btn" to={`/inscripcion/${curso.id}`}>{cta} <Flecha /></Link>
-                {!lleno && (carro.tiene(curso.id)
-                  ? <Link className="cd-carro on" to="/carrito">✓ En tu carrito · Ver carrito</Link>
-                  : <button type="button" className="cd-carro" onClick={() => carro.agregar(curso.id)}>Agregar al carrito</button>)}
+                {lleno
+                  ? <Link className="cd-btn" to={`/inscripcion/${curso.id}`}>{cta} <Flecha /></Link>
+                  : <button type="button" className="cd-btn" onClick={() => { carro.agregar(curso.id); setAviso(true) }}>{cta} <Flecha /></button>}
+                {!lleno && (aviso || carro.tiene(curso.id)) && (
+                  <div className="cd-agregado" role="status">
+                    <b>✓ Agregado a tu carrito</b>
+                    <span>{carro.cantidad} {carro.cantidad === 1 ? 'curso' : 'cursos'} en tu carrito</span>
+                    <Link className="cd-carro on" to="/carrito">Ver carrito y finalizar inscripción</Link>
+                    <Link className="cd-carro" to="/cursos">Seguir viendo cursos</Link>
+                  </div>
+                )}
                 <a className="cd-dudas" href={wa(`Hola, tengo una duda sobre el curso ${curso.titulo}`)} target="_blank" rel="noopener noreferrer">¿Tienes dudas? Escríbenos por WhatsApp</a>
                 <p className="cd-nota">Completa tu inscripción y te llevamos a WhatsApp.</p>
               </div>

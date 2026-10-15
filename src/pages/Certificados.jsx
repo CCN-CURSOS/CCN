@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { cargarAsistenciaGrupo, emitirCertificado, anularCertificado, fechaCorta, guardarFirma, quitarFirma, cargarEntregasGrupo, save, remove } from '../lib/data.js'
+import { cargarAsistenciaGrupo, emitirCertificado, anularCertificado, enviarCertificadoCorreo, fechaCorta, guardarFirma, quitarFirma, cargarEntregasGrupo, save, remove } from '../lib/data.js'
 import { resumenAlumno, fechaISOLima } from '../lib/clases.js'
 import {
   TIPOS_CERT, MIN_ASISTENCIA, MIN_PARTICIPACION, CLASES_POR_PROGRAMA, documentosDe, nuevoCodigo, generarPdf, descargarBlob, nombreArchivo, hoyLima, esClub, procesarFirma,
@@ -211,6 +211,12 @@ export default function Certificados({ data, hacer, gerente = true }) {
     try { descargarBlob(await generarPdf(datosPdf(c, data.firmas)), nombreArchivo(datosPdf(c))) } catch (e) { setErr(e.message) }
     setBusy('')
   }
+  async function enviar(c) {
+    if (!window.confirm(`¿Enviar ${TIPOS_CERT[c.tipo]} a ${c.alumno_nombre} por correo?`)) return
+    setBusy('m' + c.id)
+    await hacer(async () => { await enviarCertificadoCorreo(c, await generarPdf(datosPdf(c, data.firmas))) }, 'Correo enviado ✉️')
+    setBusy('')
+  }
   async function anular(c) {
     if (!window.confirm(`¿Anular ${TIPOS_CERT[c.tipo]} ${c.codigo} de ${c.alumno_nombre}? La verificación pública mostrará que fue anulado.`)) return
     await hacer(() => anularCertificado(c.id), 'Documento anulado')
@@ -300,7 +306,7 @@ export default function Certificados({ data, hacer, gerente = true }) {
           <tbody>{registro.map((c) => (
             <tr key={c.id}><td><b>{c.codigo}</b></td><td>{c.alumno_nombre}<small className="paq">{c.alumno_doc}</small></td><td>{TIPOS_CERT[c.tipo]}</td><td>{c.curso_titulo}</td><td>{fechaCorta(c.fecha_emision)}</td>
               <td>{c.estado === 'vigente' ? '✅ Vigente' : '🚫 Anulado'}</td>
-              <td className="acc"><button className="btn btn-line sm" onClick={() => descargar(c)} disabled={busy === c.id}>⬇ PDF</button>{c.estado === 'vigente' && <button className="btn btn-line sm" onClick={() => anular(c)}>Anular</button>}</td></tr>
+              <td className="acc"><button className="btn btn-line sm" onClick={() => descargar(c)} disabled={busy === c.id}>⬇ PDF</button>{c.estado === 'vigente' && <button className="btn btn-line sm" onClick={() => enviar(c)} disabled={busy === 'm' + c.id} title={c.enviado_en ? 'Ya enviado el ' + fechaCorta(c.enviado_en) + ': enviar de nuevo' : 'Enviar por correo'}>{c.enviado_en ? '✉️ Reenviar' : '✉️ Enviar'}</button>}{c.estado === 'vigente' && <button className="btn btn-line sm" onClick={() => anular(c)}>Anular</button>}</td></tr>
           ))}</tbody>
         </table></div>
       )}

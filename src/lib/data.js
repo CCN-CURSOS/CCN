@@ -972,6 +972,20 @@ export async function emitirCertificado(fila, nuevoCodigo) {
   throw new Error('No se pudo generar un número único. Intenta de nuevo.')
 }
 
+/* Envía el certificado/constancia por correo al alumno (Edge Function `enviar-certificado` + Resend). */
+export async function enviarCertificadoCorreo(c, pdfBlob) {
+  if (!hasBackend) {
+    const db = demoRead(); const x = db.certificados.find((y) => y.id === c.id)
+    if (x) { x.enviado_en = new Date().toISOString(); demoWrite(db) }
+    return { ok: true, demo: true }
+  }
+  const pdf_base64 = await new Promise((res, rej) => { const f = new FileReader(); f.onload = () => res(String(f.result).split(',')[1]); f.onerror = rej; f.readAsDataURL(pdfBlob) })
+  const { data, error } = await supabase.functions.invoke('enviar-certificado', { body: { certificado_id: c.id, pdf_base64 } })
+  if (error) { let m = error.message; try { const j = await error.context?.json?.(); if (j?.error) m = j.error } catch (e) { /* sin detalle */ } throw new Error(m) }
+  if (data?.error) throw new Error(data.error)
+  return data
+}
+
 export async function anularCertificado(id, estado = 'anulado') {
   if (!hasBackend) { const db = demoRead(); const c = db.certificados.find((x) => x.id === id); if (c) c.estado = estado; demoWrite(db); return }
   const { error } = await supabase.from('certificados').update({ estado }).eq('id', id)
