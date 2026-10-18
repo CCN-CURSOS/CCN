@@ -12,6 +12,7 @@ import PanelProfesor, { ClasesDrawer } from './Profesor'
 import Certificados from './Certificados'
 import { Cronograma } from './Academico.jsx'
 import { pdfTerminos } from '../lib/bienvenida.js'
+import { variables as variablesManual, presentacion as presentacionManual, oferta as ofertaManual, cierre as cierreManual, faqs as faqsManual, seguimientos as seguimientosManual, cierres as cierresManual, casos as casosManual, PASOS as PASOS_MANUAL, REGLAS as REGLAS_MANUAL, NO_DECIR as NO_DECIR_MANUAL } from '../lib/manual.js'
 import {
   hasBackend, supabase, loadAll, save, remove, CATEGORIAS_ACCESO, saveAjuste, getRol, fechaCorta, subirImagen, telefono, setNumero, COLORES, MAX_INICIO, consultasCSV, interesadosCSV, marcarConsulta,
   subirComprobante, urlComprobante, crearInscripcion, agregarPago, estadoInscripcion, borrarInscripcion, enviarBienvenidaCorreo, armarInscripciones, inscritosCSV, guardarMiembro, ponerCoordina, getCoordina, quitarMiembro, ROLES, seguimientoInteresado, reasignarInteresado, recibeInteresados, guardarProspecto, consultaAProspecto, asesoraNombre, grupoParaOferta, guionesVenta, borrarProspecto, guardarTrabajador, guardarWhatsapp, asignarGrupo, pagarTrabajador, guardarInstalacion, ESTADOS_PROSPECTO, TIPOS_PROSPECTO, ORIGENES, guardarPendiente, marcarPendiente, borrarPendiente, guardarNota, borrarNota, guardarPlantilla, enviarDocumentos, firmarDocumento, borrarDocumento, guardarQueja, atenderQueja, numeroGerencia, fmtHorario
@@ -794,6 +795,97 @@ function Interesados({ data, hacer, onInscribir, onProspecto, gerente }) {
         <Confirmar texto={`¿Borrar el registro de ${borrando.nombres} ${borrando.apellido_paterno}?`} onNo={() => setBorrando(null)}
           onSi={() => { const x = borrando; setBorrando(null); hacer(() => remove('interesados', x.id), 'Interesado borrado') }} />
       )}
+    </>
+  )
+}
+
+/* ================= MANUAL DE VENTAS (speeches y respuestas, se arma solo con cada curso) ================= */
+function ManualVentas({ data, email }) {
+  const [tab, setTab] = useState('guia')
+  const [cursoId, setCursoId] = useState('')
+  const [asesora, setAsesora] = useState(asesoraNombre(email, data.trabajadores))
+  const [nombre, setNombre] = useState('')
+  const [q, setQ] = useState('')
+  const [grupoFaq, setGrupoFaq] = useState('Todas')
+  const [copiado, setCopiado] = useState('')
+  const curso = data.cursos.find((c) => c.id === cursoId) || null
+  const grupo = curso ? grupoParaOferta(data.grupos, curso.id) : null
+  const v = useMemo(() => variablesManual({ asesora, nombre: nombre.trim().split(/\s+/)[0], curso, grupo, cursos: data.cursos }), [asesora, nombre, curso, grupo, data.cursos])
+  const copiar = async (k, t) => { try { await navigator.clipboard.writeText(t); setCopiado(k); setTimeout(() => setCopiado(''), 1800) } catch { window.prompt('Copia el mensaje:', t) } }
+  const Msg = ({ k, titulo, texto, nota, aviso }) => (
+    <section className="guion-b" key={k}>
+      <h4>{titulo}</h4>
+      {aviso && <span className="pill warn">⚠️ Por confirmar con gerencia</span>}
+      <pre>{texto}</pre>
+      {nota && <small>{nota}</small>}
+      <div className="btns"><button className="btn btn-line sm" onClick={() => copiar(k, texto)}>{copiado === k ? '✓ Copiado' : 'Copiar'}</button></div>
+    </section>
+  )
+  const lista = faqsManual(v)
+  const grupos = ['Todas', ...Array.from(new Set(lista.map((f) => f.g)))]
+  const nq = q.trim().toLowerCase()
+  const filtradas = lista.filter((f) => (grupoFaq === 'Todas' || f.g === grupoFaq) && (!nq || (f.q + ' ' + f.a).toLowerCase().includes(nq)))
+  const TABS = [['guia', 'Guía rápida'], ['pres', 'Presentación'], ['faq', 'Preguntas frecuentes'], ['seg', 'Seguimiento'], ['cierre', 'Cierre y pago'], ['casos', 'Casos especiales']]
+  return (
+    <>
+      <Seccion titulo="Manual de ventas" ayuda="Speeches listos para copiar. Se completan solos con el precio, la fecha, el horario y los cupos reales del curso que elijas." />
+      <div className="fs" style={{ marginBottom: 12 }}>
+        <div className="manual-fila">
+          <label>Curso
+            <select value={cursoId} onChange={(e) => setCursoId(e.target.value)}>
+              <option value="">Elegir curso…</option>{data.cursos.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}
+            </select>
+          </label>
+          <label>Mi nombre (asesora)
+            <input value={asesora} onChange={(e) => setAsesora(e.target.value)} />
+          </label>
+          <label>Nombre del cliente (opcional)
+            <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. María" />
+          </label>
+        </div>
+        {curso && !grupo && <p className="note">⚠️ Este curso no tiene un grupo abierto con fecha. Los mensajes dirán “fecha por confirmar”. Revisa en Grupos.</p>}
+        {curso && grupo && <p className="note">Grupo usado: inicia el {v.fecha}{v.dias ? `, ${v.dias}` : ''}{v.horario ? ` de ${v.horario}` : ''} · quedan {v.cupos} cupos.</p>}
+      </div>
+      <div className="tabs2">{TABS.map(([k, n]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{n}</button>)}</div>
+
+      {tab === 'guia' && (
+        <div className="fs">
+          <h4>Los 8 pasos de una venta</h4>
+          <ol className="manual-pasos">{PASOS_MANUAL.map(([t, d]) => <li key={t}><b>{t}</b><span>{d}</span></li>)}</ol>
+          <h4>Reglas de oro</h4>
+          <ul className="manual-reglas">{REGLAS_MANUAL.map((r) => <li key={r}>{r}</li>)}</ul>
+          <h4>Evita decir…</h4>
+          <div className="manual-nodecir">{NO_DECIR_MANUAL.map(([a, b]) => <p key={a}><b>✖ {a}</b><span>{b}</span></p>)}</div>
+        </div>
+      )}
+
+      {tab === 'pres' && (!curso
+        ? <p className="note">Elige un curso arriba para armar el mensaje de presentación y la oferta.</p>
+        : <>
+          <p className="note">Orden: envía el flyer del curso → mensaje de presentación → temario en PDF → oferta → cierre.</p>
+          <Msg k="p" titulo="1 · Presentación del curso" texto={presentacionManual(v, curso)} nota="Antes de este mensaje, envía el flyer del curso." />
+          <Msg k="o" titulo="2 · Fecha y precio" texto={ofertaManual(v, curso)} />
+          <Msg k="c" titulo="3 · Cierre con cupos reales" texto={cierreManual(v)} nota="El número de cupos sale del grupo real (máximo menos inscritos)." />
+        </>)}
+
+      {tab === 'faq' && (
+        <>
+          <div className="fs">
+            <input placeholder="Buscar una pregunta… (ej. caro, certificado, Mac)" value={q} onChange={(e) => setQ(e.target.value)} />
+            <div className="chips">{grupos.map((g) => <button key={g} className={grupoFaq === g ? 'sel' : ''} onClick={() => setGrupoFaq(g)}>{g}</button>)}</div>
+            {!curso && <p className="note">Elige un curso arriba para que las respuestas se completen con su precio, fecha y horario. Lo que falte aparece entre [corchetes].</p>}
+          </div>
+          {filtradas.length === 0 && <p className="note">No encontré esa pregunta. Si te la hacen, avisa a gerencia para sumarla al manual.</p>}
+          {filtradas.map((f, i) => <Msg key={f.q} k={`f${i}`} titulo={f.q} texto={f.a} nota={f.tip ? `💡 ${f.tip}` : ''} aviso={f.pendiente} />)}
+        </>
+      )}
+
+      {tab === 'seg' && <>
+        <p className="note">Máximo 3 intentos. Después del tercero, marca el prospecto como perdido.</p>
+        {seguimientosManual(v).map((s) => <Msg key={s.id} k={s.id} titulo={s.t} texto={s.a} nota={s.nota} />)}
+      </>}
+      {tab === 'cierre' && cierresManual(v).map((s) => <Msg key={s.id} k={s.id} titulo={s.t} texto={s.a} nota={s.nota} />)}
+      {tab === 'casos' && casosManual(v).map((s) => <Msg key={s.id} k={s.id} titulo={s.t} texto={s.a} nota={s.nota} />)}
     </>
   )
 }
@@ -2702,7 +2794,7 @@ function MiAvance({ data, email, hacer }) {
 
 /* ================= PANEL (módulos) ================= */
 const MODULOS = {
-  ventas: { nombre: 'Ventas', icono: 'ventas', secciones: [['mi', 'Mi avance'], ['agenda', 'Agenda'], ['firmar', 'Firmar'], ['plan', 'Plan de trabajo'], ['interesados', 'Interesados'], ['prospectos', 'Prospectos'], ['inscritos', 'Inscritos'], ['quejas', 'Quejas y reclamos'], ['consultas', 'Consultas'], ['grupos', 'Grupos'], ['instalaciones', 'Instalaciones']] },
+  ventas: { nombre: 'Ventas', icono: 'ventas', secciones: [['mi', 'Mi avance'], ['agenda', 'Agenda'], ['firmar', 'Firmar'], ['plan', 'Plan de trabajo'], ['interesados', 'Interesados'], ['prospectos', 'Prospectos'], ['manual', 'Manual de ventas'], ['inscritos', 'Inscritos'], ['quejas', 'Quejas y reclamos'], ['consultas', 'Consultas'], ['grupos', 'Grupos'], ['instalaciones', 'Instalaciones']] },
   web: { nombre: 'Web', icono: 'web', secciones: [['cursos', 'Cursos'], ['grupos', 'Horarios'], ['enlaces', 'Enlaces'], ['ajustes', 'Ajustes']] },
   gerencia: { nombre: 'Gerencia', icono: 'gerencia', secciones: [['resumen', 'Resumen'], ['fichas', 'Cursos'], ['trabajadores', 'Trabajadores'], ['contratos', 'Contratos'], ['horas', 'Horas trabajadas'], ['accesos', 'Accesos'], ['equipo', 'Equipo']] },
   academico: { nombre: 'Académico', icono: 'academico', secciones: [['grupos', 'Grupos'], ['cronograma', 'Cronograma y accesos'], ['certificados', 'Certificados']] },
@@ -2794,6 +2886,7 @@ function Panel({ email, rol, coordina, onSalir }) {
         {modulo === 'ventas' && tab === 'interesados' && <Interesados data={data} hacer={hacer} onInscribir={inscribirDesde} gerente={gerente}
           onProspecto={(x) => { setProtoInicial({ nombres: `${x.nombres} ${x.apellido_paterno}`.trim(), celular: x.celular, curso: x.curso, origen: 'Web', estado: 'contactado', seguimiento: '', notas: '' }); setTab('prospectos') }} />}
         {modulo === 'ventas' && tab === 'prospectos' && <Prospectos data={data} hacer={hacer} gerente={gerente} inicial={protoInicial} onCerrarInicial={() => setProtoInicial(null)} email={email} />}
+        {modulo === 'ventas' && tab === 'manual' && <ManualVentas data={data} email={email} />}
         {modulo === 'ventas' && tab === 'inscritos' && <Inscritos data={data} hacer={hacer} rol={rol} nuevaInscripcion={() => setInscForm({})} registrarPago={setPagoForm} />}
         {modulo === 'ventas' && tab === 'instalaciones' && <Instalaciones data={data} hacer={hacer} gerente={gerente} />}
         {modulo === 'ventas' && tab === 'quejas' && <Quejas data={data} hacer={hacer} gerente={gerente} email={email} />}
