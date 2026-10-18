@@ -62,7 +62,6 @@ export function Header() {
           <Link to="/cursos">Cursos</Link><Link to="/como-aprendes">Cómo aprendes</Link><Link to="/horarios">Horarios</Link><Link to="/preguntas">Preguntas</Link><Link to="/terminos">Términos y condiciones</Link><Link to="/links">Links</Link>
         </nav>
         <div className="bar-r">
-          <SelectorMoneda />
           <a className="btn btn-wa" href={hola()} target="_blank" rel="noopener noreferrer">WhatsApp</a>
           <Link className="usr cart-ico" to="/carrito" aria-label={`Carrito (${cantidad})`} title="Tu carrito">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 11h9.7l2-8H6.2" /><circle cx="9" cy="19" r="1.4" /><circle cx="17" cy="19" r="1.4" /></svg>

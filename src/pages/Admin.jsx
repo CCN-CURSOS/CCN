@@ -811,12 +811,13 @@ function ManualVentas({ data, email }) {
   const [cursoId, setCursoId] = useState('')
   const [asesora, setAsesora] = useState(asesoraNombre(email, data.trabajadores))
   const [nombre, setNombre] = useState('')
+  const [monedaMan, setMonedaMan] = useState('PEN')
   const [q, setQ] = useState('')
   const [grupoFaq, setGrupoFaq] = useState('Todas')
   const [copiado, setCopiado] = useState('')
   const curso = data.cursos.find((c) => c.id === cursoId) || null
   const grupo = curso ? grupoParaOferta(data.grupos, curso.id) : null
-  const v = useMemo(() => variablesManual({ asesora, nombre: nombre.trim().split(/\s+/)[0], curso, grupo, cursos: data.cursos, descMax: descuentoMaxPct(data.ajustes) }), [asesora, nombre, curso, grupo, data.cursos, data.ajustes])
+  const v = useMemo(() => variablesManual({ asesora, nombre: nombre.trim().split(/\s+/)[0], curso, grupo, cursos: data.cursos, descMax: descuentoMaxPct(data.ajustes), moneda: monedaMan }), [asesora, nombre, curso, grupo, data.cursos, data.ajustes, monedaMan])
   const copiar = async (k, t) => { try { await navigator.clipboard.writeText(t); setCopiado(k); setTimeout(() => setCopiado(''), 1800) } catch { window.prompt('Copia el mensaje:', t) } }
   const Msg = ({ k, titulo, texto, nota, aviso }) => (
     <section className="guion-b" key={k}>
@@ -840,6 +841,11 @@ function ManualVentas({ data, email }) {
           <label>Curso
             <select value={cursoId} onChange={(e) => setCursoId(e.target.value)}>
               <option value="">Elegir curso…</option>{data.cursos.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}
+            </select>
+          </label>
+          <label>Moneda del cliente
+            <select value={monedaMan} onChange={(e) => setMonedaMan(e.target.value)}>
+              <option value="PEN">Soles (S/)</option><option value="USD">Dólares (US$)</option>
             </select>
           </label>
           <label>Mi nombre (asesora)
