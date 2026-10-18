@@ -725,9 +725,10 @@ export async function seguimientoInteresado(id, cambios) {
 
 /* ---------- Prospectos (base propia de cada vendedor) ---------- */
 export const ESTADOS_PROSPECTO = { nuevo: 'Nuevo', contactado: 'Contactado', esperando_pago: 'Esperando pago', inscrito: 'Inscrito', perdido: 'Perdido' }
+export const TIPOS_PROSPECTO = { alto: 'Alto', medio: 'Medio', bajo: 'Bajo' }
 export const ORIGENES = ['WhatsApp', 'Instagram', 'Facebook', 'TikTok', 'Referido', 'Web', 'Otro']
 export async function guardarProspecto(p) {
-  const fila = { nombres: String(p.nombres || '').trim(), celular: String(p.celular || '').trim(), curso: p.curso || '', origen: p.origen || 'WhatsApp', estado: p.estado || 'nuevo', seguimiento: p.seguimiento || null, notas: p.notas || '' }
+  const fila = { nombres: String(p.nombres || '').trim(), celular: String(p.celular || '').trim(), curso: p.curso || '', origen: p.origen || 'WhatsApp', estado: p.estado || 'nuevo', tipo: p.tipo || 'medio', seguimiento: p.seguimiento || null, notas: p.notas || '' }
   // Contacto 1 y 2: solo se envían si el formulario los trae (así los cambios rápidos de estado no los pisan)
   if ('contacto1_fecha' in p || 'recontactar1' in p || 'recontactar2' in p || 'contacto2_fecha' in p) {
     const v = (x) => x || null
@@ -753,6 +754,18 @@ export async function guardarProspecto(p) {
   const q = p.id ? supabase.from('prospectos').update(fila).eq('id', p.id) : supabase.from('prospectos').insert(fila)
   const { error } = await q
   if (error) throw error
+}
+/* Al marcar una consulta como atendida, pasa a Prospectos (una sola vez por celular) */
+export async function consultaAProspecto(x, existentes = []) {
+  const dig = (t) => String(t || '').replace(/\D/g, '').slice(-9)
+  if (dig(x.celular) && existentes.some((p) => dig(p.celular) === dig(x.celular))) return false
+  const otro = x.curso === 'Otro'
+  await guardarProspecto({
+    nombres: `${x.nombres} ${x.apellido_paterno}`.trim(), celular: x.celular, curso: otro ? '' : x.curso,
+    origen: 'Web', estado: 'contactado',
+    notas: `Consulta web${x.modalidad ? ' · ' + x.modalidad : ''}${otro && x.otro_tema ? ' · Tema: ' + x.otro_tema : ''}${x.email ? ' · ' + x.email : ''}`,
+  })
+  return true
 }
 export async function borrarProspecto(id) {
   if (!hasBackend) { const db = demoRead(); db.prospectos = db.prospectos.filter((y) => y.id !== id); demoWrite(db); return }

@@ -79,7 +79,7 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Usas tu Agenda: pendientes, notas y calendario.
 - Inscribes a los alumnos (Ventas → Inscritos). El sistema genera solo el código de alumno.
 - Las inscripciones que llegan desde la web (carrito) entran como interesados y se abre un WhatsApp con el pedido (código P-…, cursos y total, IGV incluido). Los atiendes en el mismo orden: respondes, confirmas el pago y los inscribes. Quien lleva varios cursos llena sus datos una sola vez.
-- Programas las instalaciones de programas dentro de las ventanas permitidas; las instalaciones las hace gerencia.
+- Programas las instalaciones de programas dentro de las ventanas permitidas; las instalaciones las hace gerencia de forma remota por AnyDesk (el alumno debe tener AnyDesk descargado).
 - Creas y administras los grupos de WhatsApp de cada curso.
 - Atiendes y registras quejas y reclamos.
 - Subes las clases grabadas: entras a cada clase en Zoom, descargas el video y lo subes al Drive, en la carpeta "Cursos" > carpeta del curso > carpeta del código del grupo (la misma que el grupo de WhatsApp). Plazo máximo: 24 horas después de la clase. Solo trabajas dentro de la carpeta "Cursos"; esa carpeta del grupo es la que se comparte con los alumnos del grupo (solo lectura). La carpeta de un grupo se elimina un mes después de terminado el curso; gerencia te avisa.
@@ -102,7 +102,7 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Días de clase, con estas letras: L = lunes, M = martes, X = miércoles, J = jueves, V = viernes, S = sábado, D = domingo. Dos días van separados por una barra: L/X (lunes y miércoles), M/J (martes y jueves). Un solo día va solo: D.
 - Curso: en MAYÚSCULAS, sin tildes ni espacios (usa guion si hace falta). Ejemplos: CLUB, WORD, EXCEL, POWERPOINT, NOTION, PHOTOSHOP, ILLUSTRATOR, WEB, CLAUDE, IA, CANVA.
 - Fecha de inicio: día y mes separados por punto, con dos cifras (24.11, 04.01). Si la fecha cambia, renombras el grupo y avisas a gerencia.
-- Después de crearlo: lo dejas en "solo administradores" y lo registras en Ventas → Grupos de WhatsApp (el sistema avisa si falta).
+- Después de crearlo: lo dejas en "solo administradores" y lo registras en Ventas → Grupos de WhatsApp con su enlace de invitación (el sistema avisa si falta). Ese enlace es el que recibe cada alumno en su correo de bienvenida.
 - Cualquier duda con el código, consulta a gerencia antes de crear el grupo.
 
 6. ANTES DE INSCRIBIR A UN ALUMNO
@@ -111,7 +111,8 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Verificas que el pago entre a una cuenta oficial de CCN y registras el comprobante.
 - Confirmas el curso, el grupo y la fecha de inicio.
 - El DNI o carné de extranjería y el correo del alumno son OBLIGATORIOS. Revisa que el correo esté bien escrito: a ese correo llega su bienvenida, y al terminar el curso, sus documentos. Un correo mal escrito significa que el alumno no recibirá nada.
-- Tras inscribir, envías el correo de bienvenida desde el panel (botón con vista previa) cuando esté disponible.
+- Apenas registres el primer pago, envías el correo de bienvenida desde Ventas → Inscritos con el botón "✉️ Bienvenida" (solo aparece cuando hay un pago registrado). Lleva sus datos, curso, fecha y horario, el link del grupo de WhatsApp, el Zoom, el resumen de su pago, qué necesita y los Términos y condiciones en PDF. Si todavía debe saldo, el correo sale sin el link de Zoom y le recuerda el saldo y la fecha límite. Después de enviarlo, el botón cambia a "Reenviar".
+- Para que la bienvenida salga completa, el grupo de WhatsApp debe estar registrado en Ventas → Grupos de WhatsApp (con su enlace) y el Zoom del grupo cargado en Académico → Accesos. Si falta alguno, el correo avisa al alumno que se lo enviarán después.
 
 7. REGLAS AL VENDER
 - Precio fijo según la lista de cada curso en el sistema. Descuentos solo con autorización previa de gerencia; el sistema te pide marcarla y anotar quién y por qué.
@@ -144,7 +145,7 @@ Gerencia revisa tu reporte semanal: inscritos, ventas, atención, recontactos, p
 El asistente académico es un puesto aparte del de vendedora; por ahora lo cubres tú y por eso ves el módulo "Académico" en tu panel. No entras a Gerencia y no ves sueldos, pagos, tarifas ni contratos de nadie. Cuando se contrate a la persona del puesto, este módulo pasa a ella.
 - Grupos: creas y editas los grupos y generas sus clases (Académico → Grupos). No puedes borrarlos: eso lo hace gerencia.
 - Profesor: eliges el profesor del grupo en Académico → Cronograma y accesos. Si dice "sin acceso al panel", avisa a gerencia para que lo habilite. La tarifa la revisa gerencia.
-- Accesos de cada grupo: un solo enlace de Zoom por grupo y una carpeta de clases grabadas por grupo. El profesor los ve en su panel, así que deben estar cargados antes de la primera clase.
+- Accesos de cada grupo: un solo enlace de Zoom por grupo y una carpeta de clases grabadas por grupo. El profesor los ve en su panel y el Zoom sale en el correo de bienvenida de los alumnos que ya pagaron todo, así que deben estar cargados antes de enviar las primeras bienvenidas y antes de la primera clase.
 - Evaluaciones: por cada grupo creas el Google Forms (con subida de archivos) o la carpeta de Drive de T1 y de T2, y pegas el enlace en el cronograma. Revisa que las fechas límite sean las correctas.
 - Cronograma: al cargar los enlaces, descargas el PDF del cronograma o copias el texto para WhatsApp y se lo envías al profesor. Incluye fechas exactas de T1, T2 y de la última clase (repaso).
 - Asistencia: revisas las clases que terminaron sin asistencia. Si el profesor olvidó tomarla, usas "Reabrir para el profesor": eliges 12, 24 o 48 horas y escribes el motivo (mínimo 10 letras). Tú no tomas ni corriges asistencias; solo el profesor la registra, y queda anotado quién la reabrió y por qué.

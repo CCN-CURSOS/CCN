@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
         fila('Saldo', saldo > 0 ? soles(saldo) : 'S/ 0'),
       ].join('')}</table>
       ${aviso}
-      ${pc ? `<h3 style="color:#1FBFA8;margin:18px 0 4px">Qué necesitas</h3><ul style="font-size:14px;padding-left:18px;margin-top:4px"><li>Una computadora con <b>Windows</b>.</li><li>Nosotros instalamos el programa contigo de forma remota antes de empezar: te contactaremos para coordinar el horario.</li><li>Conexión estable a internet, cámara y micrófono para Zoom.</li></ul>`
+      ${pc ? `<h3 style="color:#1FBFA8;margin:18px 0 4px">Qué necesitas</h3><ul style="font-size:14px;padding-left:18px;margin-top:4px"><li>Una computadora con <b>Windows</b>.</li><li>Nosotros instalamos el programa contigo de forma remota por <b>AnyDesk</b> antes de empezar: descarga AnyDesk (gratis) en anydesk.com y te contactaremos para coordinar el horario.</li><li>Conexión estable a internet, cámara y micrófono para Zoom.</li></ul>`
         : `<h3 style="color:#1FBFA8;margin:18px 0 4px">Qué necesitas</h3><ul style="font-size:14px;padding-left:18px;margin-top:4px"><li>Una computadora o laptop con conexión estable a internet.</li><li>Cámara y micrófono para las clases por Zoom.</li></ul>`}
       <p style="font-size:14px">📎 Adjuntamos los <b>Términos y condiciones</b> en PDF. Al inscribirte los aceptas; guárdalos por si necesitas consultarlos.</p>
       <p style="font-size:14px">Las clases se graban y quedan disponibles para tu grupo. ¿Dudas? Escríbenos al WhatsApp <b>${WA}</b> o responde este correo.</p>

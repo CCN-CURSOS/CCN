@@ -14,7 +14,7 @@ import { Cronograma } from './Academico.jsx'
 import { pdfTerminos } from '../lib/bienvenida.js'
 import {
   hasBackend, supabase, loadAll, save, remove, CATEGORIAS_ACCESO, saveAjuste, getRol, fechaCorta, subirImagen, telefono, setNumero, COLORES, MAX_INICIO, consultasCSV, interesadosCSV, marcarConsulta,
-  subirComprobante, urlComprobante, crearInscripcion, agregarPago, estadoInscripcion, borrarInscripcion, enviarBienvenidaCorreo, armarInscripciones, inscritosCSV, guardarMiembro, ponerCoordina, getCoordina, quitarMiembro, ROLES, seguimientoInteresado, reasignarInteresado, recibeInteresados, guardarProspecto, borrarProspecto, guardarTrabajador, guardarWhatsapp, asignarGrupo, pagarTrabajador, guardarInstalacion, ESTADOS_PROSPECTO, ORIGENES, guardarPendiente, marcarPendiente, borrarPendiente, guardarNota, borrarNota, guardarPlantilla, enviarDocumentos, firmarDocumento, borrarDocumento, guardarQueja, atenderQueja, numeroGerencia, fmtHorario
+  subirComprobante, urlComprobante, crearInscripcion, agregarPago, estadoInscripcion, borrarInscripcion, enviarBienvenidaCorreo, armarInscripciones, inscritosCSV, guardarMiembro, ponerCoordina, getCoordina, quitarMiembro, ROLES, seguimientoInteresado, reasignarInteresado, recibeInteresados, guardarProspecto, consultaAProspecto, borrarProspecto, guardarTrabajador, guardarWhatsapp, asignarGrupo, pagarTrabajador, guardarInstalacion, ESTADOS_PROSPECTO, TIPOS_PROSPECTO, ORIGENES, guardarPendiente, marcarPendiente, borrarPendiente, guardarNota, borrarNota, guardarPlantilla, enviarDocumentos, firmarDocumento, borrarDocumento, guardarQueja, atenderQueja, numeroGerencia, fmtHorario
 } from '../lib/data.js'
 
 /* ================= piezas pequeñas ================= */
@@ -426,7 +426,7 @@ function Instalaciones({ data, hacer, gerente }) {
   const prox = todas.filter((x) => x.estado === 'agendada' && x.fecha >= hoy).length
   return (
     <>
-      <Seccion titulo="Instalaciones" ayuda="Agenda de las instalaciones remotas de programas (Photoshop, Illustrator, Office). Se hacen después de la inscripción.">
+      <Seccion titulo="Instalaciones" ayuda="Agenda de las instalaciones remotas por AnyDesk de programas (Photoshop, Illustrator, Office). Se hacen después de la inscripción.">
         <button className="btn btn-teal" onClick={() => setForm({})}>+ Nueva instalación</button>
       </Seccion>
       <p className="banner aviso-inst"><b>Las instalaciones solo se programan en estos horarios:</b> {AVISO_INSTALACION}</p>
@@ -685,7 +685,7 @@ function Consultas({ data, hacer, tabla = 'consultas', onInscribir, rolG = true 
                   <td>{x.email}</td>
                   {!esInt && <td>{x.modalidad}</td>}
                   <td>{esInt ? <>{x.curso}{x.lista_espera && <> <b>(lista de espera)</b></>}</> : (x.curso === 'Otro' ? `Otro: ${x.otro_tema}` : x.curso)}</td>
-                  <td><Switch on={x.estado !== 'nuevo'} label={`Atendida: ${x.nombres}`} onChange={(v) => hacer(() => marcarConsulta(x.id, v ? 'atendida' : 'nuevo', tabla), v ? 'Marcado como atendido' : 'Marcado como nuevo')} /></td>
+                  <td><Switch on={x.estado !== 'nuevo'} label={`Atendida: ${x.nombres}`} onChange={(v) => hacer(async () => { await marcarConsulta(x.id, v ? 'atendida' : 'nuevo', tabla); if (v && !esInt) await consultaAProspecto(x, data.prospectos || []) }, v ? (esInt ? 'Marcado como atendido' : 'Atendida ✅ y pasada a Prospectos') : 'Marcado como nuevo')} /></td>
                   {esInt && onInscribir && <td><button className="btn btn-line sm" onClick={() => onInscribir(x)}>Inscribir</button></td>}
                   <td>{rolG && <button className="ib red" onClick={() => setBorrando(x)} aria-label="Borrar"><Icon n="trash" /></button>}</td>
                 </tr>
@@ -802,11 +802,23 @@ function Interesados({ data, hacer, onInscribir, onProspecto, gerente }) {
 function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial }) {
   const [form, setForm] = useState(inicial || null)
   const [ver, setVer] = useState('')
+  const [fTipo, setFTipo] = useState('')
+  const [fCurso, setFCurso] = useState('')
+  const [fOrigen, setFOrigen] = useState('')
+  const [fVend, setFVend] = useState('')
+  const [fVenc, setFVenc] = useState(false)
+  const [orden, setOrden] = useState('reciente')
   const [q, setQ] = useState('')
   const [borrando, setBorrando] = useState(null)
-  const lista = (data.prospectos || []).filter((p) => (!ver || p.estado === ver) && (!q.trim() || `${p.nombres} ${p.celular} ${p.curso}`.toLowerCase().includes(q.trim().toLowerCase())))
   const hoy = new Date().toISOString().slice(0, 10)
   const todos = data.prospectos || []
+  const venc = (p) => { const r = proximoRecontacto(p); const f = r ? r.fecha : p.seguimiento; return !!f && f <= hoy && !['inscrito', 'perdido'].includes(p.estado) }
+  const rank = { alto: 0, medio: 1, bajo: 2 }
+  const hayFiltro = ver || fTipo || fCurso || fOrigen || fVend || fVenc || q.trim()
+  const lista = todos.filter((p) => (!ver || p.estado === ver) && (!fTipo || (p.tipo || 'medio') === fTipo) && (!fCurso || p.curso === fCurso) && (!fOrigen || p.origen === fOrigen) && (!fVend || p.vendedor === fVend) && (!fVenc || venc(p)) && (!q.trim() || `${p.nombres} ${p.celular} ${p.curso} ${p.notas}`.toLowerCase().includes(q.trim().toLowerCase())))
+    .sort((a, b) => orden === 'tipo' ? (rank[a.tipo || 'medio'] - rank[b.tipo || 'medio']) || String(b.creado).localeCompare(String(a.creado)) : orden === 'nombre' ? String(a.nombres).localeCompare(String(b.nombres)) : String(b.creado).localeCompare(String(a.creado)))
+  const vendedoresP = [...new Set(todos.map((p) => p.vendedor).filter(Boolean))]
+  const limpiar = () => { setVer(''); setFTipo(''); setFCurso(''); setFOrigen(''); setFVend(''); setFVenc(false); setQ('') }
   const activos = todos.filter((p) => !['inscrito', 'perdido'].includes(p.estado))
   const vencidos = activos.filter((p) => { const r = proximoRecontacto(p); return r ? r.fecha <= hoy : (p.seguimiento && p.seguimiento <= hoy) })
   const cerrar = () => { setForm(null); onCerrarInicial && onCerrarInicial() }
@@ -814,33 +826,63 @@ function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial }) {
   return (
     <>
       <Seccion titulo="Prospectos" ayuda={gerente ? 'La base de prospectos de cada vendedor.' : 'Tu base de prospectos: gente que conseguiste por WhatsApp, redes o referidos.'}>
-        <button className="btn btn-teal" onClick={() => setForm({ nombres: '', celular: '', curso: '', origen: 'WhatsApp', estado: 'nuevo', seguimiento: '', notas: '', recontactar1: '', recontactar2: '' })}>+ Nuevo prospecto</button>
+        <button className="btn btn-teal" onClick={() => setForm({ nombres: '', celular: '', curso: '', origen: 'WhatsApp', estado: 'nuevo', tipo: 'medio', seguimiento: '', notas: '', recontactar1: '', recontactar2: '' })}>+ Nuevo prospecto</button>
       </Seccion>
       {data.prospectosError && hasBackend && <p className="banner">Falta pegar <b>crm.sql</b> en Supabase. Mensaje: {data.prospectosError}</p>}
       <div className="kpis">
         <div><b>{todos.length}</b><span>prospectos</span></div>
         <div><b>{activos.length}</b><span>en seguimiento</span></div>
         <div><b>{vencidos.length}</b><span>seguimientos de hoy o vencidos</span></div>
+        <div><b>{activos.filter((p) => p.tipo === 'alto').length}</b><span>de tipo alto en seguimiento</span></div>
         <div><b>{todos.filter((p) => p.estado === 'inscrito').length}</b><span>inscritos</span></div>
       </div>
       <div className="filtros">
+        <label>Tipo
+          <select id="p-tipo" value={fTipo} onChange={(e) => setFTipo(e.target.value)}>
+            <option value="">Todos</option>{Object.entries(TIPOS_PROSPECTO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </label>
         <label>Estado
           <select id="p-est" value={ver} onChange={(e) => setVer(e.target.value)}>
             <option value="">Todos</option>{Object.entries(ESTADOS_PROSPECTO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </label>
-        <label className="buscar">Buscar<input id="p-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nombre, celular o curso" /></label>
+        <label>Curso
+          <select id="p-cur" value={fCurso} onChange={(e) => setFCurso(e.target.value)}>
+            <option value="">Todos</option>{[...new Set(todos.map((p) => p.curso).filter(Boolean))].sort().map((c) => <option key={c}>{c}</option>)}
+          </select>
+        </label>
+        <label>Origen
+          <select id="p-ori" value={fOrigen} onChange={(e) => setFOrigen(e.target.value)}>
+            <option value="">Todos</option>{ORIGENES.map((o) => <option key={o}>{o}</option>)}
+          </select>
+        </label>
+        {gerente && <label>Vendedor
+          <select id="p-ven" value={fVend} onChange={(e) => setFVend(e.target.value)}>
+            <option value="">Todos</option>{vendedoresP.map((v) => <option key={v} value={v}>{v.split('@')[0]}</option>)}
+          </select>
+        </label>}
+        <label>Ordenar por
+          <select id="p-ord" value={orden} onChange={(e) => setOrden(e.target.value)}>
+            <option value="reciente">Más recientes</option><option value="tipo">Tipo (alto primero)</option><option value="nombre">Nombre (A-Z)</option>
+          </select>
+        </label>
+        <label className="chk"><input type="checkbox" checked={fVenc} onChange={(e) => setFVenc(e.target.checked)} /> Solo seguimientos de hoy o vencidos</label>
+        <label className="buscar">Buscar<input id="p-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nombre, celular, curso o notas" /></label>
+        {hayFiltro && <button className="btn btn-line sm" onClick={limpiar}>Limpiar filtros</button>}
       </div>
+      {hayFiltro && <p className="muted-s">Mostrando {lista.length} de {todos.length} prospectos.</p>}
       {lista.length === 0 && <div className="vacio"><p>{todos.length ? 'No hay prospectos con ese filtro.' : 'Aún no hay prospectos. Agrega el primero.'}</p></div>}
       {lista.length > 0 && (
         <div className="cons-wrap">
           <table className="cons-table insc">
-            <thead><tr><th>Prospecto</th>{gerente && <th>Vendedor</th>}<th>Curso</th><th>Origen</th><th>Estado</th><th>Seguimiento</th><th>Notas</th><th /></tr></thead>
+            <thead><tr><th>Prospecto</th>{gerente && <th>Vendedor</th>}<th>Tipo</th><th>Curso</th><th>Origen</th><th>Estado</th><th>Seguimiento</th><th>Notas</th><th /></tr></thead>
             <tbody>
               {lista.map((p) => (
                 <tr key={p.id} className={(() => { const r = proximoRecontacto(p); const f = r ? r.fecha : p.seguimiento; return f && f <= hoy && !['inscrito', 'perdido'].includes(p.estado) ? 'nueva' : '' })()}>
                   <td><b>{p.nombres}</b>{p.celular && <small className="paq"><a href={wa(p.celular)} target="_blank" rel="noopener noreferrer">{p.celular}</a></small>}</td>
                   {gerente && <td>{(p.vendedor || '').split('@')[0]}</td>}
+                  <td><select aria-label={`Tipo de ${p.nombres}`} className={`tipo-${p.tipo || 'medio'}`} value={p.tipo || 'medio'} onChange={(e) => cambiar(p, { tipo: e.target.value })}>{Object.entries(TIPOS_PROSPECTO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
                   <td>{p.curso || '—'}</td>
                   <td>{p.origen}</td>
                   <td><select aria-label={`Estado de ${p.nombres}`} value={p.estado} onChange={(e) => cambiar(p, { estado: e.target.value })}>{Object.entries(ESTADOS_PROSPECTO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
@@ -868,6 +910,7 @@ function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial }) {
                 <option value="">Sin definir</option>{data.cursos.map((c) => <option key={c.id} value={c.titulo}>{c.titulo}</option>)}
               </select>
             </label>
+            <label>Tipo de prospecto<select value={form.tipo || 'medio'} onChange={(e) => setForm({ ...form, tipo: e.target.value })}>{Object.entries(TIPOS_PROSPECTO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
             <div className="g2">
               <label>Origen<select value={form.origen} onChange={(e) => setForm({ ...form, origen: e.target.value })}>{ORIGENES.map((o) => <option key={o}>{o}</option>)}</select></label>
               <label>Estado<select value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value })}>{Object.entries(ESTADOS_PROSPECTO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
