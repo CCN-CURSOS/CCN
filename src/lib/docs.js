@@ -20,7 +20,7 @@ Entre FIDTAIL PERU S.A.C., RUC 20608933019, titular de la marca CCN – Centro d
 
 5. COBROS. Todo pago de alumnos se hace únicamente a las cuentas oficiales de CCN. Está prohibido recibir dinero en cuentas personales.
 
-6. PRECIOS. El precio es fijo. Un descuento solo se concede con autorización previa de gerencia.
+6. PRECIOS. Se ofrece siempre el precio de la lista. Como último recurso para cerrar una venta puede aplicarse un descuento libre hasta el porcentaje máximo que fije gerencia; un precio menor a ese mínimo solo se concede con autorización previa de gerencia.
 
 7. CONDUCTA. Antes de inscribir a un alumno se le envían los términos y condiciones. La devolución, en primera instancia, es negativa. Los problemas de alumnos y las quejas y reclamos se comunican de inmediato a gerencia.
 
@@ -90,7 +90,7 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Instalaciones de programas: las agendas solo en estas ventanas — lunes a viernes de 7 p. m. a 10 p. m., sábados de 3 p. m. a 10 p. m., domingos de 8 a. m. a 10 p. m. Cada una dura 1 hora y debe quedar lista 3 días antes del inicio del curso.
 - Recontactos: no dejes pasar la fecha de "volver a contactar"; el panel te avisa cuando se te pasa.
 - Quejas y reclamos: se avisan a gerencia de inmediato.
-- Descuentos: ninguno sin autorización previa de gerencia.
+- Descuentos: ofrece siempre el precio de la página. Solo como último recurso para cerrar la venta puedes dar un descuento libre hasta el tope que fije gerencia (lo ves en el Manual de ventas); más abajo, ninguno sin autorización previa de gerencia.
 - Grupos de WhatsApp: se dejan en "solo administradores" hasta el inicio del curso.
 
 5. GRUPOS DE WHATSAPP: CÓMO CREARLOS Y NOMBRARLOS
@@ -115,11 +115,12 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Para que la bienvenida salga completa, el grupo de WhatsApp debe estar registrado en Ventas → Grupos de WhatsApp (con su enlace) y el Zoom del grupo cargado en Académico → Accesos. Si falta alguno, el correo avisa al alumno que se lo enviarán después.
 
 7. REGLAS AL VENDER
-- Precio fijo según la lista de cada curso en el sistema. Descuentos solo con autorización previa de gerencia; el sistema te pide marcarla y anotar quién y por qué.
+- Precio según la lista de cada curso en el sistema; ofrécelo siempre primero. El descuento libre es el ÚLTIMO recurso para cerrar la venta, nunca se anuncia ni se ofrece de entrada, y solo llega hasta el tope que fije gerencia (el Manual de ventas te muestra el precio mínimo). Por debajo de ese mínimo necesitas autorización previa de gerencia: el sistema te pide marcarla y anotar quién y por qué.
 - Los pagos entran SOLO a las cuentas oficiales de CCN, nunca a cuentas personales.
 - Devoluciones: en primera instancia la respuesta es NO.
 - Club Ofimática: es un paquete (Word + Excel + PowerPoint), cuenta como 1 cupo.
 - Los precios del sistema son FINALES e incluyen IGV: no se suma nada. Dile al alumno el precio que muestra el sistema.
+- ALUMNOS DEL EXTRANJERO (pago en dólares): en el Manual de ventas elige “Moneda del cliente: Dólares” y todos los mensajes salen en US$ para copiar y pegar (primer mensaje, datos, pago y confirmación). La inscripción va en UNA sola moneda: o soles o dólares, nunca mezcladas. Se paga por PayPal: tú creas el enlace de cobro por el monto exacto o se lo pides a gerencia (nunca cuentas personales). Al inscribir en el panel eliges “Dólares”. A estos alumnos no se les da boleta ni factura: solo, si la piden, una “Nota de pago” que sale del botón en Ventas → Inscritos (solo para extranjeros que pagan en dólares). Las clases son en horario de Perú (GMT-5) y quedan grabadas. Los dólares no aparecen en la web pública, solo en el panel y el manual.
 - EVALUACIONES T1 Y T2 Y CERTIFICADO: cada curso tiene dos trabajos obligatorios: T1 (a mitad del curso) y T2 (proyecto final). El T1 se entrega dentro de los 3 días después de la clase en que se anuncia; el T2, a más tardar 48 horas antes de la última clase. La última clase es de repaso: el profesor revisa los trabajos que elija con los alumnos y resuelve preguntas. Quien no entrega a tiempo o no aprueba NO accede al certificado (si cumplió la asistencia mínima, recibe la constancia). El certificado sale dentro de las 72 horas después de la última clase. Debes decirlo al vender; también está en los términos y condiciones. Para el certificado además se pide asistencia mínima y participación.
 - BENEFICIO: las clases se graban y los alumnos del grupo pueden volver a verlas.
 
@@ -135,7 +136,7 @@ Este documento reúne todo lo que debes saber para trabajar en CCN: tus metas, t
 - Cada certificado y cada constancia tienen un código y un QR con el que cualquier persona puede verificarlos.
 
 10. TU PAGO
-Sueldo mensual + bono de pasajes (ambos figuran en tu ficha y en tu contrato; si se aumenta tu sueldo, el bono se mantiene) + comisión sobre lo vendido en el mes (3 % de 0 a 9 cupos, 4 % de 10 a 14, 5 % desde 15) + S/ 50 por cada curso que se llena (20 alumnos) en el que vendiste al menos un alumno. La comisión se calcula sobre el precio sin IGV. Lo ves en "Mi avance".
+Sueldo mensual + bono de pasajes (ambos figuran en tu ficha y en tu contrato; si se aumenta tu sueldo, el bono se mantiene) + comisión sobre lo vendido en el mes (3 % de 0 a 9 cupos, 4 % de 10 a 14, 5 % desde 15) + S/ 50 por cada curso que se llena (20 alumnos) en el que vendiste al menos un alumno. La comisión se calcula sobre el precio sin IGV. Lo ves en "Mi avance". Si vendes en dólares, la comisión es el mismo porcentaje; en "Mi avance" tus ventas en dólares aparecen solo en dólares y se te pagan en soles: gerencia las convierte a fin de mes al tipo de cambio del momento.
 DESCUENTOS: se calculan por hora sobre el total (sueldo + bono de pasajes). Valor de la hora = total mensual ÷ horas mínimas del mes. Se descuentan las horas no trabajadas y cada día presencial al que no asistas (se descuentan sus 4 horas). El descuento alcanza también al bono de pasajes.
 
 11. LO QUE SE REVISA
