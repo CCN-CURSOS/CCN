@@ -59,7 +59,7 @@ create table if not exists public.ajustes (
   clave text primary key,
   valor text not null default ''
 );
-insert into public.ajustes (clave, valor) values ('whatsapp', '51931330058') on conflict do nothing;
+insert into public.ajustes (clave, valor) values ('whatsapp', '51944485759') on conflict do nothing;
 
 -- 4) Seguridad (RLS): cualquiera lee lo publicado, solo admins escriben
 alter table public.admins enable row level security;

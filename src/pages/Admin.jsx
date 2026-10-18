@@ -14,7 +14,7 @@ import { Cronograma } from './Academico.jsx'
 import { pdfTerminos } from '../lib/bienvenida.js'
 import {
   hasBackend, supabase, loadAll, save, remove, CATEGORIAS_ACCESO, saveAjuste, getRol, fechaCorta, subirImagen, telefono, setNumero, COLORES, MAX_INICIO, consultasCSV, interesadosCSV, marcarConsulta,
-  subirComprobante, urlComprobante, crearInscripcion, agregarPago, estadoInscripcion, borrarInscripcion, enviarBienvenidaCorreo, armarInscripciones, inscritosCSV, guardarMiembro, ponerCoordina, getCoordina, quitarMiembro, ROLES, seguimientoInteresado, reasignarInteresado, recibeInteresados, guardarProspecto, consultaAProspecto, borrarProspecto, guardarTrabajador, guardarWhatsapp, asignarGrupo, pagarTrabajador, guardarInstalacion, ESTADOS_PROSPECTO, TIPOS_PROSPECTO, ORIGENES, guardarPendiente, marcarPendiente, borrarPendiente, guardarNota, borrarNota, guardarPlantilla, enviarDocumentos, firmarDocumento, borrarDocumento, guardarQueja, atenderQueja, numeroGerencia, fmtHorario
+  subirComprobante, urlComprobante, crearInscripcion, agregarPago, estadoInscripcion, borrarInscripcion, enviarBienvenidaCorreo, armarInscripciones, inscritosCSV, guardarMiembro, ponerCoordina, getCoordina, quitarMiembro, ROLES, seguimientoInteresado, reasignarInteresado, recibeInteresados, guardarProspecto, consultaAProspecto, asesoraNombre, grupoParaOferta, guionesVenta, borrarProspecto, guardarTrabajador, guardarWhatsapp, asignarGrupo, pagarTrabajador, guardarInstalacion, ESTADOS_PROSPECTO, TIPOS_PROSPECTO, ORIGENES, guardarPendiente, marcarPendiente, borrarPendiente, guardarNota, borrarNota, guardarPlantilla, enviarDocumentos, firmarDocumento, borrarDocumento, guardarQueja, atenderQueja, numeroGerencia, fmtHorario
 } from '../lib/data.js'
 
 /* ================= piezas pequeñas ================= */
@@ -799,7 +799,54 @@ function Interesados({ data, hacer, onInscribir, onProspecto, gerente }) {
 }
 
 /* ================= PROSPECTOS (base propia del vendedor) ================= */
-function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial }) {
+function GuionVenta({ p, data, email, onClose }) {
+  const [cursoId, setCursoId] = useState((data.cursos.find((c) => c.titulo === p.curso) || {}).id || '')
+  const [copiado, setCopiado] = useState('')
+  const curso = data.cursos.find((c) => c.id === cursoId) || null
+  const grupo = curso ? grupoParaOferta(data.grupos, curso.id) : null
+  const g = guionesVenta({ asesora: asesoraNombre(email, data.trabajadores), nombre: String(p.nombres || '').trim().split(/\s+/)[0], curso, grupo })
+  const copiar = async (k, t) => { try { await navigator.clipboard.writeText(t); setCopiado(k); setTimeout(() => setCopiado(''), 1800) } catch { window.prompt('Copia el mensaje:', t) } }
+  const abrir = (t) => window.open(`${wa(p.celular)}?text=${encodeURIComponent(t)}`, '_blank', 'noopener')
+  const bloque = (k, titulo, t, nota) => t ? (
+    <section className="guion-b" key={k}>
+      <h4>{titulo}</h4>
+      <pre>{t}</pre>
+      {nota && <small>{nota}</small>}
+      <div className="btns">
+        <button className="btn btn-line sm" onClick={() => copiar(k, t)}>{copiado === k ? '✓ Copiado' : 'Copiar'}</button>
+        {p.celular && <button className="btn btn-teal sm" onClick={() => abrir(t)}>Abrir en WhatsApp</button>}
+      </div>
+    </section>
+  ) : null
+  return (
+    <Drawer titulo={`Guion · ${p.nombres}`} onClose={onClose} pie={<button className="btn btn-line" onClick={onClose}>Cerrar</button>}>
+      <div className="fs">
+        <p className="note">Orden: 1) saludo → 2) cuando responda, sube sus datos → 3) envía el flyer del curso y este mensaje → 4) el temario en PDF → 5) el cierre.</p>
+        {bloque('s', '1 · Saludo', g.saludo)}
+        <label>Curso de interés
+          <select value={cursoId} onChange={(e) => setCursoId(e.target.value)}>
+            <option value="">Elegir curso…</option>{data.cursos.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}
+          </select>
+        </label>
+        {!curso && <p className="note">Elige el curso para armar el mensaje con su precio, fecha y cupos.</p>}
+        {bloque('o', '3 · Fecha y precio (después del flyer)', g.oferta, 'Antes de este mensaje envía la imagen (flyer) del curso.')}
+        {curso && !grupo && <p className="note">⚠️ Este curso no tiene un grupo abierto con fecha. Revisa en Grupos.</p>}
+        {bloque('c', '5 · Cierre (después del temario en PDF)', g.cierre, g.cupos != null ? `Los cupos salen del grupo real (máximo menos inscritos).` : '')}
+      </div>
+    </Drawer>
+  )
+}
+
+function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial, email }) {
+  const [guion, setGuion] = useState(null)
+  const [rapido, setRapido] = useState({ nombres: '', celular: '', curso: '' })
+  const dig9 = (t) => String(t || '').replace(/\D/g, '').slice(-9)
+  const agregarRapido = () => hacer(async () => {
+    const dup = dig9(rapido.celular) && (data.prospectos || []).find((x) => dig9(x.celular) === dig9(rapido.celular))
+    if (dup) throw new Error(`Ya existe un prospecto con ese celular: ${dup.nombres}.`)
+    await guardarProspecto({ nombres: rapido.nombres, celular: rapido.celular, curso: rapido.curso, origen: 'WhatsApp', estado: 'nuevo', tipo: 'medio' })
+    setRapido({ nombres: '', celular: '', curso: '' })
+  }, 'Prospecto agregado ⚡')
   const [form, setForm] = useState(inicial || null)
   const [ver, setVer] = useState('')
   const [fTipo, setFTipo] = useState('')
@@ -829,6 +876,15 @@ function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial }) {
         <button className="btn btn-teal" onClick={() => setForm({ nombres: '', celular: '', curso: '', origen: 'WhatsApp', estado: 'nuevo', tipo: 'medio', seguimiento: '', notas: '', recontactar1: '', recontactar2: '' })}>+ Nuevo prospecto</button>
       </Seccion>
       {data.prospectosError && hasBackend && <p className="banner">Falta pegar <b>crm.sql</b> en Supabase. Mensaje: {data.prospectosError}</p>}
+      <form className="rapido" onSubmit={(e) => { e.preventDefault(); agregarRapido() }}>
+        <b>⚡ Registro rápido</b>
+        <input aria-label="Nombre" placeholder="Nombre" value={rapido.nombres} onChange={(e) => setRapido({ ...rapido, nombres: e.target.value })} />
+        <input aria-label="Celular" inputMode="tel" placeholder="Celular" value={rapido.celular} onChange={(e) => setRapido({ ...rapido, celular: e.target.value })} />
+        <select aria-label="Curso" value={rapido.curso} onChange={(e) => setRapido({ ...rapido, curso: e.target.value })}>
+          <option value="">Curso (opcional)</option>{data.cursos.map((c) => <option key={c.id} value={c.titulo}>{c.titulo}</option>)}
+        </select>
+        <button className="btn btn-teal sm" type="submit" disabled={rapido.nombres.trim().length < 2}>Agregar</button>
+      </form>
       <div className="kpis">
         <div><b>{todos.length}</b><span>prospectos</span></div>
         <div><b>{activos.length}</b><span>en seguimiento</span></div>
@@ -889,6 +945,7 @@ function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial }) {
                   <td>{(() => { const r = proximoRecontacto(p); const f = r ? r.fecha : p.seguimiento; return f ? <span className={recontactoVencido(p) ? 'vencido' : ''}>{fechaCorta(f)}{r ? ` · contacto ${r.etapa + 1}` : ''}{recontactoVencido(p) ? ' ⚠️' : ''}</span> : <small>{p.recontactar1 === 'no' || p.recontactar2 === 'no' ? 'No recontactar' : '—'}</small> })()}</td>
                   <td className="notas">{p.notas || '—'}</td>
                   <td className="acc">
+                    <button className="btn btn-teal sm" onClick={() => setGuion(p)}>Guion</button>
                     <button className="btn btn-line sm" onClick={() => setForm(p)}>Editar</button>
                     <button className="ib red" onClick={() => setBorrando(p)} aria-label="Borrar"><Icon n="trash" /></button>
                   </td>
@@ -898,6 +955,7 @@ function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial }) {
           </table>
         </div>
       )}
+      {guion && <GuionVenta p={guion} data={data} email={email} onClose={() => setGuion(null)} />}
       {form && (
         <Drawer titulo={form.id ? 'Editar prospecto' : 'Nuevo prospecto'} onClose={cerrar}
           pie={<><button className="btn btn-line" onClick={cerrar}>Cancelar</button>
@@ -1832,9 +1890,9 @@ function Ajustes({ data, hacer }) {
       <Seccion titulo="Ajustes" ayuda="Lo único que se cambia aquí es el número de WhatsApp de CCN que usa la web." />
       <div className="fs" style={{ maxWidth: 520 }}>
         <label>WhatsApp de CCN
-          <input id="a-wa" inputMode="tel" value={num} onChange={(e) => setNum(e.target.value)} placeholder="51931330058" />
+          <input id="a-wa" inputMode="tel" value={num} onChange={(e) => setNum(e.target.value)} placeholder="51944485759" />
         </label>
-        <p className="note">Con código de país y sin espacios. Ejemplo: 51931330058. Se verá como <b>{valido ? `+${limpio.length === 11 && limpio.startsWith('51') ? `51 ${limpio.slice(2, 5)} ${limpio.slice(5, 8)} ${limpio.slice(8)}` : limpio}` : '…'}</b>.</p>
+        <p className="note">Con código de país y sin espacios. Ejemplo: 51944485759. Se verá como <b>{valido ? `+${limpio.length === 11 && limpio.startsWith('51') ? `51 ${limpio.slice(2, 5)} ${limpio.slice(5, 8)} ${limpio.slice(8)}` : limpio}` : '…'}</b>.</p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button className="btn btn-teal" disabled={!valido}
             onClick={() => hacer(async () => { await saveAjuste('whatsapp', limpio); setNumero(limpio) }, 'WhatsApp guardado')}>Guardar</button>
@@ -2735,7 +2793,7 @@ function Panel({ email, rol, coordina, onSalir }) {
         {modulo === 'ventas' && tab === 'consultas' && <Consultas data={data} hacer={hacer} rolG={gerente} />}
         {modulo === 'ventas' && tab === 'interesados' && <Interesados data={data} hacer={hacer} onInscribir={inscribirDesde} gerente={gerente}
           onProspecto={(x) => { setProtoInicial({ nombres: `${x.nombres} ${x.apellido_paterno}`.trim(), celular: x.celular, curso: x.curso, origen: 'Web', estado: 'contactado', seguimiento: '', notas: '' }); setTab('prospectos') }} />}
-        {modulo === 'ventas' && tab === 'prospectos' && <Prospectos data={data} hacer={hacer} gerente={gerente} inicial={protoInicial} onCerrarInicial={() => setProtoInicial(null)} />}
+        {modulo === 'ventas' && tab === 'prospectos' && <Prospectos data={data} hacer={hacer} gerente={gerente} inicial={protoInicial} onCerrarInicial={() => setProtoInicial(null)} email={email} />}
         {modulo === 'ventas' && tab === 'inscritos' && <Inscritos data={data} hacer={hacer} rol={rol} nuevaInscripcion={() => setInscForm({})} registrarPago={setPagoForm} />}
         {modulo === 'ventas' && tab === 'instalaciones' && <Instalaciones data={data} hacer={hacer} gerente={gerente} />}
         {modulo === 'ventas' && tab === 'quejas' && <Quejas data={data} hacer={hacer} gerente={gerente} email={email} />}

@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const SUPA_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPA_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
-const WA_ENV = import.meta.env.VITE_WHATSAPP || '51931330058'
+const WA_ENV = import.meta.env.VITE_WHATSAPP || '51944485759'
 let numero = WA_ENV
 export const setNumero = (n) => { if (n) numero = String(n).replace(/\D/g, '') || WA_ENV }
 export const getNumero = () => numero
@@ -755,6 +755,38 @@ export async function guardarProspecto(p) {
   const { error } = await q
   if (error) throw error
 }
+/* ---------- Guion de primer contacto por WhatsApp (arma los textos con datos reales del curso y del grupo) ---------- */
+export function asesoraNombre(email, trabajadores = []) {
+  const t = (trabajadores || []).find((x) => String(x.email || '').toLowerCase() === String(email || '').toLowerCase())
+  const base = (t && t.nombre) || String(email || '').split('@')[0].split(/[._-]/)[0] || 'tu asesora'
+  const w = String(base).trim().split(/\s+/)[0]
+  return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+}
+export function grupoParaOferta(grupos, cursoId) {
+  const hoy = new Date().toISOString().slice(0, 10)
+  return (grupos || []).filter((g) => g.curso_id === cursoId && g.activo !== false && g.estado !== 'cerrado' && (!g.inicio || g.inicio >= hoy))
+    .sort((a, b) => String(a.inicio || '9999').localeCompare(String(b.inicio || '9999')))[0] || null
+}
+export function guionesVenta({ asesora, nombre, curso, grupo }) {
+  const saludo = `Hola 👋 soy tu asesora académica de CCN, ${asesora} 😊\n\n¿Cuál es tu nombre?\n¿En qué cursos estás interesado?`
+  if (!curso) return { saludo, oferta: '', cierre: '', cupos: null }
+  const soles = (n) => `S/ ${Number(n).toLocaleString('es-PE')}`
+  const lineas = [`${nombre ? `Gracias, ${nombre} 😊\n\n` : ''}📚 *${curso.titulo}*`]
+  if (grupo && grupo.inicio) lineas.push(`🗓️ Inicio: ${fechaCorta(grupo.inicio)}`)
+  if (grupo && (grupo.dias || grupo.horario)) lineas.push(`⏰ ${[grupo.dias, grupo.horario ? fmtHorario(grupo.horario) : ''].filter(Boolean).join(' · ')}`)
+  lineas.push(`💻 Online por Zoom${curso.horas ? ` · ${curso.horas} horas` : ''}`)
+  lineas.push('')
+  if (curso.precio_antes && Number(curso.precio_antes) > Number(curso.precio)) lineas.push(`💰 Inversión: ~${soles(curso.precio_antes)}~`)
+  lineas.push(`💰 *Inversión: ${soles(curso.precio)}*`)
+  const cupos = grupo ? Math.max(0, (grupo.maximo || 20) - (grupo.inscritos || 0)) : null
+  const cierre = !grupo
+    ? 'Aún no tenemos fecha confirmada del próximo grupo; te avisamos apenas abra 🙌\n\n*¿Quieres que te avisemos?*'
+    : cupos === 0
+      ? 'Este grupo ya está lleno 😅 pero podemos anotarte en lista de espera.\n\n*¿Te anoto?*'
+      : `Actualmente contamos con ${cupos} cupo${cupos === 1 ? '' : 's'} disponible${cupos === 1 ? '' : 's'} 🙌\n\n*¿Deseas inscribirte?*`
+  return { saludo, oferta: lineas.join('\n'), cierre, cupos }
+}
+
 /* Al marcar una consulta como atendida, pasa a Prospectos (una sola vez por celular) */
 export async function consultaAProspecto(x, existentes = []) {
   const dig = (t) => String(t || '').replace(/\D/g, '').slice(-9)
