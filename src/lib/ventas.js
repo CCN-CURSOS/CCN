@@ -1,5 +1,6 @@
 /* Métricas del vendedor: todo se calcula con los datos que el panel ya tiene (sin tablas extra). */
 import { sinIgv } from './igv.js'
+import { monedaDe, simbolo } from './moneda.js'
 import { FERIADOS } from './clases.js'
 
 export const TRAMOS_DEF = [{ desde: 0, pct: 3 }, { desde: 10, pct: 4 }, { desde: 15, pct: 5 }]
@@ -68,8 +69,15 @@ export function metricasVendedor(data, email, mes, trab) {
   const pasajes = !activo ? 0 : parcial ? r2((pasajesBase * dias) / diasMes) : pasajesBase
   const mats = (data.matriculas || []).filter((m) => m.vendedor === email && m.estado === 'activa' && mesDe(m.fecha_inscripcion) === mes)
   const ids = new Set(mats.map((m) => m.id))
-  const vendido = suma(mats.map((m) => sinIgv(m.precio)))   // la comisión se calcula sobre el precio base (sin IGV)
-  const cobrado = suma((data.pagos || []).filter((p) => ids.has(p.matricula_id)).map((p) => p.monto))
+  // Dos monedas sin tipo de cambio: lo vendido en soles y en dólares se lleva por separado.
+  const matsPEN = mats.filter((m) => monedaDe(m) === 'PEN')
+  const matsUSD = mats.filter((m) => monedaDe(m) === 'USD')
+  const idsPEN = new Set(matsPEN.map((m) => m.id))
+  const idsUSD = new Set(matsUSD.map((m) => m.id))
+  const vendido = suma(matsPEN.map((m) => sinIgv(m.precio)))   // la comisión se calcula sobre el precio base (sin IGV)
+  const vendidoUSD = suma(matsUSD.map((m) => sinIgv(m.precio)))
+  const cobrado = suma((data.pagos || []).filter((p) => idsPEN.has(p.matricula_id)).map((p) => p.monto))
+  const cobradoUSD = suma((data.pagos || []).filter((p) => idsUSD.has(p.matricula_id)).map((p) => p.monto))
   const prospectos = (data.prospectos || []).filter((p) => p.vendedor === email && mesDe(p.creado) === mes)
   const ints = (data.interesados || []).filter((x) => x.asignado_a === email && mesDe(x.asignado_en || x.creado) === mes)
   const contactados = ints.filter((x) => x.estado !== 'nuevo')
@@ -78,11 +86,12 @@ export function metricasVendedor(data, email, mes, trab) {
   const pesos = pesosCupo(mats)
   mats.forEach((m) => { sem[semana(m.fecha_inscripcion)].cupos += pesos.get(m.id) })
   prospectos.forEach((p) => { sem[semana(p.creado)].prospectos += 1 })
-  const com = calcularComision(sumaCupos(mats), vendido, tramos)
+  const com = calcularComision(sumaCupos(mats), vendido, tramos)          // comisión en soles (se paga en soles)
+  const comUSD = calcularComision(sumaCupos(mats), vendidoUSD, tramos)    // mismo %, sobre lo vendido en dólares (gerencia lo pasa a soles a fin de mes)
   const bonos = bonosCursoCerrado(data, email, mes)
   const bono = bonos.reduce((t, b) => t + b.monto, 0)
   return {
-    cupos: sumaCupos(mats), inscripciones: new Set(mats.map((m) => m.paquete_id)).size, vendido, cobrado,
+    cupos: sumaCupos(mats), inscripciones: new Set(mats.map((m) => m.paquete_id)).size, vendido, cobrado, vendidoUSD, cobradoUSD, comisionUSD: comUSD,
     prospectos: prospectos.length, prospectosInscritos: prospectos.filter((p) => p.estado === 'inscrito').length,
     interesados: ints.length, contactados: contactados.length, contestaron: ints.filter((x) => x.contesto === true).length,
     sem, tramos, sueldo, sueldoBase, pasajes, pasajesBase, ini, activo, parcial, dias, diasMes, comision: com, bonos, bono, aPagar: activo ? r2(sueldo + pasajes + com.monto + bono) : 0,
@@ -110,11 +119,11 @@ export function historialVendedor(data, email, limite = 40) {
   const mias = (data.matriculas || []).filter((m) => m.vendedor === email)
   const paq = new Map()
   mias.forEach((m) => { if (!paq.has(m.paquete_id)) paq.set(m.paquete_id, []); paq.get(m.paquete_id).push(m) })
-  paq.forEach((ms) => ev.push({ t: ms[0].creado, ico: 'Inscripción', txt: `Inscribiste a ${nom(alum.get(ms[0].alumno_id))} en ${ms.map((m) => m.grupo_codigo).join(' + ')} · S/ ${suma(ms.map((m) => m.precio))}` }))
+  paq.forEach((ms) => ev.push({ t: ms[0].creado, ico: 'Inscripción', txt: `Inscribiste a ${nom(alum.get(ms[0].alumno_id))} en ${ms.map((m) => m.grupo_codigo).join(' + ')} · ${simbolo(monedaDe(ms[0]))} ${suma(ms.map((m) => m.precio))}` }))
   const mid = new Map(mias.map((m) => [m.id, m]))
   const lotes = new Map()
-  ;(data.pagos || []).forEach((p) => { const m = mid.get(p.matricula_id); if (!m) return; const k = p.lote || p.id; const x = lotes.get(k) || { t: p.creado, n: p.numero, monto: 0, a: alum.get(m.alumno_id) }; x.monto += Number(p.monto); lotes.set(k, x) })
-  lotes.forEach((x) => ev.push({ t: x.t, ico: 'Pago', txt: `Pago ${x.n} de ${nom(x.a)}: S/ ${r2(x.monto)}` }))
+  ;(data.pagos || []).forEach((p) => { const m = mid.get(p.matricula_id); if (!m) return; const k = p.lote || p.id; const x = lotes.get(k) || { t: p.creado, n: p.numero, monto: 0, a: alum.get(m.alumno_id), mon: monedaDe(m) }; x.monto += Number(p.monto); lotes.set(k, x) })
+  lotes.forEach((x) => ev.push({ t: x.t, ico: 'Pago', txt: `Pago ${x.n} de ${nom(x.a)}: ${simbolo(x.mon)} ${r2(x.monto)}` }))
   return ev.filter((e) => e.t).sort((a, b) => String(b.t).localeCompare(String(a.t))).slice(0, limite)
 }
 
@@ -198,11 +207,14 @@ export function metricasCurso(data, cursoId) {
   const ints = (data.interesados || []).filter((x) => String(x.curso_id) === cid)
   const mats = (data.matriculas || []).filter((m) => String(m.curso_id) === cid)
   const activas = mats.filter((m) => m.estado === 'activa')
-  const ids = new Set(activas.map((m) => m.id))
+  const activasPEN = activas.filter((m) => monedaDe(m) === 'PEN')
+  const activasUSD = activas.filter((m) => monedaDe(m) === 'USD')
   const pagosPor = new Map()
   ;(data.pagos || []).forEach((p) => { pagosPor.set(p.matricula_id, r2((pagosPor.get(p.matricula_id) || 0) + Number(p.monto))) })
-  const vendido = suma(activas.map((m) => m.precio))
-  const cobrado = suma([...ids].map((id) => pagosPor.get(id) || 0))
+  const vendido = suma(activasPEN.map((m) => m.precio))          // soles
+  const cobrado = suma(activasPEN.map((m) => pagosPor.get(m.id) || 0))
+  const vendidoUSD = suma(activasUSD.map((m) => m.precio))       // dólares (aparte, sin tipo de cambio)
+  const cobradoUSD = suma(activasUSD.map((m) => pagosPor.get(m.id) || 0))
   const alum = new Map((data.alumnos || []).map((a) => [a.id, a]))
   const filas = mats.map((m) => {
     const pagado = pagosPor.get(m.id) || 0
@@ -212,13 +224,13 @@ export function metricasCurso(data, cursoId) {
   const hoy = new Date().toISOString().slice(0, 7)
   const serie = mesesAtras(hoy, 6).map((mes) => {
     const del = activas.filter((m) => String(m.fecha_inscripcion).slice(0, 7) === mes)
-    return { mes, cupos: del.length, vendido: suma(del.map((m) => m.precio)) }
+    return { mes, cupos: del.length, vendido: suma(del.filter((m) => monedaDe(m) === 'PEN').map((m) => m.precio)) }
   })
   const historial = (data.historial || []).filter((h) => String(h.curso_id) === cid)
   return {
-    grupos, ints, filas, historial, serie, vendido, cobrado, porCobrar: r2(Math.max(0, vendido - cobrado)),
+    grupos, ints, filas, historial, serie, vendido, cobrado, porCobrar: r2(Math.max(0, vendido - cobrado)), vendidoUSD, cobradoUSD, porCobrarUSD: r2(Math.max(0, vendidoUSD - cobradoUSD)),
     cupos: activas.length, contactados: ints.filter((x) => x.estado !== 'nuevo').length,
-    abiertos: grupos.filter((g) => g.estado === 'abierto').length, ticket: activas.length ? r2(vendido / activas.length) : 0,
+    abiertos: grupos.filter((g) => g.estado === 'abierto').length, ticket: activasPEN.length ? r2(vendido / activasPEN.length) : 0,
   }
 }
 
@@ -258,19 +270,19 @@ export function actividadMes(data, email, mes) {
   const ventas = mats.map((m) => {
     const a = alum.get(m.alumno_id)
     const pagado = pagadoPor.get(m.id) || 0
-    return { t: m.creado || m.fecha_inscripcion, fecha: m.fecha_inscripcion, terminos: !!m.terminos_enviados, requisitos: !!m.requisitos_enviados, pideReq: !!programaSugerido(curso.get(String(m.curso_id)) || ''), alumno: nom(a), codigo: a?.codigo || '', curso: curso.get(String(m.curso_id)) || '', grupo: m.grupo_codigo, precio: Number(m.precio), pagado, saldo: r2(Math.max(0, Number(m.precio) - pagado)) }
+    return { t: m.creado || m.fecha_inscripcion, fecha: m.fecha_inscripcion, terminos: !!m.terminos_enviados, requisitos: !!m.requisitos_enviados, pideReq: !!programaSugerido(curso.get(String(m.curso_id)) || ''), alumno: nom(a), codigo: a?.codigo || '', curso: curso.get(String(m.curso_id)) || '', grupo: m.grupo_codigo, moneda: monedaDe(m), precio: Number(m.precio), pagado, saldo: r2(Math.max(0, Number(m.precio) - pagado)) }
   }).sort((a, b) => String(b.t).localeCompare(String(a.t)))
   const mid = new Map(mats.map((m) => [m.id, m]))
   const pagos = (data.pagos || []).filter((p) => mid.has(p.matricula_id)).map((p) => {
     const m = mid.get(p.matricula_id)
-    return { t: p.creado || p.fecha, fecha: p.fecha, alumno: nom(alum.get(m.alumno_id)), grupo: m.grupo_codigo, numero: p.numero, monto: Number(p.monto), metodo: p.metodo, comprobante: !!p.comprobante_url }
+    return { t: p.creado || p.fecha, fecha: p.fecha, alumno: nom(alum.get(m.alumno_id)), grupo: m.grupo_codigo, numero: p.numero, monto: Number(p.monto), moneda: monedaDe(m), metodo: p.metodo, comprobante: !!p.comprobante_url }
   }).sort((a, b) => String(b.t).localeCompare(String(a.t)))
   return { prospectos, interesados, ventas, pagos }
 }
 
 /* ---------- Serie por día / semana / mes ---------- */
 export function serieActividad(data, email, mes, vista) {
-  const mats = (data.matriculas || []).filter((m) => m.vendedor === email && m.estado === 'activa')
+  const mats = (data.matriculas || []).filter((m) => m.vendedor === email && m.estado === 'activa' && monedaDe(m) === 'PEN')   // el gráfico es en soles
   const mid = new Map(mats.map((m) => [m.id, m]))
   const pros = (data.prospectos || []).filter((p) => p.vendedor === email)
   const pagos = (data.pagos || []).filter((p) => mid.has(p.matricula_id))
@@ -345,7 +357,8 @@ export function reporteSemana(data, email, lunes, ahora = new Date()) {
   const hoy = ahora.toISOString().slice(0, 10)
   const mats = (data.matriculas || []).filter((m) => m.vendedor === email && m.estado === 'activa' && en(m.fecha_inscripcion))
   const paq = new Set(mats.map((m) => m.paquete_id || m.id))
-  const vendido = r2(mats.reduce((t, m) => t + Number(m.precio || 0), 0))
+  const vendido = r2(mats.filter((m) => monedaDe(m) === 'PEN').reduce((t, m) => t + Number(m.precio || 0), 0))
+  const vendidoUSD = r2(mats.filter((m) => monedaDe(m) === 'USD').reduce((t, m) => t + Number(m.precio || 0), 0))
   const pros = (data.prospectos || []).filter((p) => p.vendedor === email)
   const nuevosPros = pros.filter((p) => en(p.creado))
   const ints = (data.interesados || []).filter((x) => x.asignado_a === email && en(x.asignado_en || x.creado))
@@ -358,7 +371,7 @@ export function reporteSemana(data, email, lunes, ahora = new Date()) {
   const abiertosVencidos = pend.filter((x) => x.estado === 'pendiente' && x.fecha_limite && x.fecha_limite < hoy)
   const horas = semanaHoras(data, email, lunes, ahora)
   return {
-    inscritos: paq.size, matriculas: mats.length, vendido,
+    inscritos: paq.size, matriculas: mats.length, vendido, vendidoUSD,
     prospectosNuevos: nuevosPros.length,
     interesados: ints.length, atendidos: atendidos.length, sinAtender: ints.length - atendidos.length,
     vencidos, programados: progs.length,
@@ -389,7 +402,7 @@ export function alertasVenta(data, email, ahora = new Date()) {
     if (!ini) return
     const d = dif(ini, hoy)  // días que faltan para empezar
     const a = alum.get(ms[0].alumno_id) || {}
-    const base = { alumno: `${a.nombres || ''} ${a.apellido_paterno || ''}`.trim() || 'Alumno', celular: a.celular || '', saldo, inicio: ini, grupo: ms.map((m) => m.grupo_codigo).filter(Boolean).join(' + ') }
+    const base = { alumno: `${a.nombres || ''} ${a.apellido_paterno || ''}`.trim() || 'Alumno', celular: a.celular || '', moneda: monedaDe(ms[0]), saldo, inicio: ini, grupo: ms.map((m) => m.grupo_codigo).filter(Boolean).join(' + ') }
     if (d < 0) vacantes.push({ ...base, nivel: 'retirar', txt: 'El curso ya empezó y no pagó: no se le dan accesos y se le retira del grupo de WhatsApp hasta que pague.' })
     else if (d === 0) vacantes.push({ ...base, nivel: 'hoy', txt: 'El curso empieza HOY: debe pagar como máximo 3 horas antes de la clase. Si no paga a tiempo, no se le dan accesos.' })
     else if (d === 1) vacantes.push({ ...base, nivel: 'hoy', txt: 'HOY vence su pago (un día antes del curso) para darle sus accesos. Excepcionalmente puede pagar el día del inicio, hasta 3 horas antes de la clase.' })

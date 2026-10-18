@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { monedaDe, simbolo } from './moneda.js'
 
 const SUPA_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPA_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -285,6 +286,7 @@ export async function crearInteresado(c) {
     acepta_datos: true, acepta_adicional: Boolean(c.acepta_adicional), estado: 'nuevo',
   }
   if (c.observacion) fila.observacion = String(c.observacion).slice(0, 300)
+  if (c.moneda === 'USD') fila.moneda = 'USD'    // solo se manda si es en dólares (así los pedidos en soles no dependen de la columna nueva)
   if (!hasBackend) {
     const db = demoRead()
     const quien = demoElegirVendedora(db, fila.email)
@@ -431,7 +433,8 @@ export async function urlComprobante(ruta) {
 }
 
 /* Crea (o actualiza) al alumno, lo matricula en 1 o más grupos y registra su primer pago */
-export async function crearInscripcion({ alumno, grupos, precioTotal, pago, paquete = '', nota = '', fecha, terminos = false, requisitos = false, descuentoAutorizado = false, descuentoMotivo = '' }) {
+export async function crearInscripcion({ alumno, grupos, precioTotal, pago, paquete = '', nota = '', fecha, terminos = false, requisitos = false, descuentoAutorizado = false, descuentoMotivo = '', moneda = 'PEN' }) {
+  moneda = moneda === 'USD' ? 'USD' : 'PEN'
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(alumno.email || '').trim())) throw new Error('El correo del alumno es obligatorio.')
   const hoy = fecha || new Date().toISOString().slice(0, 10)
   const precios = repartir(precioTotal, grupos.map(() => 1))
@@ -446,14 +449,14 @@ export async function crearInscripcion({ alumno, grupos, precioTotal, pago, paqu
     for (const g of grupos) {
       if (db.matriculas.some((m) => m.alumno_id === al.id && m.grupo_id === g.id && m.estado === 'activa')) throw new Error(`Este alumno ya está inscrito en ${g.codigo || 'ese grupo'}.`)
     }
-    const nuevas = grupos.map((g, i) => ({ id: uid(), creado: new Date().toISOString(), paquete_id: paqueteId, paquete, alumno_id: al.id, grupo_id: g.id, grupo_codigo: g.codigo || '', curso_id: g.curso_id, curso_titulo: g.curso_titulo, precio: precios[i], fecha_inscripcion: hoy, estado: 'activa', nota, terminos_enviados: !!terminos, requisitos_enviados: !!requisitos, descuento_autorizado: !!descuentoAutorizado, descuento_motivo: descuentoMotivo || '', vendedor: DEMO_USER }))
+    const nuevas = grupos.map((g, i) => ({ id: uid(), creado: new Date().toISOString(), paquete_id: paqueteId, paquete, alumno_id: al.id, grupo_id: g.id, grupo_codigo: g.codigo || '', curso_id: g.curso_id, curso_titulo: g.curso_titulo, precio: precios[i], moneda, fecha_inscripcion: hoy, estado: 'activa', nota, terminos_enviados: !!terminos, requisitos_enviados: !!requisitos, descuento_autorizado: !!descuentoAutorizado, descuento_motivo: descuentoMotivo || '', vendedor: DEMO_USER }))
     db.matriculas.unshift(...nuevas)
     if (pago && Number(pago.monto) > 0) {
       const partes = repartir(Number(pago.monto), precios)
       const lote = crypto.randomUUID()
-      nuevas.forEach((m, i) => { if (partes[i] > 0) db.pagos.unshift({ id: uid(), creado: new Date().toISOString(), matricula_id: m.id, numero: 1, monto: partes[i], fecha: pago.fecha || hoy, metodo: pago.metodo, comprobante_url: pago.comprobante_url || '', lote, nota: '' }) })
+      nuevas.forEach((m, i) => { if (partes[i] > 0) db.pagos.unshift({ id: uid(), creado: new Date().toISOString(), matricula_id: m.id, numero: 1, monto: partes[i], moneda, fecha: pago.fecha || hoy, metodo: pago.metodo, comprobante_url: pago.comprobante_url || '', lote, nota: '' }) })
     }
-    nuevas.forEach((m) => demoLog(db, m.grupo_id, m.curso_id, 'inscripcion', `Inscrito: ${al.nombres} ${al.apellido_paterno} en ${m.grupo_codigo} (S/ ${m.precio})`))
+    nuevas.forEach((m) => demoLog(db, m.grupo_id, m.curso_id, 'inscripcion', `Inscrito: ${al.nombres} ${al.apellido_paterno} en ${m.grupo_codigo} (${simbolo(moneda)} ${m.precio})`))
     demoSync(db); demoWrite(db)
     return al.codigo
   }
@@ -474,14 +477,14 @@ export async function crearInscripcion({ alumno, grupos, precioTotal, pago, paqu
     alumnoId = data.id; alumnoCodigo = data.codigo
   }
   // 2) matrículas
-  const filas = grupos.map((g, i) => ({ paquete_id: paqueteId, paquete, alumno_id: alumnoId, grupo_id: String(g.id), grupo_codigo: g.codigo || '', curso_id: String(g.curso_id), curso_titulo: g.curso_titulo, precio: precios[i], fecha_inscripcion: hoy, nota, terminos_enviados: !!terminos, requisitos_enviados: !!requisitos, descuento_autorizado: !!descuentoAutorizado, descuento_motivo: descuentoMotivo || '' }))
+  const filas = grupos.map((g, i) => ({ paquete_id: paqueteId, paquete, alumno_id: alumnoId, grupo_id: String(g.id), grupo_codigo: g.codigo || '', curso_id: String(g.curso_id), curso_titulo: g.curso_titulo, precio: precios[i], moneda, fecha_inscripcion: hoy, nota, terminos_enviados: !!terminos, requisitos_enviados: !!requisitos, descuento_autorizado: !!descuentoAutorizado, descuento_motivo: descuentoMotivo || '' }))
   const { data: mats, error: e2 } = await supabase.from('matriculas').insert(filas).select('id, precio')
   if (e2) throw e2
   // 3) primer pago (repartido entre las matrículas del paquete)
   if (pago && Number(pago.monto) > 0) {
     const partes = repartir(Number(pago.monto), mats.map((m) => m.precio))
     const lote = crypto.randomUUID()
-    const pf = mats.map((m, i) => ({ matricula_id: m.id, numero: 1, monto: partes[i], fecha: pago.fecha || hoy, metodo: pago.metodo, comprobante_url: pago.comprobante_url || '', lote })).filter((x) => x.monto > 0)
+    const pf = mats.map((m, i) => ({ matricula_id: m.id, numero: 1, monto: partes[i], moneda, fecha: pago.fecha || hoy, metodo: pago.metodo, comprobante_url: pago.comprobante_url || '', lote })).filter((x) => x.monto > 0)
     const { error } = await supabase.from('pagos').insert(pf)
     if (error) throw error
   }
@@ -496,8 +499,8 @@ export async function agregarPago({ matriculas, pago }) {
     const db = demoRead()
     matriculas.forEach((m, i) => {
       const num = Math.max(0, ...db.pagos.filter((p) => p.matricula_id === m.id).map((p) => p.numero)) + 1
-      if (partes[i] > 0) db.pagos.unshift({ id: uid(), creado: new Date().toISOString(), matricula_id: m.id, numero: num, monto: partes[i], fecha: pago.fecha, metodo: pago.metodo, comprobante_url: pago.comprobante_url || '', lote, nota: pago.nota || '' })
-      demoLog(db, m.grupo_id, m.curso_id, 'pago', `Pago ${num}: S/ ${partes[i]} (${pago.metodo}) en ${m.grupo_codigo}`)
+      if (partes[i] > 0) db.pagos.unshift({ id: uid(), creado: new Date().toISOString(), matricula_id: m.id, numero: num, monto: partes[i], moneda: monedaDe(m), fecha: pago.fecha, metodo: pago.metodo, comprobante_url: pago.comprobante_url || '', lote, nota: pago.nota || '' })
+      demoLog(db, m.grupo_id, m.curso_id, 'pago', `Pago ${num}: ${simbolo(monedaDe(m))} ${partes[i]} (${pago.metodo}) en ${m.grupo_codigo}`)
     })
     demoWrite(db)
     return
@@ -507,7 +510,7 @@ export async function agregarPago({ matriculas, pago }) {
   if (e0) throw e0
   const filas = matriculas.map((m, i) => ({
     matricula_id: m.id, numero: Math.max(0, ...(prev || []).filter((p) => p.matricula_id === m.id).map((p) => p.numero)) + 1,
-    monto: partes[i], fecha: pago.fecha, metodo: pago.metodo, comprobante_url: pago.comprobante_url || '', lote, nota: pago.nota || '',
+    monto: partes[i], moneda: monedaDe(m), fecha: pago.fecha, metodo: pago.metodo, comprobante_url: pago.comprobante_url || '', lote, nota: pago.nota || '',
   })).filter((x) => x.monto > 0)
   const { error } = await supabase.from('pagos').insert(filas)
   if (error) throw error
@@ -556,18 +559,18 @@ export function armarInscripciones({ alumnos = [], matriculas = [], pagos = [] }
     const lista = [...lotes.values()].sort((a, b) => a.numero - b.numero || String(a.fecha).localeCompare(String(b.fecha)))
     const anulada = activas.length === 0
     const estado = anulada ? 'anulada' : pagado >= precio - 0.005 ? 'pagado' : pagado > 0 ? 'adelanto' : 'pendiente'
-    return { ...x, activas, precio, pagado, saldo: r2(Math.max(0, precio - pagado)), pagosLista: lista, estado, codigos: x.matriculas.map((m) => m.grupo_codigo).filter(Boolean), mes: String(x.fecha || x.creado || '').slice(0, 7) }
+    return { ...x, moneda: monedaDe(activas[0] || x.matriculas[0]), activas, precio, pagado, saldo: r2(Math.max(0, precio - pagado)), pagosLista: lista, estado, codigos: x.matriculas.map((m) => m.grupo_codigo).filter(Boolean), mes: String(x.fecha || x.creado || '').slice(0, 7) }
   }).sort((a, b) => String(b.creado).localeCompare(String(a.creado)))
 }
 
 export function inscritosCSV(lista) {
-  const cab = ['Fecha de inscripción', 'Código alumno', 'Alumno', 'Documento', 'Celular', 'Email', 'Cursos', 'Códigos', 'Precio', 'Pagado', 'Saldo', 'Estado', 'Pago 1', 'Pago 2', 'Pago 3']
+  const cab = ['Fecha de inscripción', 'Código alumno', 'Alumno', 'Documento', 'Celular', 'Email', 'Cursos', 'Códigos', 'Moneda', 'Precio', 'Pagado', 'Saldo', 'Estado', 'Pago 1', 'Pago 2', 'Pago 3']
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
   const filas = lista.map((x) => {
     const a = x.alumno || {}
-    const pg = (i) => (x.pagosLista[i] ? `S/ ${x.pagosLista[i].monto} · ${x.pagosLista[i].metodo} · ${x.pagosLista[i].fecha}` : '')
+    const pg = (i) => (x.pagosLista[i] ? `${simbolo(x.moneda)} ${x.pagosLista[i].monto} · ${x.pagosLista[i].metodo} · ${x.pagosLista[i].fecha}` : '')
     return [x.fecha, a.codigo || '', `${a.nombres || ''} ${a.apellido_paterno || ''} ${a.apellido_materno || ''}`.trim(), `${a.tipo_doc || ''} ${a.documento || ''}`, a.celular, a.email,
-      x.matriculas.map((m) => m.curso_titulo).join(' + '), x.codigos.join(' + '), x.precio, x.pagado, x.saldo, x.estado, pg(0), pg(1), pg(2)]
+      x.matriculas.map((m) => m.curso_titulo).join(' + '), x.codigos.join(' + '), x.moneda === 'USD' ? 'US$' : 'S/', x.precio, x.pagado, x.saldo, x.estado, pg(0), pg(1), pg(2)]
   })
   return '\ufeffsep=,\r\n' + [cab, ...filas].map((f) => f.map(esc).join(',')).join('\r\n')
 }

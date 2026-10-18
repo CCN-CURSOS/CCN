@@ -12,6 +12,8 @@ import PanelProfesor, { ClasesDrawer } from './Profesor'
 import Certificados from './Certificados'
 import { Cronograma } from './Academico.jsx'
 import { pdfTerminos } from '../lib/bienvenida.js'
+import { fmtMoneda, simbolo, precioEn, vendeEnUsd, descuentoMaxPct, precioMinimoLibre, sumaPorMoneda } from '../lib/moneda.js'
+import { generarNotaPago } from '../lib/notaPago.js'
 import { variables as variablesManual, presentacion as presentacionManual, oferta as ofertaManual, cierre as cierreManual, faqs as faqsManual, seguimientos as seguimientosManual, cierres as cierresManual, casos as casosManual, PASOS as PASOS_MANUAL, REGLAS as REGLAS_MANUAL, NO_DECIR as NO_DECIR_MANUAL } from '../lib/manual.js'
 import {
   hasBackend, supabase, loadAll, save, remove, CATEGORIAS_ACCESO, saveAjuste, getRol, fechaCorta, subirImagen, telefono, setNumero, COLORES, MAX_INICIO, consultasCSV, interesadosCSV, marcarConsulta,
@@ -89,12 +91,12 @@ function Imagen({ url, onChange, color }) {
 
 /* ================= CURSOS ================= */
 const CURSO_VACIO = {
-  titulo: '', descripcion: '', color: 'g1', horas: 12, sesiones: 4, precio: 229, precio_antes: '',
+  titulo: '', descripcion: '', color: 'g1', horas: 12, sesiones: 4, precio: 229, precio_antes: '', precio_usd: '', precio_antes_usd: '',
   programas: '', temario: [], extra: '', orden: 0, activo: true, destacado: false, imagen_url: '',
 }
 
 function CursoForm({ inicial, total, enInicio, onSave, onClose }) {
-  const [f, setF] = useState({ ...CURSO_VACIO, ...inicial, precio_antes: inicial.precio_antes ?? '', temario: [...(inicial.temario || [])] })
+  const [f, setF] = useState({ ...CURSO_VACIO, ...inicial, precio_antes: inicial.precio_antes ?? '', precio_usd: inicial.precio_usd ?? '', precio_antes_usd: inicial.precio_antes_usd ?? '', temario: [...(inicial.temario || [])] })
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }))
@@ -115,6 +117,8 @@ function CursoForm({ inicial, total, enInicio, onSave, onClose }) {
         titulo: f.titulo.trim(),
         horas: Number(f.horas) || 0, sesiones: Number(f.sesiones) || 0, precio: redondear(f.precio),
         precio_antes: f.precio_antes === '' ? null : redondear(f.precio_antes),
+        precio_usd: f.precio_usd === '' || f.precio_usd == null ? null : Math.round(Number(f.precio_usd) * 100) / 100,
+        precio_antes_usd: f.precio_antes_usd === '' || f.precio_antes_usd == null ? null : Math.round(Number(f.precio_antes_usd) * 100) / 100,
         orden: f.id ? f.orden : total + 1,
         temario: f.temario.map((t) => t.trim()).filter(Boolean),
       })
@@ -151,6 +155,8 @@ function CursoForm({ inicial, total, enInicio, onSave, onClose }) {
         <div className="g2">
           <label>Precio FINAL en S/ (ya incluye IGV)<input id="c-precio" type="number" min="0" step="1" value={f.precio} onChange={(e) => set('precio', e.target.value)} onBlur={(e) => set('precio', e.target.value === '' ? '' : String(redondear(e.target.value)))} /><small>Es lo que ve y paga el alumno. No se le suma nada más. Se redondea al entero más cercano.</small></label>
           <label>Precio tachado en S/ (final, opcional)<input id="c-antes" type="number" min="0" step="1" value={f.precio_antes} onChange={(e) => set('precio_antes', e.target.value)} onBlur={(e) => set('precio_antes', e.target.value === '' ? '' : String(redondear(e.target.value)))} placeholder="Ej. 573 · déjalo vacío si no hay descuento" /></label>
+          <label>Precio FINAL en US$ (dólares)<input id="c-usd" type="number" min="0" step="0.01" value={f.precio_usd} onChange={(e) => set('precio_usd', e.target.value)} placeholder="Ej. 69 · vacío = aún no se vende en dólares" /><small>Sin tipo de cambio: es el precio estándar en dólares.</small></label>
+          <label>Precio tachado en US$ (opcional)<input id="c-antes-usd" type="number" min="0" step="0.01" value={f.precio_antes_usd} onChange={(e) => set('precio_antes_usd', e.target.value)} placeholder="Déjalo vacío si no hay" /></label>
           <label>Horas<input id="c-horas" type="number" min="1" value={f.horas} onChange={(e) => set('horas', e.target.value)} /></label>
           <label>Sesiones<input id="c-ses" type="number" min="1" value={f.sesiones} onChange={(e) => set('sesiones', e.target.value)} /></label>
         </div>
@@ -810,7 +816,7 @@ function ManualVentas({ data, email }) {
   const [copiado, setCopiado] = useState('')
   const curso = data.cursos.find((c) => c.id === cursoId) || null
   const grupo = curso ? grupoParaOferta(data.grupos, curso.id) : null
-  const v = useMemo(() => variablesManual({ asesora, nombre: nombre.trim().split(/\s+/)[0], curso, grupo, cursos: data.cursos }), [asesora, nombre, curso, grupo, data.cursos])
+  const v = useMemo(() => variablesManual({ asesora, nombre: nombre.trim().split(/\s+/)[0], curso, grupo, cursos: data.cursos, descMax: descuentoMaxPct(data.ajustes) }), [asesora, nombre, curso, grupo, data.cursos, data.ajustes])
   const copiar = async (k, t) => { try { await navigator.clipboard.writeText(t); setCopiado(k); setTimeout(() => setCopiado(''), 1800) } catch { window.prompt('Copia el mensaje:', t) } }
   const Msg = ({ k, titulo, texto, nota, aviso }) => (
     <section className="guion-b" key={k}>
@@ -885,7 +891,7 @@ function ManualVentas({ data, email }) {
         {seguimientosManual(v).map((s) => <Msg key={s.id} k={s.id} titulo={s.t} texto={s.a} nota={s.nota} />)}
       </>}
       {tab === 'cierre' && cierresManual(v).map((s) => <Msg key={s.id} k={s.id} titulo={s.t} texto={s.a} nota={s.nota} />)}
-      {tab === 'casos' && casosManual(v).map((s) => <Msg key={s.id} k={s.id} titulo={s.t} texto={s.a} nota={s.nota} />)}
+      {tab === 'casos' && casosManual(v).map((s) => <Msg key={s.id} k={s.id} titulo={s.t} texto={s.a} nota={s.nota} aviso={s.pendiente} />)}
     </>
   )
 }
@@ -1289,7 +1295,7 @@ function ReporteSemanal({ data, email }) {
         <div><h4>Ventas</h4><ul>
           {fila('Inscritos (alumnos)', r.inscritos)}
           {fila('Cupos / matrículas', r.matriculas)}
-          {fila('Total vendido', soles(r.vendido))}
+          {fila('Total vendido', dosMon({ PEN: r.vendido, USD: r.vendidoUSD || 0 }))}
         </ul></div>
         <div><h4>Atención</h4><ul>
           {fila('Prospectos nuevos', r.prospectosNuevos)}
@@ -1531,7 +1537,7 @@ function AlertasVenta({ data, email, gerente }) {
     <div className="alertas">
       {vacantes.map((v, i) => (
         <p key={i} className={`alerta ${v.nivel === 'retirar' ? 'rojo' : ''}`}>
-          <b>{etiqueta[v.nivel]} · {v.alumno}</b> debe {soles(v.saldo)} ({v.grupo || 'curso'} empieza {fechaCorta(v.inicio)}). {v.txt}
+          <b>{etiqueta[v.nivel]} · {v.alumno}</b> debe {fmtMoneda(v.saldo, v.moneda)} ({v.grupo || 'curso'} empieza {fechaCorta(v.inicio)}). {v.txt}
           {v.celular && <> <a href={wa(v.celular)} target="_blank" rel="noopener noreferrer">Escribirle</a></>}
         </p>
       ))}
@@ -1603,7 +1609,9 @@ function Quejas({ data, hacer, gerente, email }) {
 
 /* ================= INSCRITOS (alumnos, matrículas y pagos) ================= */
 const soles = (n) => 'S/ ' + Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
-const METODOS = ['Yape', 'Plin', 'Transferencia', 'Efectivo', 'Tarjeta', 'Otro']
+/* Soles y dólares nunca se suman: si hay dólares se muestran aparte, sin tipo de cambio */
+const dosMon = (t) => (t.USD > 0 ? (t.PEN > 0 ? `${soles(t.PEN)} + ${fmtMoneda(t.USD, 'USD')}` : fmtMoneda(t.USD, 'USD')) : soles(t.PEN))
+const METODOS = ['Yape', 'Plin', 'Transferencia', 'PayPal', 'Efectivo', 'Tarjeta', 'Otro']
 const hoyISO = () => new Date().toISOString().slice(0, 10)
 const nombreMes = (m) => m ? new Date(m + '-01T00:00:00').toLocaleDateString('es-PE', { month: 'long', year: 'numeric' }) : ''
 const ESTADO_TXT = { pagado: 'Pagado', adelanto: 'Adelanto', pendiente: 'Sin pago', anulada: 'Anulada' }
@@ -1661,6 +1669,7 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
   const [al, setAl] = useState({ tipo_doc: 'DNI', documento: '', nombres: '', apellido_paterno: '', apellido_materno: '', email: '', celular: '', ...(inicial.alumno || {}) })
   const [sel, setSel] = useState(inicial.grupo_id ? [String(inicial.grupo_id)] : [])
   const [paquete, setPaquete] = useState('')
+  const [moneda, setMoneda] = useState('PEN')
   const [precio, setPrecio] = useState('')
   const [precioManual, setPrecioManual] = useState(false)
   const [fecha, setFecha] = useState(hoyISO())
@@ -1678,8 +1687,15 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
 
   const elegidos = sel.map((id) => grupos.find((g) => String(g.id) === id)).filter(Boolean)
   const pideReq = elegidos.some((g) => programaSugerido(cursoDe(g.curso_id)?.titulo || ''))
-  const sugerido = elegidos.reduce((t, g) => t + Number(cursoDe(g.curso_id)?.precio || 0), 0)   // precio de lista (final, incluye IGV)
+  const sugerido = elegidos.reduce((t, g) => t + precioEn(cursoDe(g.curso_id), moneda), 0)   // precio de lista en la moneda elegida (en soles ya incluye IGV)
+  const faltaUsd = moneda === 'USD' && elegidos.some((g) => !vendeEnUsd(cursoDe(g.curso_id)))
+  const descMax = descuentoMaxPct(data.ajustes)               // tope de descuento libre (%), lo define gerencia en Web → Ajustes
+  const minLibre = precioMinimoLibre(sugerido, descMax)
   useEffect(() => { if (!precioManual) setPrecio(sugerido ? String(sugerido) : '') }, [sugerido, precioManual])
+  useEffect(() => {
+    setPrecioManual(false)
+    setPago((p) => ({ ...p, metodo: moneda === 'USD' ? 'PayPal' : (p.metodo === 'PayPal' ? 'Yape' : p.metodo) }))
+  }, [moneda])
 
   function buscarAlumno(doc) {
     const x = data.alumnos.find((a) => a.tipo_doc === al.tipo_doc && a.documento === doc.trim())
@@ -1690,7 +1706,10 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
     const buscar = (re) => grupos.find((g) => re.test(cursoDe(g.curso_id)?.titulo || ''))
     const gs = [buscar(/word/i), buscar(/excel/i), buscar(/power\s*point/i)]
     if (gs.some((g) => !g)) { setErr('Para el Club Ofimática tiene que haber un grupo abierto de Word, de Excel y de PowerPoint.'); return }
-    setErr(''); setSel(gs.map((g) => String(g.id))); setPaquete('Club Ofimática'); setPrecio('459'); setPrecioManual(true)
+    const club = data.cursos.find((c) => /club/i.test(c.titulo || ''))
+    const pClub = precioEn(club, moneda) || (moneda === 'PEN' ? 459 : 0)
+    if (!pClub) { setErr('El Club Ofimática aún no tiene precio en dólares. Ponlo en Web → Cursos.'); return }
+    setErr(''); setSel(gs.map((g) => String(g.id))); setPaquete('Club Ofimática'); setPrecio(String(pClub)); setPrecioManual(true)
   }
   const alternar = (id) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
 
@@ -1705,15 +1724,17 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
     if (pideReq && !requisitos) { setErr('Marca que enviaste los requisitos mínimos de PC y que el alumno los cumple.'); return }
     const total = Number(precio)
     if (!(total >= 0) || precio === '') { setErr('Pon el precio acordado.'); return }
+    if (faltaUsd) { setErr('Alguno de los cursos aún no tiene precio en dólares. Ponlo en Web → Cursos o cambia a soles.'); return }
     const conDescuento = sugerido > 0 && total < sugerido - 0.005 && !esClubSel
-    if (conDescuento && !gerente && (!descAut || descMotivo.trim().length < 3)) { setErr('Estás dando descuento: marca que gerencia lo autorizó y escribe quién y por qué.'); return }
+    const dentroTope = conDescuento && descMax > 0 && total >= minLibre - 0.005     // descuento libre: sin autorización de gerencia
+    if (conDescuento && !dentroTope && !gerente && (!descAut || descMotivo.trim().length < 3)) { setErr(descMax > 0 ? `Pasa del descuento libre (${descMax} %): marca que gerencia lo autorizó y escribe quién y por qué.` : 'Estás dando descuento: marca que gerencia lo autorizó y escribe quién y por qué.'); return }
     const monto = Number(pago.monto) || 0
     if (monto > total + 0.005) { setErr('El pago no puede ser mayor que el precio.'); return }
     if (monto > 0 && pago.metodo !== 'Efectivo' && !pago.comprobante_url) { setErr('Sube la foto del comprobante del pago.'); return }
     setBusy(true); setErr('')
     try {
       await onSave({
-        alumno: al, precioTotal: total, fecha, nota, terminos, descuentoAutorizado: conDescuento ? (gerente || descAut) : false, descuentoMotivo: conDescuento ? descMotivo.trim() : '', requisitos: pideReq ? requisitos : false,
+        alumno: al, precioTotal: total, moneda, fecha, nota, terminos, descuentoAutorizado: conDescuento && !dentroTope ? (gerente || descAut) : false, descuentoMotivo: conDescuento ? (dentroTope && !descMotivo.trim() ? `Descuento libre dentro del tope (${descMax} %)` : descMotivo.trim()) : '', requisitos: pideReq ? requisitos : false,
         paquete: elegidos.length > 1 ? (paquete.trim() || 'Paquete') : '',
         grupos: elegidos.map((g) => ({ id: g.id, codigo: g.codigo || '', curso_id: g.curso_id, curso_titulo: cursoDe(g.curso_id)?.titulo || '' })),
         pago: monto > 0 ? { ...pago, monto } : null,
@@ -1755,6 +1776,12 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
 
       <section className="fs">
         <h3>Curso(s) y precio</h3>
+        <div className="chips" role="radiogroup" aria-label="Moneda de esta inscripción">
+          <button type="button" className={moneda === 'PEN' ? 'sel' : ''} onClick={() => setMoneda('PEN')}>🇵🇪 Soles (S/)</button>
+          <button type="button" className={moneda === 'USD' ? 'sel' : ''} onClick={() => setMoneda('USD')}>💵 Dólares (US$)</button>
+        </div>
+        <p className="note">Toda la inscripción va en una sola moneda (el precio y los pagos).</p>
+        {faltaUsd && <p className="note">⚠️ Alguno de los cursos elegidos aún no tiene precio en dólares. Gerencia lo pone en Web → Cursos.</p>}
         {grupos.length === 0 && <p className="note">Aún no hay grupos abiertos. Pide a gerencia que abra uno en Horarios.</p>}
         <div className="pick">
           {grupos.map((g) => {
@@ -1767,19 +1794,22 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
             )
           })}
         </div>
-        <button type="button" className="btn btn-line sm" onClick={hacerClub}>🎓 Club Ofimática (Word + Excel + PowerPoint · S/ 459 · cuenta como 1 cupo)</button>
+        <button type="button" className="btn btn-line sm" onClick={hacerClub}>🎓 Club Ofimática (Word + Excel + PowerPoint · {fmtMoneda(precioEn(data.cursos.find((c) => /club/i.test(c.titulo || '')), moneda) || (moneda === 'PEN' ? 459 : 0), moneda)} · cuenta como 1 cupo)</button>
         {elegidos.length > 1 && (
           <label>Nombre del paquete<input id="i-paq" value={paquete} onChange={(e) => setPaquete(e.target.value)} placeholder="Ej.: Club Ofimática" /></label>
         )}
-        <label>Precio acordado {elegidos.length > 1 ? 'por todo el paquete' : ''} (S/, IGV incluido)
+        <label>Precio acordado {elegidos.length > 1 ? 'por todo el paquete' : ''} ({simbolo(moneda)}{moneda === 'PEN' ? ', IGV incluido' : ''})
           <input id="i-precio" type="number" min="0" step="0.01" value={precio} onChange={(e) => { setPrecio(e.target.value); setPrecioManual(true) }} />
         </label>
-        {sugerido > 0 && Number(precio) !== sugerido && <p className="note">Precio de lista (IGV incl.): {soles(sugerido)}. {Number(precio) < sugerido && !esClubSel ? 'Estás dando descuento.' : ''}</p>}
+        {sugerido > 0 && Number(precio) !== sugerido && <p className="note">Precio de la página: {fmtMoneda(sugerido, moneda)}. {Number(precio) < sugerido && !esClubSel ? 'Estás dando descuento.' : ''}</p>}
+        {sugerido > 0 && Number(precio) >= sugerido - 0.005 && descMax > 0 && !esClubSel && <p className="note">💡 Ofrece primero el precio de la página. El descuento es el último recurso para cerrar la venta: hasta {descMax} % (mínimo {fmtMoneda(minLibre, moneda)}), sin pedir autorización.</p>}
         {sugerido > 0 && Number(precio) < sugerido - 0.005 && !esClubSel && (
           <div className="fs descuento">
-            <p className="note"><b>El precio es fijo.</b> Un descuento solo se da con autorización previa de gerencia.</p>
-            {!gerente && <label className="chk"><input id="i-desc" type="checkbox" checked={descAut} onChange={(e) => setDescAut(e.target.checked)} /> Gerencia autorizó este descuento antes de cerrar la venta</label>}
-            <label>{gerente ? 'Motivo (opcional)' : 'Quién lo autorizó y por qué'}<input id="i-descm" value={descMotivo} onChange={(e) => setDescMotivo(e.target.value)} placeholder="Ej.: Diego, para cerrar la venta hoy" /></label>
+            {descMax > 0 && Number(precio) >= minLibre - 0.005
+              ? <p className="note"><b>Descuento libre.</b> Está dentro del tope ({descMax} %): no necesitas autorización. Úsalo solo como último recurso para cerrar la venta.</p>
+              : <p className="note"><b>Pasa del descuento libre.</b> {descMax > 0 ? `Lo máximo sin autorización es ${descMax} % (${fmtMoneda(minLibre, moneda)}). ` : 'Aún no hay un tope de descuento libre. '}Para este precio hace falta autorización previa de gerencia.</p>}
+            {!(descMax > 0 && Number(precio) >= minLibre - 0.005) && !gerente && <label className="chk"><input id="i-desc" type="checkbox" checked={descAut} onChange={(e) => setDescAut(e.target.checked)} /> Gerencia autorizó este descuento antes de cerrar la venta</label>}
+            <label>{gerente || (descMax > 0 && Number(precio) >= minLibre - 0.005) ? 'Nota (opcional)' : 'Quién lo autorizó y por qué'}<input id="i-descm" value={descMotivo} onChange={(e) => setDescMotivo(e.target.value)} placeholder="Ej.: pidió precio menor y cerró hoy" /></label>
           </div>
         )}
         <label>Fecha de inscripción<input id="i-fecha" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} /></label>
@@ -1788,7 +1818,7 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
       <section className="fs">
         <h3>Pago 1 <small>(déjalo vacío si aún no paga)</small></h3>
         <div className="g2">
-          <label>Monto (S/)<input id="p-monto" type="number" min="0" step="0.01" value={pago.monto} onChange={(e) => setPago({ ...pago, monto: e.target.value })} /></label>
+          <label>Monto ({simbolo(moneda)})<input id="p-monto" type="number" min="0" step="0.01" value={pago.monto} onChange={(e) => setPago({ ...pago, monto: e.target.value })} /></label>
           <label>Método<select id="p-met" value={pago.metodo} onChange={(e) => setPago({ ...pago, metodo: e.target.value })}>{METODOS.map((m) => <option key={m}>{m}</option>)}</select></label>
         </div>
         <label>Fecha del pago<input id="p-fecha" type="date" value={pago.fecha} onChange={(e) => setPago({ ...pago, fecha: e.target.value })} /></label>
@@ -1809,14 +1839,15 @@ function InscripcionForm({ inicial, data, onSave, onClose, gerente }) {
 }
 
 function PagoForm({ insc, onSave, onClose }) {
-  const [p, setP] = useState({ monto: insc.saldo ? String(insc.saldo) : '', metodo: 'Yape', fecha: hoyISO(), comprobante_url: '', nota: '' })
+  const usd = insc.moneda === 'USD'
+  const [p, setP] = useState({ monto: insc.saldo ? String(insc.saldo) : '', metodo: usd ? 'PayPal' : 'Yape', fecha: hoyISO(), comprobante_url: '', nota: '' })
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const a = insc.alumno || {}
   async function guardar() {
     const monto = Number(p.monto)
     if (!(monto > 0)) { setErr('Pon el monto del pago.'); return }
-    if (monto > insc.saldo + 0.005) { setErr(`El pago no puede pasar del saldo (${soles(insc.saldo)}).`); return }
+    if (monto > insc.saldo + 0.005) { setErr(`El pago no puede pasar del saldo (${fmtMoneda(insc.saldo, insc.moneda)}).`); return }
     if (p.metodo !== 'Efectivo' && !p.comprobante_url) { setErr('Sube la foto del comprobante.'); return }
     setBusy(true); setErr('')
     try { await onSave({ matriculas: insc.activas, pago: { ...p, monto } }) } catch (e) { setErr(e.message || 'No se pudo guardar'); setBusy(false) }
@@ -1826,9 +1857,9 @@ function PagoForm({ insc, onSave, onClose }) {
       pie={<>{err && <span className="err">{err}</span>}<button className="btn btn-line" onClick={onClose}>Cancelar</button><button className="btn btn-teal" onClick={guardar} disabled={busy}>{busy ? 'Guardando…' : 'Registrar pago'}</button></>}>
       <section className="fs">
         <h3>{a.nombres} {a.apellido_paterno}</h3>
-        <p className="note">{insc.codigos.join(' + ')} · Precio {soles(insc.precio)} · Pagado {soles(insc.pagado)} · <b>Saldo {soles(insc.saldo)}</b></p>
+        <p className="note">{insc.codigos.join(' + ')} · Precio {fmtMoneda(insc.precio, insc.moneda)} · Pagado {fmtMoneda(insc.pagado, insc.moneda)} · <b>Saldo {fmtMoneda(insc.saldo, insc.moneda)}</b></p>
         <div className="g2">
-          <label>Monto (S/)<input id="pp-monto" type="number" min="0" step="0.01" value={p.monto} onChange={(e) => setP({ ...p, monto: e.target.value })} /></label>
+          <label>Monto ({simbolo(insc.moneda)})<input id="pp-monto" type="number" min="0" step="0.01" value={p.monto} onChange={(e) => setP({ ...p, monto: e.target.value })} /></label>
           <label>Método<select id="pp-met" value={p.metodo} onChange={(e) => setP({ ...p, metodo: e.target.value })}>{METODOS.map((m) => <option key={m}>{m}</option>)}</select></label>
         </div>
         <label>Fecha del pago<input id="pp-fecha" type="date" value={p.fecha} onChange={(e) => setP({ ...p, fecha: e.target.value })} /></label>
@@ -1853,7 +1884,7 @@ function Inscritos({ data, hacer, rol, nuevaInscripcion, registrarPago }) {
   async function bienvenida(x) {
     const a = x.alumno || {}
     const reenvio = x.activas.length > 0 && x.activas.every((m) => m.bienvenida_en)
-    if (!window.confirm(`¿${reenvio ? 'Reenviar' : 'Enviar'} el correo de bienvenida a ${a.nombres} (${a.email})?${x.saldo > 0 ? `\n\nOjo: aún debe ${soles(x.saldo)}. El correo saldrá SIN el link de Zoom hasta que complete el pago.` : ''}`)) return
+    if (!window.confirm(`¿${reenvio ? 'Reenviar' : 'Enviar'} el correo de bienvenida a ${a.nombres} (${a.email})?${x.saldo > 0 ? `\n\nOjo: aún debe ${fmtMoneda(x.saldo, x.moneda)}. El correo saldrá SIN el link de Zoom hasta que complete el pago.` : ''}`)) return
     setEnviando(x.id)
     await hacer(async () => { await enviarBienvenidaCorreo(x.id, await pdfTerminos()) }, 'Bienvenida enviada ✉️')
     setEnviando('')
@@ -1873,8 +1904,9 @@ function Inscritos({ data, hacer, rol, nuevaInscripcion, registrarPago }) {
     return true
   })
   const vivas = lista.filter((x) => x.estado !== 'anulada')
-  const cobrado = vivas.reduce((t, x) => t + x.pagado, 0)
-  const porCobrar = vivas.reduce((t, x) => t + x.saldo, 0)
+  const cobrado = sumaPorMoneda(vivas, (x) => x.pagado, (x) => x.moneda)
+  const porCobrar = sumaPorMoneda(vivas, (x) => x.saldo, (x) => x.moneda)
+  const dosMonedas = (t) => (t.USD > 0 ? `${soles(t.PEN)} · ${fmtMoneda(t.USD, 'USD')}` : soles(t.PEN))
   const bajar = () => {
     const blob = new Blob([inscritosCSV(lista)], { type: 'text/csv;charset=utf-8' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
@@ -1910,8 +1942,8 @@ function Inscritos({ data, hacer, rol, nuevaInscripcion, registrarPago }) {
 
       <div className="kpis">
         <div><b>{vivas.length}</b><span>inscripciones</span></div>
-        <div><b>{soles(cobrado)}</b><span>cobrado</span></div>
-        <div><b>{soles(porCobrar)}</b><span>por cobrar</span></div>
+        <div><b>{dosMonedas(cobrado)}</b><span>cobrado</span></div>
+        <div><b>{dosMonedas(porCobrar)}</b><span>por cobrar</span></div>
       </div>
 
       {lista.length === 0 && !data.crmError && (
@@ -1931,17 +1963,17 @@ function Inscritos({ data, hacer, rol, nuevaInscripcion, registrarPago }) {
                       <small className="paq">{a.codigo ? <span className="cod">{a.codigo}</span> : `${a.tipo_doc} ${a.documento}`}{a.celular && <> · <a href={`https://wa.me/${String(a.celular).replace(/\D/g, '').replace(/^(\d{9})$/, '51$1')}`} target="_blank" rel="noopener noreferrer">{a.celular}</a></>}</small></td>
                     {gerente && <td>{(x.vendedor || '').split('@')[0] || '—'}</td>}
                     <td>{x.matriculas.map((m) => <span key={m.id} className="cod" title={m.curso_titulo}>{m.grupo_codigo || '—'}</span>)}</td>
-                    <td>{soles(x.precio)}</td>
+                    <td>{fmtMoneda(x.precio, x.moneda)}</td>
                     <td className="pagos">
                       {x.pagosLista.length === 0 && <small>—</small>}
                       {x.pagosLista.map((p, i) => (
                         <span key={i} className="pg">
-                          <b>P{p.numero}</b> {soles(p.monto)} <small>{p.metodo}</small>
+                          <b>P{p.numero}</b> {fmtMoneda(p.monto, x.moneda)} <small>{p.metodo}</small>
                           {p.comprobante_url && <button type="button" className="link" onClick={() => setFoto(p.comprobante_url)} aria-label={`Ver comprobante del pago ${p.numero}`}><Icon n="clip" size={14} /></button>}
                         </span>
                       ))}
                     </td>
-                    <td>{x.saldo > 0 && x.estado !== 'anulada' ? soles(x.saldo) : '—'}</td>
+                    <td>{x.saldo > 0 && x.estado !== 'anulada' ? fmtMoneda(x.saldo, x.moneda) : '—'}</td>
                     <td><span className={`pill ${x.estado}`}>{ESTADO_TXT[x.estado]}</span></td>
                     <td className="acc">
                       {x.estado !== 'anulada' && x.saldo > 0 && <button className="btn btn-line sm" onClick={() => registrarPago(x)}>+ Pago</button>}
@@ -1950,6 +1982,12 @@ function Inscritos({ data, hacer, rol, nuevaInscripcion, registrarPago }) {
                           {enviando === x.id ? 'Enviando…' : x.activas.length > 0 && x.activas.every((m) => m.bienvenida_en) ? '✉️ Reenviar' : '✉️ Bienvenida'}
                         </button>
                       )}
+                      {x.estado !== 'anulada' && x.pagado > 0 && (x.moneda === 'USD'
+                        ? <button className="btn btn-line sm" onClick={() => hacer(() => generarNotaPago(x), 'Nota de pago descargada 📄')} title="Genera un PDF con los pagos recibidos (no es boleta ni factura)">📄 Nota de pago</button>
+                        : <>
+                          <button className="btn btn-line sm" disabled title="Aún no disponible: falta conectar SUNAT">Boleta</button>
+                          <button className="btn btn-line sm" disabled title="Aún no disponible: falta conectar SUNAT">Factura</button>
+                        </>)}
                       {gerente && (x.estado === 'anulada'
                         ? <button className="btn btn-line sm" onClick={() => hacer(() => estadoInscripcion(x.id, 'activa'), 'Inscripción reactivada')}>Reactivar</button>
                         : <button className="btn btn-line sm" onClick={() => hacer(() => estadoInscripcion(x.id, 'anulada'), 'Inscripción anulada')}>Anular</button>)}
@@ -1975,11 +2013,26 @@ function Inscritos({ data, hacer, rol, nuevaInscripcion, registrarPago }) {
 function Ajustes({ data, hacer }) {
   const [num, setNum] = useState(data.ajustes?.whatsapp || '')
   useEffect(() => { setNum(data.ajustes?.whatsapp || '') }, [data.ajustes?.whatsapp])
+  const [pct, setPct] = useState(data.ajustes?.descuento_max_pct ?? '')
+  useEffect(() => { setPct(data.ajustes?.descuento_max_pct ?? '') }, [data.ajustes?.descuento_max_pct])
+  const pctNum = Number(pct)
+  const pctValido = pct === '' || (pctNum >= 0 && pctNum <= 50)
   const limpio = num.replace(/\D/g, '')
   const valido = limpio.length >= 10
   return (
     <>
-      <Seccion titulo="Ajustes" ayuda="Lo único que se cambia aquí es el número de WhatsApp de CCN que usa la web." />
+      <Seccion titulo="Ajustes" ayuda="El número de WhatsApp de CCN que usa la web y el descuento libre de las vendedoras." />
+      <div className="fs" style={{ maxWidth: 520 }}>
+        <label>Descuento libre de las vendedoras (% máximo)
+          <input id="a-desc" type="number" min="0" max="50" step="1" value={pct} onChange={(e) => setPct(e.target.value)} placeholder="Ej. 10 · vacío o 0 = no hay descuento libre" />
+        </label>
+        <p className="note">Es el último recurso para cerrar una venta: la vendedora siempre ofrece primero el precio de la página. Hasta este porcentaje no necesita autorización; si pasa, el sistema le pide la autorización de gerencia. Aplica igual en soles y en dólares.</p>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 18 }}>
+          <button className="btn btn-teal" disabled={!pctValido}
+            onClick={() => hacer(async () => { await saveAjuste('descuento_max_pct', pct === '' ? '0' : String(pctNum)) }, 'Descuento libre guardado')}>Guardar descuento</button>
+        </div>
+        {!pctValido && <p className="note err">Pon un número entre 0 y 50.</p>}
+      </div>
       <div className="fs" style={{ maxWidth: 520 }}>
         <label>WhatsApp de CCN
           <input id="a-wa" inputMode="tel" value={num} onChange={(e) => setNum(e.target.value)} placeholder="51944485759" />
@@ -2001,9 +2054,9 @@ function Resumen({ data }) {
   const [mes, setMes] = useState('')
   const meses = [...new Set(todas.map((x) => x.mes).filter(Boolean))].sort().reverse()
   const vivas = todas.filter((x) => x.estado !== 'anulada' && (!mes || x.mes === mes))
-  const vendido = vivas.reduce((t, x) => t + x.precio, 0)
-  const cobrado = vivas.reduce((t, x) => t + x.pagado, 0)
-  const porCobrar = vivas.reduce((t, x) => t + x.saldo, 0)
+  const vendido = sumaPorMoneda(vivas, (x) => x.precio, (x) => x.moneda)
+  const cobrado = sumaPorMoneda(vivas, (x) => x.pagado, (x) => x.moneda)
+  const porCobrar = sumaPorMoneda(vivas, (x) => x.saldo, (x) => x.moneda)
   const cupos = vivas.reduce((t, x) => t + x.activas.length, 0)
   const cursoDe = (id) => data.cursos.find((c) => String(c.id) === String(id))
   const hoy = new Date().toISOString().slice(0, 10)
@@ -2011,10 +2064,11 @@ function Resumen({ data }) {
 
   const filas = data.grupos.filter((g) => g.codigo).sort((a, b) => a.codigo.localeCompare(b.codigo)).map((g) => {
     const ms = data.matriculas.filter((m) => String(m.grupo_id) === String(g.id) && m.estado === 'activa' && (!mes || String(m.fecha_inscripcion || '').slice(0, 7) === mes))
-    const ids = new Set(ms.map((m) => m.id))
-    const pagado = data.pagos.filter((p) => ids.has(p.matricula_id)).reduce((t, p) => t + Number(p.monto), 0)
-    const precio = ms.reduce((t, m) => t + Number(m.precio), 0)
-    return { g, c: cursoDe(g.curso_id), n: g.inscritos || 0, vendido: precio, cobrado: pagado, saldo: Math.max(0, precio - pagado) }
+    const monDe = new Map(ms.map((m) => [m.id, m.moneda === 'USD' ? 'USD' : 'PEN']))
+    const pagado = sumaPorMoneda(data.pagos.filter((p) => monDe.has(p.matricula_id)), (p) => p.monto, (p) => monDe.get(p.matricula_id))
+    const precio = sumaPorMoneda(ms, (m) => m.precio, (m) => (m.moneda === 'USD' ? 'USD' : 'PEN'))
+    const saldo = { PEN: Math.max(0, precio.PEN - pagado.PEN), USD: Math.max(0, precio.USD - pagado.USD) }
+    return { g, c: cursoDe(g.curso_id), n: g.inscritos || 0, vendido: precio, cobrado: pagado, saldo }
   })
   const alertas = data.grupos.filter((g) => g.estado === 'abierto' && g.inicio && g.inicio >= hoy && g.inicio <= en21 && (g.inscritos || 0) < (g.minimo || 5))
   const llenos = data.grupos.filter((g) => g.estado === 'lleno')
@@ -2026,7 +2080,7 @@ function Resumen({ data }) {
     return { email, prospectos: (data.prospectos || []).filter((p) => p.vendedor === email).length,
       derivados: intMes.filter((x) => x.asignado_a === email).length,
       contactados: intMes.filter((x) => x.asignado_a === email && x.estado !== 'nuevo').length,
-      cupos: mias.reduce((t, x) => t + x.activas.length, 0), vendido: mias.reduce((t, x) => t + x.precio, 0), cobrado: mias.reduce((t, x) => t + x.pagado, 0) }
+      cupos: mias.reduce((t, x) => t + x.activas.length, 0), vendido: sumaPorMoneda(mias, (x) => x.precio, (x) => x.moneda), cobrado: sumaPorMoneda(mias, (x) => x.pagado, (x) => x.moneda) }
   })
 
   return (
@@ -2040,9 +2094,9 @@ function Resumen({ data }) {
       </Seccion>
       <div className="kpis">
         <div><b>{cupos}</b><span>cupos vendidos</span></div>
-        <div><b>{soles(vendido)}</b><span>vendido</span></div>
-        <div><b>{soles(cobrado)}</b><span>cobrado</span></div>
-        <div><b>{soles(porCobrar)}</b><span>por cobrar</span></div>
+        <div><b>{dosMon(vendido)}</b><span>vendido</span></div>
+        <div><b>{dosMon(cobrado)}</b><span>cobrado</span></div>
+        <div><b>{dosMon(porCobrar)}</b><span>por cobrar</span></div>
         <div><b>{nuevos}</b><span>prospectos nuevos</span></div>
       </div>
       <h2 className="subh">Interesados de la web</h2>
@@ -2061,7 +2115,7 @@ function Resumen({ data }) {
             <table className="cons-table insc" style={{ minWidth: 0 }}>
               <thead><tr><th>Vendedor</th><th>Interesados derivados</th><th>Atendidos</th><th>Pendientes</th><th>Prospectos</th><th>Cupos vendidos</th><th>Vendido</th><th>Cobrado</th></tr></thead>
               <tbody>{porVendedor.map((v) => (
-                <tr key={v.email}><td><b>{v.email.split('@')[0]}</b></td><td>{v.derivados}</td><td>{v.contactados}</td><td>{v.derivados - v.contactados}</td><td>{v.prospectos}</td><td>{v.cupos}</td><td>{soles(v.vendido)}</td><td>{soles(v.cobrado)}</td></tr>
+                <tr key={v.email}><td><b>{v.email.split('@')[0]}</b></td><td>{v.derivados}</td><td>{v.contactados}</td><td>{v.derivados - v.contactados}</td><td>{v.prospectos}</td><td>{v.cupos}</td><td>{dosMon(v.vendido)}</td><td>{dosMon(v.cobrado)}</td></tr>
               ))}</tbody>
             </table>
           </div>
@@ -2085,7 +2139,7 @@ function Resumen({ data }) {
                   <td><b>{c?.titulo || 'Curso'}</b></td>
                   <td>{g.inicio ? fechaCorta(g.inicio) : 'Sin fecha'}</td>
                   <td><div className="barra" title={`${n} de ${g.minimo || 5} mínimo`}><i style={{ width: `${Math.min(100, (n / (g.minimo || 5)) * 100)}%` }} /></div><small>{n}/{g.minimo || 5} mín. · máx. {g.maximo || 20}</small></td>
-                  <td>{soles(v)}</td><td>{soles(co)}</td><td>{saldo > 0 ? soles(saldo) : '—'}</td>
+                  <td>{dosMon(v)}</td><td>{dosMon(co)}</td><td>{saldo.PEN > 0 || saldo.USD > 0 ? dosMon(saldo) : '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -2324,9 +2378,9 @@ function FichaCurso({ data, curso, hacer, onVolver, abrirGrupo, editarGrupo, irW
             <div><b>{m.abiertos}</b><span>grupos abiertos</span></div>
             <div><b>{m.ints.length}</b><span>interesados</span></div>
             <div><b>{m.cupos}</b><span>inscritos</span></div>
-            <div><b>{soles(m.vendido)}</b><span>vendido</span></div>
-            <div><b>{soles(m.cobrado)}</b><span>cobrado</span></div>
-            <div><b>{soles(m.porCobrar)}</b><span>por cobrar</span></div>
+            <div><b>{dosMon({ PEN: m.vendido, USD: m.vendidoUSD })}</b><span>vendido</span></div>
+            <div><b>{dosMon({ PEN: m.cobrado, USD: m.cobradoUSD })}</b><span>cobrado</span></div>
+            <div><b>{dosMon({ PEN: m.porCobrar, USD: m.porCobrarUSD })}</b><span>por cobrar</span></div>
             <div><b>{soles(m.ticket)}</b><span>ticket promedio</span></div>
           </div>
           <div className="av-grid">
@@ -2367,7 +2421,7 @@ function FichaCurso({ data, curso, hacer, onVolver, abrirGrupo, editarGrupo, irW
               <td><b>{a.nombres} {a.apellido_paterno}</b>{a.codigo && <small className="paq"><span className="cod">{a.codigo}</span></small>}</td>
               <td><span className="cod">{x.grupo_codigo || '—'}</span></td>
               <td>{(x.vendedor || x.creado_por || '').split('@')[0] || '—'}</td>
-              <td>{soles(x.precio)}</td><td>{soles(pagado)}</td><td>{saldo > 0 ? soles(saldo) : '—'}</td>
+              <td>{fmtMoneda(x.precio, x.moneda)}</td><td>{fmtMoneda(pagado, x.moneda)}</td><td>{saldo > 0 ? fmtMoneda(saldo, x.moneda) : '—'}</td>
               <td><span className={`pill ${estado}`}>{ESTADO_PAGO[estado]}</span></td>
             </tr>))}</tbody>
         </table></div>
@@ -2444,7 +2498,7 @@ function CursosGerencia({ data, hacer, abrirGrupo, editarGrupo, irWeb }) {
               return (
                 <tr key={c.id} onClick={() => setSel(c.id)} tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setSel(c.id)}>
                   <td><span className="sw-c" style={{ background: `var(--${c.color})` }} /><b>{c.titulo}</b><small className="paq">{c.horas} h · {soles(c.precio)}{c.activo === false ? ' · oculto' : ''}</small></td>
-                  <td>{m.abiertos}</td><td>{m.ints.length}</td><td>{m.cupos}</td><td>{soles(m.vendido)}</td><td>{soles(m.cobrado)}</td><td>{m.porCobrar > 0 ? soles(m.porCobrar) : '—'}</td>
+                  <td>{m.abiertos}</td><td>{m.ints.length}</td><td>{m.cupos}</td><td>{dosMon({ PEN: m.vendido, USD: m.vendidoUSD })}</td><td>{dosMon({ PEN: m.cobrado, USD: m.cobradoUSD })}</td><td>{m.porCobrar > 0 || m.porCobrarUSD > 0 ? dosMon({ PEN: m.porCobrar, USD: m.porCobrarUSD }) : '—'}</td>
                 </tr>
               )
             })}

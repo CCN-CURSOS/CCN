@@ -10,7 +10,7 @@ const DESDE = 'CCN Centro de Capacitaciones & Negocios <cursos@ccnperuacademy.co
 const WA = '+51 944 485 759'
 const esc = (t: unknown) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string))
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { ...CORS, 'Content-Type': 'application/json' } })
-const soles = (n: number) => 'S/ ' + Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+const soles = (n: number, usd = false) => (usd ? 'US$ ' : 'S/ ') + Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
 const horario = (t: string) => String(t ?? '').replace(/\s*[–—]\s*/g, ' - ').replace(/\b(\d{1,2}):(\d{2})(?!\s*[ap]\.?\s*m)/gi, (m, h, mi) => { const n = Number(h); return n > 23 ? m : `${n % 12 || 12}:${mi} ${n >= 12 ? 'p. m.' : 'a. m.'}` })
 const fecha = (iso: string) => {
   if (!iso) return 'Por confirmar'
@@ -33,6 +33,8 @@ Deno.serve(async (req) => {
 
     const { data: mats } = await sb.from('matriculas').select('*').eq('paquete_id', paquete_id).eq('estado', 'activa')
     if (!mats?.length) return json({ error: 'No tienes permiso o la inscripción no existe o está anulada.' }, 403)
+    const usd = mats[0]?.moneda === 'USD'   // la inscripción va en una sola moneda
+    const S = (n: number) => soles(n, usd)
 
     const { data: a } = await sb.from('alumnos').select('*').eq('id', mats[0].alumno_id).maybeSingle()
     const correo = String(a?.email ?? '').trim()
@@ -74,10 +76,10 @@ Deno.serve(async (req) => {
 
     const nombre = esc(a?.nombres || '')
     const fila = (k: string, v: string) => `<tr><td style="padding:3px 12px 3px 0;color:#6b7a90">${k}</td><td style="padding:3px 0"><b>${esc(v)}</b></td></tr>`
-    const pagosTxt = (pagos ?? []).sort((x, y) => x.numero - y.numero).map((p) => `${soles(p.monto)} (${p.metodo})`).join(' + ')
+    const pagosTxt = (pagos ?? []).sort((x, y) => x.numero - y.numero).map((p) => `${S(p.monto)} (${p.metodo})`).join(' + ')
     const pc = mats.some((m) => necesitaPC(m.curso_titulo)) || club
     const aviso = saldo > 0
-      ? `<div style="background:#fff7e6;border:1px solid #f3d9a4;border-radius:10px;padding:12px 14px;margin:14px 0;font-size:14px"><b>Saldo pendiente: ${soles(saldo)}.</b> Para recibir tus accesos, págalo a más tardar 1 día antes del inicio (excepcionalmente hasta 3 horas antes de la clase) a las cuentas oficiales de CCN que te indicó nuestro equipo. Si el curso inicia sin pago completo, no se brindan los accesos.</div>`
+      ? `<div style="background:#fff7e6;border:1px solid #f3d9a4;border-radius:10px;padding:12px 14px;margin:14px 0;font-size:14px"><b>Saldo pendiente: ${S(saldo)}.</b> Para recibir tus accesos, págalo a más tardar 1 día antes del inicio (excepcionalmente hasta 3 horas antes de la clase) a las cuentas oficiales de CCN que te indicó nuestro equipo. Si el curso inicia sin pago completo, no se brindan los accesos.</div>`
       : `<div style="background:#e9faf6;border:1px solid #b6ebe0;border-radius:10px;padding:12px 14px;margin:14px 0;font-size:14px"><b>¡Tu pago está completo!</b> Tu vacante está asegurada.</div>`
 
     const html = `<div style="font-family:Arial,sans-serif;color:#0F2547;max-width:580px;margin:auto;line-height:1.5">
@@ -95,9 +97,9 @@ Deno.serve(async (req) => {
       ${bloques}
       <h3 style="color:#1FBFA8;margin:18px 0 4px">Tu pago</h3>
       <table style="font-size:14px;border-collapse:collapse">${[
-        fila('Precio', soles(precio)),
-        fila('Pagado', `${soles(pagado)}${pagosTxt ? ' · ' + pagosTxt : ''}`),
-        fila('Saldo', saldo > 0 ? soles(saldo) : 'S/ 0'),
+        fila('Precio', S(precio)),
+        fila('Pagado', `${S(pagado)}${pagosTxt ? ' · ' + pagosTxt : ''}`),
+        fila('Saldo', saldo > 0 ? S(saldo) : 'S/ 0'),
       ].join('')}</table>
       ${aviso}
       ${pc ? `<h3 style="color:#1FBFA8;margin:18px 0 4px">Qué necesitas</h3><ul style="font-size:14px;padding-left:18px;margin-top:4px"><li>Una computadora con <b>Windows</b>.</li><li>Nosotros instalamos el programa contigo de forma remota por <b>AnyDesk</b> antes de empezar: descarga AnyDesk (gratis) en anydesk.com y te contactaremos para coordinar el horario.</li><li>Conexión estable a internet, cámara y micrófono para Zoom.</li></ul>`

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { loadCatalog, wa, fechaCorta, fmtHorario } from '../lib/data.js'
 import CourseCard from '../components/CourseCard.jsx'
-import { precioWeb } from '../lib/igv.js'
+import { precioDe, precioWebMon } from '../lib/moneda.js'
+import { useMonedaWeb } from '../lib/monedaWeb.js'
 import { useCarrito } from '../lib/carrito.js'
 import { Header, Footer } from '../components/Layout.jsx'
 
@@ -23,6 +24,7 @@ export default function CursoDetalle() {
   const [barra, setBarra] = useState(false)
   const [alto, setAlto] = useState(76)
   const carro = useCarrito()
+  const { moneda } = useMonedaWeb()
   const [aviso, setAviso] = useState(false)
 
   useEffect(() => { loadCatalog().then(setData).catch(() => setData({ cursos: [], grupos: [], error: true })) }, [])
@@ -52,6 +54,7 @@ export default function CursoDetalle() {
   const fondo = conImagen
     ? { backgroundImage: `url("${curso.imagen_url}")`, backgroundSize: 'cover', backgroundPosition: 'center' }
     : { background: `var(--${curso.color})` }
+  const pr = precioDe(curso, moneda)
   const temario = curso.temario || []
   const programas = (curso.programas || '').split(',').map((s) => s.trim()).filter(Boolean)
   const otros = data.cursos.filter((c) => c.id !== curso.id).slice(0, 3)
@@ -62,7 +65,7 @@ export default function CursoDetalle() {
       <Header />
       <div className={`cd-bar ${barra ? 'on' : ''}`} style={{ top: alto }} aria-hidden={!barra}>
         <div className="wrap cd-bar-in">
-          <div><b>{curso.titulo}</b><span>S/{curso.precio}{curso.precio_antes > curso.precio && <s>S/{curso.precio_antes}</s>}</span></div>
+          <div><b>{curso.titulo}</b><span>{precioWebMon(pr.precio, pr.mon)}{pr.antes > pr.precio && <s>{precioWebMon(pr.antes, pr.mon)}</s>}</span></div>
           {lleno
             ? <Link className="cd-btn" to={`/inscripcion/${curso.id}`} tabIndex={barra ? 0 : -1}>{cta} <Flecha /></Link>
             : <button type="button" className="cd-btn" tabIndex={barra ? 0 : -1} onClick={() => { carro.agregar(curso.id); setAviso(true) }}>{cta} <Flecha /></button>}
@@ -110,8 +113,8 @@ export default function CursoDetalle() {
             <aside className="cd-side" style={{ top: alto + 96 }}>
               <div className="cd-box">
                 <div className="cd-precio">
-                  <b>{precioWeb(curso.precio)}</b>
-                  {curso.precio_antes > curso.precio && <><span className="antes">{precioWeb(curso.precio_antes)}</span><span className="dsct">-{Math.round((1 - curso.precio / curso.precio_antes) * 100)}% DSCT.</span></>}
+                  <b>{precioWebMon(pr.precio, pr.mon)}</b>
+                  {pr.antes > pr.precio && <><span className="antes">{precioWebMon(pr.antes, pr.mon)}</span><span className="dsct">-{Math.round((1 - pr.precio / pr.antes) * 100)}% DSCT.</span></>}
                 </div>
                 <dl>
                   {grupo?.inicio && <div><dt>Inicio</dt><dd>{fechaCorta(grupo.inicio)}</dd></div>}

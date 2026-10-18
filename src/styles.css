@@ -1409,3 +1409,10 @@ select.tipo-bajo{border-color:#8a94a6;color:var(--muted);font-weight:700}
 .manual-nodecir p b{display:block}
 .manual-nodecir p span{color:var(--muted);font-size:.9rem}
 .pill.warn{background:#E0A10033;color:#7A5A00;border:1px solid #E0A100;margin-bottom:6px}
+
+/* ===== Selector de moneda (web) ===== */
+.moneda-sel{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;font-size:.8rem;font-weight:700}
+.moneda-sel button{border:0;background:transparent;color:inherit;padding:6px 11px;cursor:pointer;font:inherit}
+.moneda-sel button[aria-pressed="true"]{background:var(--teal);color:#06231F}
+.usd-nota{display:block;margin-top:6px;opacity:.9}
+.moneda-aviso{font-size:.85rem;opacity:.8;margin:6px 0 0}

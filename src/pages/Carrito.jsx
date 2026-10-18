@@ -4,8 +4,10 @@ import { loadCatalog, crearInteresado, fechaCorta, fmtHorario } from '../lib/dat
 import { Header, Footer } from '../components/Layout.jsx'
 import { FORM_VACIO, validar } from '../components/Secciones.jsx'
 import { useCarrito, quitar, vaciar, limpiarInvalidos } from '../lib/carrito.js'
-import { armarPedido, iniciarPago, soles, PROVEEDORES, PROVEEDOR_ACTIVO } from '../lib/pago.js'
+import { armarPedido, iniciarPago, soles, monedaDelCarrito, PROVEEDORES, PROVEEDOR_ACTIVO } from '../lib/pago.js'
 import { sinIgv, igvDe } from '../lib/igv.js'
+import { precioDe } from '../lib/moneda.js'
+import { useMonedaWeb } from '../lib/monedaWeb.js'
 
 /* Cursos del carrito con su catálogo (sin los que ya no existen o están llenos: esos van por lista de espera) */
 function useItems() {
@@ -21,24 +23,27 @@ function useItems() {
   const sobran = conClub ? cursos.filter(incluidoEnClub) : []
   const cursosOk = conClub ? cursos.filter((c) => !incluidoEnClub(c)) : cursos
   useEffect(() => { if (data) limpiarInvalidos(cursosOk.map((c) => c.id)) }, [data, cursosOk.length]) // eslint-disable-line
-  const subtotal = cursosOk.reduce((s, c) => s + Number(c.precio || 0), 0)
-  return { data, cursos: cursosOk, conClub, grupoDe, subtotal: sinIgv(subtotal), total: subtotal, igv: igvDe(subtotal) }
+  const { moneda: pref } = useMonedaWeb()
+  const moneda = monedaDelCarrito(cursosOk, pref)       // el carrito va en una sola moneda
+  const faltaUsd = pref === 'USD' && moneda === 'PEN' && cursosOk.length > 0
+  const subtotal = cursosOk.reduce((s, c) => s + precioDe(c, moneda).precio, 0)
+  return { data, cursos: cursosOk, conClub, grupoDe, moneda, faltaUsd, subtotal: sinIgv(subtotal), total: subtotal, igv: igvDe(subtotal) }
 }
 
-function Resumen({ subtotal, total, igv, n }) {
+function Resumen({ subtotal, total, igv, n, moneda }) {
   return (
     <div className="cart-sum">
       <h3>Resumen</h3>
       <dl>
-        <div><dt>{n} {n === 1 ? 'curso' : 'cursos'}</dt><dd>{soles(total)}</dd></div>
-        <div className="tot"><dt>Total</dt><dd>{soles(total)}</dd></div>
+        <div><dt>{n} {n === 1 ? 'curso' : 'cursos'}</dt><dd>{soles(total, moneda)}</dd></div>
+        <div className="tot"><dt>Total</dt><dd>{soles(total, moneda)}</dd></div>
       </dl>
     </div>
   )
 }
 
 export function Carrito() {
-  const { data, cursos, conClub, grupoDe, subtotal, total, igv } = useItems()
+  const { data, cursos, conClub, grupoDe, subtotal, total, igv, moneda, faltaUsd } = useItems()
   useEffect(() => { document.title = 'Tu carrito · CCN' }, [])
   return (
     <>
@@ -46,6 +51,7 @@ export function Carrito() {
       <main className="insc"><div className="wrap">
         <div className="head cform-head"><span className="eyebrow">Carrito</span><h1 className="insc-h1">Tu carrito</h1></div>
         {conClub && <p className="note">🎓 El Club Ofimática ya incluye Word, Excel y PowerPoint, así que no los cobramos por separado.</p>}
+        {faltaUsd && <p className="note">Algunos de estos cursos aún no tienen precio en dólares, por eso ves todo en soles. Escríbenos por WhatsApp si quieres pagar en dólares.</p>}
         {!data ? <p className="note">Cargando…</p> : cursos.length === 0 ? (
           <div className="cart-vacio"><p>Aún no agregaste cursos.</p><Link className="btn btn-wa" to="/cursos">Ver cursos</Link></div>
         ) : (
@@ -60,14 +66,14 @@ export function Carrito() {
                       <Link to={`/cursos/${c.id}`}><b>{c.titulo}</b></Link>
                       <small>{c.horas} h · {c.sesiones} sesiones · Online en vivo{g?.inicio ? ` · Inicio ${fechaCorta(g.inicio)}` : ''}{g && (g.dias || g.horario) ? ` · ${fmtHorario([g.dias, g.horario].filter(Boolean).join(' '))}` : ''}</small>
                     </div>
-                    <div className="cart-precio"><b>{soles(c.precio)}</b></div>
+                    <div className="cart-precio"><b>{soles(precioDe(c, moneda).precio, moneda)}</b></div>
                     <button type="button" className="cart-x" onClick={() => quitar(c.id)} aria-label={`Quitar ${c.titulo}`}>Quitar</button>
                   </li>
                 )
               })}
             </ul>
             <aside>
-              <Resumen subtotal={subtotal} total={total} igv={igv} n={cursos.length} />
+              <Resumen subtotal={subtotal} total={total} igv={igv} n={cursos.length} moneda={moneda} />
               <Link className="cbtn cart-cta" to="/checkout">INSCRÍBETE</Link>
               <Link className="cart-mas" to="/cursos">Seguir viendo cursos</Link>
             </aside>
@@ -80,7 +86,7 @@ export function Carrito() {
 }
 
 export function Checkout() {
-  const { data, cursos, grupoDe, subtotal, total, igv } = useItems()
+  const { data, cursos, grupoDe, subtotal, total, igv, moneda } = useItems()
   const nav = useNavigate()
   const [f, setF] = useState(FORM_VACIO)
   const [err, setErr] = useState({})
@@ -112,9 +118,9 @@ export function Checkout() {
       celular: f.celular.replace(/[\s-]/g, ''),
     }
     try {
-      const pedido = armarPedido({ cliente, cursos, grupoDe })
+      const pedido = armarPedido({ cliente, cursos, grupoDe, moneda })
       for (const c of cursos) { // un registro por curso: así entra al flujo de ventas de siempre (todos a la misma vendedora)
-        await crearInteresado({ ...cliente, curso_id: c.id, curso: c.titulo, lista_espera: false, inicio: grupoDe(c.id)?.inicio || '', acepta_adicional: f.acepta_adicional, observacion: `Pedido ${pedido.codigo} · ${cursos.length} ${cursos.length === 1 ? 'curso' : 'cursos'} · total ${soles(pedido.total)}` })
+        await crearInteresado({ ...cliente, curso_id: c.id, curso: c.titulo, lista_espera: false, inicio: grupoDe(c.id)?.inicio || '', acepta_adicional: f.acepta_adicional, moneda, observacion: `Pedido ${pedido.codigo} · ${cursos.length} ${cursos.length === 1 ? 'curso' : 'cursos'} · total ${soles(pedido.total, moneda)}` })
       }
       const r = await iniciarPago(pedido)
       setDestino(r.url); setEstado('ok'); vaciar()
@@ -170,9 +176,9 @@ export function Checkout() {
             </form>
             <aside>
               <ul className="cart-mini">
-                {cursos.map((c) => <li key={c.id}><span>{c.titulo}</span><b>{soles(c.precio)}</b></li>)}
+                {cursos.map((c) => <li key={c.id}><span>{c.titulo}</span><b>{soles(precioDe(c, moneda).precio, moneda)}</b></li>)}
               </ul>
-              <Resumen subtotal={subtotal} total={total} igv={igv} n={cursos.length} />
+              <Resumen subtotal={subtotal} total={total} igv={igv} n={cursos.length} moneda={moneda} />
               <Link className="cart-mas" to="/carrito">Editar carrito</Link>
             </aside>
           </div>

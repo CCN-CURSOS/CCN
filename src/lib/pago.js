@@ -4,25 +4,30 @@
    solo se registra un proveedor nuevo en PROVEEDORES y se cambia PROVEEDOR_ACTIVO. */
 import { wa, fechaCorta, fmtHorario } from './data.js'
 import { IGV_TASA, sinIgv, igvDe } from './igv.js'
+import { precioDe, precioWebMon } from './moneda.js'
 
 export const PROVEEDOR_ACTIVO = 'whatsapp'
 
 const r2 = (n) => Math.round(Number(n || 0) * 100) / 100
-export const soles = (n) => 'S/' + (Number.isInteger(r2(n)) ? r2(n) : r2(n).toFixed(2))
+export const soles = (n, mon = 'PEN') => precioWebMon(r2(n), mon)
+
+/* El carrito va en UNA sola moneda: dólares solo si TODOS los cursos tienen precio en dólares y el visitante eligió US$. */
+export const monedaDelCarrito = (cursos, moneda) => (moneda === 'USD' && cursos.length > 0 && cursos.every((c) => precioDe(c, 'USD').mon === 'USD') ? 'USD' : 'PEN')
 
 const codigoPedido = () => 'P-' + Date.now().toString(36).toUpperCase().slice(-6)
 
 /* Arma el pedido a partir de los cursos del carrito. El precio de cada curso es FINAL (ya incluye IGV); base e IGV se derivan. */
-export function armarPedido({ cliente, cursos, grupoDe }) {
+export function armarPedido({ cliente, cursos, grupoDe, moneda = 'PEN' }) {
   const items = cursos.map((c) => {
     const g = grupoDe(c.id)
-    return { curso_id: String(c.id), titulo: c.titulo, inicio: g?.inicio || '', horario: fmtHorario([g?.dias, g?.horario].filter(Boolean).join(' ')), base: sinIgv(c.precio), igv: igvDe(c.precio), total: r2(c.precio) }
+    const p = precioDe(c, moneda).precio
+    return { curso_id: String(c.id), titulo: c.titulo, inicio: g?.inicio || '', horario: fmtHorario([g?.dias, g?.horario].filter(Boolean).join(' ')), base: sinIgv(p), igv: igvDe(p), total: r2(p) }
   })
   const total = r2(items.reduce((s, i) => s + i.total, 0))
   const subtotal = sinIgv(total)
   return {
     codigo: codigoPedido(), cliente, items,
-    subtotal, igv: r2(total - subtotal), total, igv_tasa: IGV_TASA, moneda: 'PEN',
+    subtotal, igv: r2(total - subtotal), total, igv_tasa: IGV_TASA, moneda,
     // Reservado para SUNAT: tipo de comprobante y datos de facturación (boleta por defecto con el DNI/CE del alumno).
     comprobante: { tipo: 'boleta', documento: cliente.documento, tipo_doc: cliente.tipo_doc },
   }
@@ -36,8 +41,8 @@ export const PROVEEDORES = {
     boton: 'INSCRÍBETE',
     /* Devuelve { tipo: 'redirect', url } -> el checkout manda al visitante a esa dirección. */
     async iniciar(p) {
-      const lineas = p.items.map((i) => `• ${i.titulo}${i.inicio ? ` (inicio ${fechaCorta(i.inicio)}${i.horario ? ` · ${i.horario}` : ''})` : ''} · ${soles(i.total)}`).join('\n')
-      const msg = `Hola, quiero inscribirme en ${p.items.length > 1 ? 'estos cursos' : 'este curso'}:\n${lineas}\nTotal: ${soles(p.total)}\nPedido: ${p.codigo}\nMis datos: ${nombreCompleto(p.cliente)} · Celular: ${p.cliente.celular}`
+      const lineas = p.items.map((i) => `• ${i.titulo}${i.inicio ? ` (inicio ${fechaCorta(i.inicio)}${i.horario ? ` · ${i.horario}` : ''})` : ''} · ${soles(i.total, p.moneda)}`).join('\n')
+      const msg = `Hola, quiero inscribirme en ${p.items.length > 1 ? 'estos cursos' : 'este curso'}:\n${lineas}\nTotal: ${soles(p.total, p.moneda)}\nPedido: ${p.codigo}\nMis datos: ${nombreCompleto(p.cliente)} · Celular: ${p.cliente.celular}`
       return { tipo: 'redirect', url: wa(msg) }
     },
   },

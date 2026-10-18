@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { metricasVendedor, serieVendedor, historialVendedor, actividadMes, serieActividad, progresoMetas } from '../lib/ventas'
 import { Barras, Embudo, Meta } from '../components/Charts'
+import { fmtMoneda } from '../lib/moneda'
 
 const soles = (n) => 'S/ ' + Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
 const nombreMes = (m) => new Date(m + '-01T00:00:00').toLocaleDateString('es-PE', { month: 'long', year: 'numeric' })
@@ -29,7 +30,9 @@ export default function AvanceVendedor({ data, email, trab, verPago = true, hist
   const tit = vista === 'dia' ? 'por día' : vista === 'semana' ? 'por semana' : 'últimos 6 meses'
   const fmtF = (iso) => (iso ? new Date(String(iso).slice(0, 10) + 'T00:00:00').toLocaleDateString('es-PE', { day: '2-digit', month: 'short' }) : '—')
   const r0 = (n) => Math.round(n * 100) / 100
-  const KP = [['prospectos', m.prospectos, 'prospectos nuevos'], ['interesados', m.interesados, 'interesados derivados'], ['ventas', m.cupos, 'cupos vendidos'], ['vendido', soles(m.vendido), 'vendido'], ['cobrado', soles(m.cobrado), 'cobrado']]
+  const dos = (pen, usd) => (usd > 0 ? (pen > 0 ? `${soles(pen)} + ${fmtMoneda(usd, 'USD')}` : fmtMoneda(usd, 'USD')) : soles(pen))   // soles y dólares por separado, sin tipo de cambio
+  const usdTxt = m.vendidoUSD > 0 ? `Además vendiste ${fmtMoneda(m.vendidoUSD, 'USD')} en dólares: tu comisión por esas ventas es ${fmtMoneda(m.comisionUSD.monto, 'USD')} (${m.comisionUSD.pct}%). Se te paga en soles, al tipo de cambio de fin de mes.` : ''
+  const KP = [['prospectos', m.prospectos, 'prospectos nuevos'], ['interesados', m.interesados, 'interesados derivados'], ['ventas', m.cupos, 'cupos vendidos'], ['vendido', dos(m.vendido, m.vendidoUSD), 'vendido'], ['cobrado', dos(m.cobrado, m.cobradoUSD), 'cobrado']]
   const KPV = compacto ? KP.filter((x) => x[0] !== 'vendido' && x[0] !== 'cobrado') : KP
 
   return (
@@ -49,6 +52,7 @@ export default function AvanceVendedor({ data, email, trab, verPago = true, hist
           <small>Este mes vas ganando</small>
           <b className="monto">{soles(m.aPagar)}</b>
           <span>{soles(m.sueldo)} de sueldo{m.parcial ? ` (${m.dias} de ${m.diasMes} días)` : ''}{m.pasajes > 0 && ` + ${soles(m.pasajes)} de bono de pasajes`} + <b>{soles(m.comision.monto)}</b> de comisión{m.bono > 0 && <> + <b>{soles(m.bono)}</b> de bono 🎉</>}</span>
+          {usdTxt && <small className="usd-nota">💵 {usdTxt}</small>}
           {sig && (() => { const tk = m.cupos ? m.vendido / m.cupos : 299; const total = r0(m.sueldo + ((m.vendido + sig.faltan * tk) * sig.pct) / 100); return <div className="reto"><i>🔥</i><p>Cierra <b>{sig.faltan} cupo{sig.faltan === 1 ? '' : 's'} más</b> y tu comisión sube al <b>{sig.pct}%</b>: ganarías <b>{soles(total)}</b> este mes.</p></div> })()}
           {!sig && <div className="reto"><i>🏆</i><p>Estás en el tramo máximo: <b>{m.comision.pct}%</b> de comisión. ¡Sigue así!</p></div>}
           {proxima && <div className="hito"><div className="meta-top"><b>Próxima meta: {proxima.cupos} cupos{proxima.cursos > 1 ? ` en ${proxima.cursos} cursos` : ''}</b><span>{proxima.cumplida ? 'Cumplida' : `${fmtF(proxima.fecha)} · ${proxima.dias} día${proxima.dias === 1 ? '' : 's'}`}</span></div><div className="barra"><i style={{ width: `${proxima.pct}%` }} /></div><small>Llevas {proxima.cupos_actual} de {proxima.cupos}</small></div>}
@@ -72,11 +76,11 @@ export default function AvanceVendedor({ data, email, trab, verPago = true, hist
           ))}
           {(abierto === 'ventas' || abierto === 'vendido') && (act.ventas.length === 0 ? <p className="note">No cerró ventas este mes.</p> : (
             <div className="cons-wrap"><table className="cons-table insc"><thead><tr><th>Fecha</th><th>Alumno</th><th>Curso</th><th>Grupo</th><th>Precio</th><th>Pagado</th><th>Saldo</th><th>T&amp;C</th><th>Requisitos PC</th></tr></thead>
-              <tbody>{act.ventas.map((x, i) => <tr key={i}><td>{fmtF(x.fecha)}</td><td><b>{x.alumno}</b>{x.codigo && <small className="paq"><span className="cod">{x.codigo}</span></small>}</td><td>{x.curso}</td><td><span className="cod">{x.grupo}</span></td><td>{soles(x.precio)}</td><td>{soles(x.pagado)}</td><td>{x.saldo > 0 ? soles(x.saldo) : '—'}</td><td>{x.terminos ? 'Enviados' : <span className="wa falta">No</span>}</td><td>{!x.pideReq ? 'No aplica' : x.requisitos ? 'Enviados' : <span className="wa falta">No</span>}</td></tr>)}</tbody></table></div>
+              <tbody>{act.ventas.map((x, i) => <tr key={i}><td>{fmtF(x.fecha)}</td><td><b>{x.alumno}</b>{x.codigo && <small className="paq"><span className="cod">{x.codigo}</span></small>}</td><td>{x.curso}</td><td><span className="cod">{x.grupo}</span></td><td>{fmtMoneda(x.precio, x.moneda)}</td><td>{fmtMoneda(x.pagado, x.moneda)}</td><td>{x.saldo > 0 ? fmtMoneda(x.saldo, x.moneda) : '—'}</td><td>{x.terminos ? 'Enviados' : <span className="wa falta">No</span>}</td><td>{!x.pideReq ? 'No aplica' : x.requisitos ? 'Enviados' : <span className="wa falta">No</span>}</td></tr>)}</tbody></table></div>
           ))}
           {abierto === 'cobrado' && (act.pagos.length === 0 ? <p className="note">No registró pagos este mes.</p> : (
             <div className="cons-wrap"><table className="cons-table insc"><thead><tr><th>Fecha</th><th>Alumno</th><th>Grupo</th><th>Pago N.º</th><th>Monto</th><th>Método</th><th>Comprobante</th></tr></thead>
-              <tbody>{act.pagos.map((x, i) => <tr key={i}><td>{fmtF(x.fecha)}</td><td><b>{x.alumno}</b></td><td><span className="cod">{x.grupo}</span></td><td>{x.numero}</td><td>{soles(x.monto)}</td><td>{x.metodo}</td><td>{x.comprobante ? 'Subido' : <span className="wa falta">Sin comprobante</span>}</td></tr>)}</tbody></table></div>
+              <tbody>{act.pagos.map((x, i) => <tr key={i}><td>{fmtF(x.fecha)}</td><td><b>{x.alumno}</b></td><td><span className="cod">{x.grupo}</span></td><td>{x.numero}</td><td>{fmtMoneda(x.monto, x.moneda)}</td><td>{x.metodo}</td><td>{x.comprobante ? 'Subido' : <span className="wa falta">Sin comprobante</span>}</td></tr>)}</tbody></table></div>
           ))}
         </section>
       )}
@@ -100,6 +104,7 @@ export default function AvanceVendedor({ data, email, trab, verPago = true, hist
             <small>Va ganando este mes</small>
             <b className="grande">{soles(m.aPagar)}</b>
             <span>{soles(m.sueldo)} de sueldo{m.parcial ? ` (${m.dias} de ${m.diasMes} días)` : ''}{m.pasajes > 0 && ` + ${soles(m.pasajes)} de bono de pasajes`} + {soles(m.comision.monto)} de comisión ({m.comision.pct}% de {soles(m.vendido)}){m.bono > 0 && ` + ${soles(m.bono)} de bono por curso cerrado (${m.bonos.map((b) => b.grupo).join(', ')})`}</span>
+            {usdTxt && <span className="usd-nota">💵 {usdTxt}</span>}
           </div>
           <div className="av-meta">
             <Meta valor={m.cupos} objetivo={sig ? sig.desde : Math.max(m.cupos, 1)} etiqueta={sig ? `Con ${sig.faltan} cupo${sig.faltan === 1 ? '' : 's'} más sube al ${sig.pct}% (llevas ${m.cupos})` : `Ya estás en el tramo máximo (${m.comision.pct}%)`} />

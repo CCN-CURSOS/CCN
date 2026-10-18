@@ -6,6 +6,7 @@
    debe consultar a gerencia antes de prometerlo.
    ===================================================================== */
 import { fechaCorta, fmtHorario, telefono } from './data'
+import { precioEn, antesEn, precioMinimoLibre, fmtMoneda, vendeEnUsd } from './moneda'
 
 const soles = (n) => `S/ ${Number(n).toLocaleString('es-PE')}`
 const norm = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -53,7 +54,7 @@ function pitchDe(curso) {
 }
 
 /* Datos del curso y del grupo para rellenar los textos */
-export function variables({ asesora, nombre, curso, grupo, cursos = [] }) {
+export function variables({ asesora, nombre, curso, grupo, cursos = [], descMax = 0 }) {
   const g = grupo || {}
   const cupos = grupo ? Math.max(0, (g.maximo || 20) - (g.inscritos || 0)) : null
   const buscar = (re) => cursos.find((c) => re.test(norm(c.titulo)))
@@ -70,6 +71,12 @@ export function variables({ asesora, nombre, curso, grupo, cursos = [] }) {
     horario: g.horario ? fmtHorario(g.horario) : '', cupos: cupos == null ? '' : String(cupos),
     whatsapp: telefono(), clubPrecio: club ? soles(club.precio) : '', sueltos: sumaSueltos ? soles(sumaSueltos) : '', ahorro: ahorro ? soles(ahorro) : '',
     tieneGrupo: !!(grupo && grupo.inicio),
+    // Dólares y descuento libre (el tope lo define gerencia en Web → Ajustes)
+    precioUsd: curso && vendeEnUsd(curso) ? fmtMoneda(precioEn(curso, 'USD'), 'USD') : '',
+    antesUsd: curso && antesEn(curso, 'USD') > precioEn(curso, 'USD') ? fmtMoneda(antesEn(curso, 'USD'), 'USD') : '',
+    descMax: descMax > 0 ? String(descMax) : '',
+    precioMin: curso && descMax > 0 ? soles(precioMinimoLibre(Number(curso.precio), descMax)) : '',
+    precioMinUsd: curso && descMax > 0 && vendeEnUsd(curso) ? fmtMoneda(precioMinimoLibre(precioEn(curso, 'USD'), descMax), 'USD') : '',
   }
 }
 
@@ -131,7 +138,8 @@ export const PASOS = [
 ]
 export const REGLAS = [
   'Responde rápido: máximo 2 horas entre 8 a. m. y 7 p. m.; después de las 7 p. m., al día siguiente.',
-  'Nunca inventes cupos, fechas ni descuentos. Todo sale del panel.',
+  'Nunca inventes cupos, fechas ni descuentos. Todo sale del panel. Siempre ofreces el precio de la página; el descuento libre (con tope) es el último recurso para cerrar.',
+  'Cada inscripción va en una sola moneda: soles o dólares (US$). No se mezclan ni se convierten.',
   'Máximo 3 intentos de seguimiento por prospecto; luego se marca como perdido.',
   'Todo contacto queda registrado en Prospectos.',
   'Los pagos van solo a las cuentas oficiales de CCN, nunca a cuentas personales.',
@@ -142,7 +150,7 @@ export const REGLAS = [
 ]
 export const NO_DECIR = [
   ['“Es solo por este mes” / “última oportunidad”', 'No hay fecha real de cierre. Usa solo cupos y fecha reales.'],
-  ['“Te hago un descuento”', 'El precio publicado ya es el más bajo. No hay descuentos adicionales.'],
+  ['“Te hago un descuento” (de entrada)', 'Primero ofrece el precio de la página. El descuento libre es solo el último recurso para cerrar la venta, nunca se anuncia y nunca pasa del tope.'],
   ['“Seguro te devolvemos el dinero”', 'La respuesta en primera instancia es no. Revisa los Términos.'],
   ['“Es un título oficial” / “reconocido por el Ministerio”', 'Es un certificado CCN verificable con código QR.'],
   ['“Aprendes todo sin esfuerzo”', 'El curso pide asistencia, práctica y proyecto final. Sé realista.'],
@@ -157,12 +165,14 @@ export function faqs(v) {
   return [
     /* ---- Precio y pago ---- */
     { g: 'Precio y pago', q: '¿Cuánto cuesta?', a: 'El curso *{curso}* tiene una inversión de {precio} 😊 Incluye clases en vivo por Zoom, clases grabadas y certificado CCN al aprobar el curso. ¿Te comparto las fechas y el temario?', tip: 'Da el precio junto con el valor (qué incluye) y termina con una pregunta que avance la conversación.' },
-    { g: 'Precio y pago', q: '“Está caro”', a: 'Te entiendo 😊 El precio que ves ya es el precio promocional de la web, por eso no manejamos descuentos adicionales. Lo que recibes: clases en vivo con el instructor, clases grabadas para repasar, práctica guiada, proyecto final y certificado CCN. ¿Qué parte del curso te interesa más? Así te cuento cómo te ayuda.', tip: 'No te pongas a la defensiva ni bajes el precio. Pasa de “precio” a “valor” y pregunta qué necesita resolver.' },
-    { g: 'Precio y pago', q: '¿Tienen descuento / promoción?', a: 'El precio de {precio} ya incluye la promoción vigente de la web 😊 No manejamos descuentos adicionales. {club_}', tip: 'Si pide descuento, ofrece una alternativa de valor (Club) en vez de rebajar.', conClub: true },
+    { g: 'Precio y pago', q: '“Está caro”', a: 'Te entiendo 😊 El precio que ves ya es el precio promocional de la web. Lo que recibes: clases en vivo con el instructor, clases grabadas para repasar, práctica guiada, proyecto final y certificado CCN. ¿Qué parte del curso te interesa más? Así te cuento cómo te ayuda.', tip: 'No te pongas a la defensiva ni bajes el precio. Pasa de “precio” a “valor” y pregunta qué necesita resolver.' },
+    { g: 'Precio y pago', q: '¿Tienen descuento / promoción?', a: 'El precio de {precio} ya incluye la promoción vigente de la web 😊 {club_}', tip: 'Ofrece SIEMPRE primero el precio de la página y una alternativa de valor (Club). El descuento libre es el último recurso para cerrar la venta: mira “Último recurso: descuento” en Casos especiales. Nunca lo anuncies ni lo ofrezcas de entrada.', conClub: true },
+    { g: 'Precio y pago', q: '¿Puedo pagar en dólares / desde el extranjero?', a: '¡Sí! 😊 Puedes pagar en dólares (US$) por PayPal. El precio de *{curso}* en dólares es {precioUsd}. Cuando estés listo, te envío los datos de pago.', pendiente: true, tip: 'La cuenta de PayPal de CCN aún se está creando: no envíes datos de pago hasta que gerencia los confirme. Si arriba sale [precioUsd], ese curso aún no tiene precio en dólares (se pone en Web → Cursos). Toda la inscripción va en una sola moneda.' },
+    { g: 'Precio y pago', q: 'Pagué en dólares: ¿me dan comprobante?', a: 'Por ahora, en los pagos en dólares te enviamos una *nota de pago* con el detalle de tu pago 😊', tip: 'En el panel: Ventas → Inscritos → botón “Nota de pago” (solo en inscripciones en dólares). No es boleta ni factura: por ahora no se emite comprobante electrónico en dólares.' },
     { g: 'Precio y pago', q: '¿Cómo puedo pagar?', a: 'Puedes pagar por *Yape, Plin o transferencia* a las cuentas oficiales de CCN. Cuando estés listo, te envío los datos y, al pagar, me compartes la captura 😊', tip: 'Envía los datos de pago solo cuando el cliente confirme que quiere inscribirse.' },
     { g: 'Precio y pago', q: '¿Puedo separar mi cupo?', a: 'Sí, puedes reservar tu cupo 😊 Solo debes completar el pago del curso *antes de que inicie*: lo ideal es un día antes, y excepcionalmente el mismo día hasta 3 horas antes de la primera clase. Si no se completa el pago, no podrás ingresar a las clases.', tip: 'La reserva no es un adelanto parcial: es apartar el cupo y pagar el total antes del inicio.' },
     { g: 'Precio y pago', q: '¿Puedo pagar en cuotas / por partes?', a: 'Déjame confirmarlo con la coordinación y te respondo en un momento 😊', pendiente: true, tip: 'NO está definido. No prometas cuotas. Consulta con gerencia.' },
-    { g: 'Precio y pago', q: '¿Me dan boleta o factura?', a: 'Sí, te entregamos tu comprobante de pago. Si necesitas factura, envíame tu RUC y razón social y lo coordinamos 😊', pendiente: true, tip: 'El comprobante electrónico con SUNAT está decidido pero aún no está activo. Confirma con gerencia cómo y cuándo se entrega antes de prometer fechas.' },
+    { g: 'Precio y pago', q: '¿Me dan boleta o factura?', a: 'Sí, te entregamos tu comprobante de pago. Si necesitas factura, envíame tu RUC y razón social y lo coordinamos 😊', pendiente: true, tip: 'Solo para pagos en soles. El comprobante electrónico con SUNAT está decidido pero aún no está activo (los botones Boleta y Factura del panel aparecen apagados). Confirma con gerencia cómo y cuándo se entrega antes de prometer fechas. Pagos en dólares: ver “Pagué en dólares”.' },
     { g: 'Precio y pago', q: '¿Hay devolución si no me gusta?', a: 'Los pagos no son reembolsables 😊 Por eso te recomiendo revisar bien el temario, las fechas y el horario antes de inscribirte. Si tienes cualquier duda, te la resuelvo ahora mismo.', tip: 'En primera instancia la respuesta es no. Sé clara y amable; si insiste, deriva a gerencia.' },
     { g: 'Precio y pago', q: 'Ya pagué y no puedo asistir. ¿Qué hago?', a: 'Gracias por avisarme 🙌 Voy a revisar tu caso con la coordinación y te respondo hoy mismo.', pendiente: true, tip: 'No prometas reembolso ni cambio. Registra el caso y avisa a gerencia.' },
     { g: 'Precio y pago', q: '¿El precio incluye IGV?', a: 'El precio de {precio} es el *precio final*, no se agrega ningún costo adicional 😊', tip: 'No entres en detalles de IGV. Es precio final.' },
@@ -220,6 +230,7 @@ export function cierres(v) {
   return [
     { id: 'c1', t: 'Pedir datos para inscribir', nota: 'Correo y DNI/CE son obligatorios. Envía también los Términos y condiciones (y los requisitos de PC si es ofimática).', a: 'Para inscribirte necesito estos datos 😊\n\n• Nombre completo\n• DNI o CE\n• Correo electrónico\n• Celular\n\nTe envío también los Términos y condiciones para que los revises.' },
     { id: 'c2', t: 'Enviar datos de pago', nota: 'Reemplaza [datos de la cuenta oficial] con las cuentas de CCN (Yape, Plin o transferencia). Nunca cuentas personales.', a: `Perfecto, ${v.nombre || '[nombre]'} 🙌 El pago de *${v.curso || '[curso]'}* es de *${v.precio || '[precio]'}*.\n\nPuedes pagar por Yape, Plin o transferencia:\n[datos de la cuenta oficial]\n\nCuando pagues, envíame la captura y quedas inscrito 😊` },
+    { id: 'c2b', t: 'Enviar datos de pago en dólares (PayPal)', nota: 'La cuenta de PayPal aún se está creando: usa este mensaje solo cuando gerencia confirme los datos. La inscripción completa va en dólares (no se mezcla con soles).', a: `Perfecto, ${v.nombre || '[nombre]'} 🙌 El pago de *${v.curso || '[curso]'}* en dólares es de *${v.precioUsd || '[precio en US$]'}*.\n\nPuedes pagar por PayPal:\n[datos de PayPal]\n\nCuando pagues, envíame la captura y quedas inscrito 😊` },
     { id: 'c3', t: 'Recordar el pago antes del inicio', nota: 'Fecha límite: idealmente 1 día antes; excepcionalmente hasta 3 horas antes de la clase.', a: `Hola ${v.nombre || '[nombre]'} 😊 te recuerdo que para asegurar tu cupo en *${v.curso || '[curso]'}* debes completar tu pago antes del inicio (${v.fecha || '[fecha]'}). Si no se completa, no podrás ingresar a las clases. ¿Te ayudo con algo?` },
     { id: 'c4', t: 'Confirmar el pago recibido', nota: 'Registra el pago en el panel y envía la bienvenida (Ventas → Inscritos).', a: `¡Pago recibido, gracias! ✅ Ya estás inscrito en *${v.curso || '[curso]'}*. En breve te llegará un correo de bienvenida con el link del grupo de WhatsApp y los datos de tu clase. Si tu curso lo necesita, te escribo para agendar la instalación de los programas 😊` },
   ]
@@ -228,6 +239,10 @@ export function cierres(v) {
 /* ---------------- 6. Casos especiales ---------------- */
 export function casos(v) {
   return [
+    { id: 'k0', t: 'Último recurso: descuento libre', pendiente: !v.descMax, nota: v.descMax
+      ? `Solo si el cliente está por irse y el precio es lo único que falta. Antes ofrece SIEMPRE el precio de la página y el valor del curso. Puedes bajar hasta ${v.descMax} % (mínimo ${v.precioMin || '[elige un curso]'}) sin pedir autorización; más abajo necesitas la autorización de gerencia. Al inscribir, pon el precio acordado: el panel lo reconoce como descuento libre. No uses frases como “solo por hoy”.`
+      : 'Aún no hay un tope de descuento libre (se define en Web → Ajustes). Mientras tanto, cualquier descuento necesita autorización previa de gerencia.',
+      a: v.descMax ? `Te entiendo 😊 Déjame ver qué puedo hacer por ti… Puedo ofrecerte *${v.precioMin || '[precio mínimo]'}* por *${v.curso || '[curso]'}*. ¿Te inscribes con ese precio?` : 'Déjame consultarlo con la coordinación y te respondo en un momento 😊' },
     { id: 'k1', t: 'Curso sin fecha confirmada', nota: 'Segunda ola (p. ej. Claude, IA aplicada, Canva) mientras no haya grupo.', a: `Este curso aún no tiene fecha confirmada 😊 Si quieres, te anoto y te aviso apenas abramos el grupo. ¿Te parece?` },
     { id: 'k2', t: 'Grupo lleno → lista de espera', nota: 'Registra al cliente como prospecto con el curso.', a: 'Este grupo ya está completo 🙌 Puedo anotarte en lista de espera y avisarte apenas haya un cupo o se abra un nuevo grupo. ¿Te anoto?' },
     { id: 'k3', t: 'El grupo se posterga (no llegó al mínimo)', nota: 'Avisa a quienes ya se inscribieron. La reprogramación se rige por los Términos y condiciones.', a: `Hola ${v.nombre || '[nombre]'} 😊 Te aviso que el grupo de *${v.curso || '[curso]'}* se posterga [1 o 2] semana(s) para completar el cupo mínimo. La nueva fecha de inicio será el [nueva fecha]. Tu inscripción se mantiene según nuestros Términos y condiciones. ¿Alguna duda?` },
