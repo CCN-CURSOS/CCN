@@ -4,7 +4,7 @@
    - Base imponible e IGV se DERIVAN del final (para comprobantes/SUNAT): base = final / 1.18
    - La comisión de las vendedoras se calcula sobre la base (sin IGV). */
 export const IGV_TASA = 0.18
-const r2 = (n) => Math.round(Number(n || 0) * 100) / 100
+import { r2 } from './formato.js'
 
 export const redondear = (n) => Math.round(Number(n || 0))                  // los precios siempre enteros
 export const sinIgv = (final) => r2(Number(final || 0) / (1 + IGV_TASA))   // 229 -> 194.07 (base)

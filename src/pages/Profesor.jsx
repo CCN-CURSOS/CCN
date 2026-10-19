@@ -8,34 +8,9 @@ import {
   DIAS_SEMANA, diasDeTexto, horaDeTexto, generarFechas, aTs, fechaClase, horaClase, fechaISOLima, horaHHMM, horasDeClase, ventana,
   ESTADOS_ASIS, ETIQ_ASIS, resumenAlumno, reabierta,
 } from '../lib/clases.js'
+import { Drawer, Seccion } from '../components/ui.jsx'
 
 /* ================= piezas pequeñas ================= */
-function Seccion({ titulo, ayuda, children }) {
-  return (
-    <div className="sechead">
-      <div><h1>{titulo}</h1><p>{ayuda}</p></div>
-      <div className="secact">{children}</div>
-    </div>
-  )
-}
-
-function Drawer({ titulo, onClose, children, pie, ancho }) {
-  useEffect(() => {
-    const k = (e) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', k)
-    return () => window.removeEventListener('keydown', k)
-  }, [onClose])
-  return (
-    <div className="ovl" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <aside className={`drawer ${ancho ? 'ancho' : ''}`} role="dialog" aria-modal="true" aria-label={titulo}>
-        <div className="dr-head"><h2>{titulo}</h2><button className="x" onClick={onClose} aria-label="Cerrar">×</button></div>
-        <div className="dr-body">{children}</div>
-        {pie && <div className="dr-foot">{pie}</div>}
-      </aside>
-    </div>
-  )
-}
-
 const nombreAlumno = (a) => `${a.apellido_paterno || ''} ${a.apellido_materno || ''}, ${a.nombres || ''}`.replace(/\s+,/, ',').trim()
 
 /* Reloj para que los estados (en curso / cerrada) se actualicen solos */

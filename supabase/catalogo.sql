@@ -29,7 +29,7 @@ from (values
   ('Word',                      'Domina Word desde cero: documentos, formatos y trabajos con presentación profesional.',          'g2', 12, 4, 200, 'Microsoft Word', 4),
   ('Excel',                     'Aprende Excel desde cero: tablas, fórmulas y reportes para tu trabajo o tu negocio.',            'g7', 12, 4, 200, 'Microsoft Excel', 5),
   ('PowerPoint',                'Crea presentaciones claras y profesionales en PowerPoint.',                                       'g9', 12, 4, 200, 'Microsoft PowerPoint', 6),
-  ('Club Ofimática',            'Word, Excel y PowerPoint en un solo paquete: 36 horas para dominar la ofimática.',               'g11', 36, 12, 450, 'Microsoft Word, Excel y PowerPoint', 7),
+  ('Club Ofimática',            'Word, Excel y PowerPoint en un solo paquete: 42 horas para dominar la ofimática.',               'g11', 42, 18, 459, 'Microsoft Word, Excel y PowerPoint', 7),
   ('Illustrator desde 0',       'Aprende diseño vectorial desde cero con Adobe Illustrator.',                                      'g6', 12, 4, 299, 'Adobe Illustrator', 9),
   ('Photoshop desde 0',         'Aprende edición y diseño de imágenes desde cero con Adobe Photoshop.',                            'g8', 12, 4, 299, 'Adobe Photoshop', 10),
   ('Canva',                     'Diseña piezas para redes y tu negocio con Canva, paso a paso.',                                   'g10', 12, 4, 299, 'Canva', 11)

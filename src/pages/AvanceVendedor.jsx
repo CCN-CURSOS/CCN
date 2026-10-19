@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
 import { metricasVendedor, serieVendedor, historialVendedor, actividadMes, serieActividad, progresoMetas } from '../lib/ventas'
 import { Barras, Embudo, Meta } from '../components/Charts'
+import { soles, nombreMes } from '../lib/formato.js'
 import { fmtMoneda } from '../lib/moneda'
 
-const soles = (n) => 'S/ ' + Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
-const nombreMes = (m) => new Date(m + '-01T00:00:00').toLocaleDateString('es-PE', { month: 'long', year: 'numeric' })
 const corto = (m) => new Date(m + '-01T00:00:00').toLocaleDateString('es-PE', { month: 'short' }).replace('.', '')
 const cuando = (iso) => new Date(iso).toLocaleString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 

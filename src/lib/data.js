@@ -382,8 +382,7 @@ export const fechaCorta = (iso) =>
 /* =====================================================================
    CRM: alumnos, matrículas, pagos y comprobantes
    ===================================================================== */
-const r2 = (n) => Math.round(Number(n) * 100) / 100
-const suma = (xs) => r2(xs.reduce((t, x) => t + Number(x || 0), 0))
+import { r2, suma } from './formato.js'
 
 /* Reparte un monto entre n partes (la última lleva el resto, para que sume exacto) */
 export function repartir(total, pesos) {

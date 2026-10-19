@@ -10,8 +10,7 @@ export const PUESTOS = { instructor: 'Profesores', vendedor: 'Vendedores' }
 export const TARIFA_HORA_DEF = 20 // S/400 por curso de 20 h
 
 const mesDe = (iso) => String(iso || '').slice(0, 7)
-const r2 = (n) => Math.round(n * 100) / 100
-const suma = (a) => r2(a.reduce((t, x) => t + Number(x || 0), 0))
+import { r2, suma } from './formato.js'
 
 export function tramosDe(trab) {
   const t = Array.isArray(trab?.comision_tramos) && trab.comision_tramos.length ? trab.comision_tramos : TRAMOS_DEF

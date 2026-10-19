@@ -8,7 +8,7 @@ import { precioDe, precioWebMon } from './moneda.js'
 
 export const PROVEEDOR_ACTIVO = 'whatsapp'
 
-const r2 = (n) => Math.round(Number(n || 0) * 100) / 100
+import { r2 } from './formato.js'
 export const soles = (n, mon = 'PEN') => precioWebMon(r2(n), mon)
 
 /* El carrito va en UNA sola moneda: dólares solo si TODOS los cursos tienen precio en dólares y el visitante eligió US$. */

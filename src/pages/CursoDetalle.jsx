@@ -6,10 +6,7 @@ import { precioDe, precioWebMon } from '../lib/moneda.js'
 import { useMonedaWeb } from '../lib/monedaWeb.js'
 import { useCarrito } from '../lib/carrito.js'
 import { Header, Footer } from '../components/Layout.jsx'
-
-const Flecha = () => (
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-)
+import { Flecha } from '../components/Icons.jsx'
 
 const POR_QUE = [
   ['Clases en vivo', 'Aprendes con el instructor en tiempo real y resuelves tus dudas al instante.'],

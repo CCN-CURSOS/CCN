@@ -23,7 +23,7 @@ create table if not exists public.cursos (
   color text not null default 'g1' check (color in ('g1','g2','g3','g4','g5')),
   horas int not null default 12,
   sesiones int not null default 4,
-  precio int not null default 299,
+  precio int not null default 229,
   programas text not null default '',
   temario text[] not null default '{}',
   extra text not null default '',
@@ -143,7 +143,7 @@ grant execute on function public.clic_enlace(uuid) to anon, authenticated;
 
 insert into public.enlaces (titulo, subtitulo, url, tipo, destacado, orden, activo)
 select * from (values
- ('VER LOS CURSOS','Online · desde S/299','/cursos','enlace',true,1,true),
+ ('VER LOS CURSOS','Online · desde S/229','/cursos','enlace',true,1,true),
  ('ESCRÍBENOS POR WHATSAPP','Inscripciones y consultas','','whatsapp',false,2,true),
  ('INSTAGRAM','Pon aquí tu @usuario','https://instagram.com/','enlace',false,3,false),
  ('TIKTOK','Pon aquí tu @usuario','https://tiktok.com/','enlace',false,4,false)
