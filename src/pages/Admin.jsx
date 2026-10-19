@@ -874,10 +874,9 @@ function ManualVentas({ data, email }) {
       {tab === 'pres' && (!curso
         ? <p className="note">Elige un curso arriba para armar el mensaje de presentación y la oferta.</p>
         : <>
-          <p className="note">Orden: envía el flyer del curso → mensaje de presentación → temario en PDF → oferta → cierre.</p>
+          <p className="note">Orden: envía el flyer del curso → mensaje de presentación → mensaje de fecha, precio y cierre → temario en PDF.</p>
           <Msg k="p" titulo="1 · Presentación del curso" texto={presentacionManual(v, curso)} nota="Antes de este mensaje, envía el flyer del curso." />
-          <Msg k="o" titulo="2 · Fecha y precio" texto={ofertaManual(v, curso)} />
-          <Msg k="c" titulo="3 · Cierre con cupos reales" texto={cierreManual(v)} nota="El número de cupos sale del grupo real (máximo menos inscritos)." />
+          <Msg k="o" titulo="2 · Fecha, precio y cierre" texto={ofertaManual(v, curso)} nota="Incluye los cupos reales del grupo (máximo menos inscritos). Después envía el temario en PDF." />
         </>)}
 
       {tab === 'faq' && (
@@ -925,7 +924,7 @@ function GuionVenta({ p, data, email, onClose }) {
   return (
     <Drawer titulo={`Guion · ${p.nombres}`} onClose={onClose} pie={<button className="btn btn-line" onClick={onClose}>Cerrar</button>}>
       <div className="fs">
-        <p className="note">Orden: 1) saludo → 2) cuando responda, sube sus datos → 3) envía el flyer del curso y este mensaje → 4) el temario en PDF → 5) el cierre.</p>
+        <p className="note">Orden: 1) saludo → 2) cuando responda, sube sus datos → 3) envía el flyer del curso y el mensaje de fecha, precio y cierre → 4) el temario en PDF.</p>
         {bloque('s', '1 · Saludo', g.saludo)}
         <label>Curso de interés
           <select value={cursoId} onChange={(e) => setCursoId(e.target.value)}>
@@ -933,9 +932,8 @@ function GuionVenta({ p, data, email, onClose }) {
           </select>
         </label>
         {!curso && <p className="note">Elige el curso para armar el mensaje con su precio, fecha y cupos.</p>}
-        {bloque('o', '3 · Fecha y precio (después del flyer)', g.oferta, 'Antes de este mensaje envía la imagen (flyer) del curso.')}
+        {bloque('o', '3 · Fecha, precio y cierre (después del flyer)', g.oferta, 'Antes de este mensaje envía la imagen (flyer) del curso.')}
         {curso && !grupo && <p className="note">⚠️ Este curso no tiene un grupo abierto con fecha. Revisa en Grupos.</p>}
-        {bloque('c', '5 · Cierre (después del temario en PDF)', g.cierre, g.cupos != null ? `Los cupos salen del grupo real (máximo menos inscritos).` : '')}
       </div>
     </Drawer>
   )

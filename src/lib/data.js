@@ -771,7 +771,7 @@ export function grupoParaOferta(grupos, cursoId) {
     .sort((a, b) => String(a.inicio || '9999').localeCompare(String(b.inicio || '9999')))[0] || null
 }
 export function guionesVenta({ asesora, nombre, curso, grupo }) {
-  const saludo = `Hola 👋 soy tu asesora académica de CCN, ${asesora} 😊\n\n¿Cuál es tu nombre?\n¿En qué cursos estás interesado?`
+  const saludo = `Hola 👋 soy tu asesora educativa de CCN, ${asesora} 😊\n\n¿Cuál es tu nombre?\n¿En qué cursos estás interesado?`
   if (!curso) return { saludo, oferta: '', cierre: '', cupos: null }
   const soles = (n) => `S/ ${Number(n).toLocaleString('es-PE')}`
   const lineas = [`${nombre ? `Gracias, ${nombre} 😊\n\n` : ''}📚 *${curso.titulo}*`]
@@ -787,7 +787,7 @@ export function guionesVenta({ asesora, nombre, curso, grupo }) {
     : cupos === 0
       ? 'Este grupo ya está lleno 😅 pero podemos anotarte en lista de espera.\n\n*¿Te anoto?*'
       : `Actualmente contamos con ${cupos} cupo${cupos === 1 ? '' : 's'} disponible${cupos === 1 ? '' : 's'} 🙌\n\n*¿Deseas inscribirte?*`
-  return { saludo, oferta: lineas.join('\n'), cierre, cupos }
+  return { saludo, oferta: lineas.join('\n') + '\n\n' + cierre, cierre, cupos }
 }
 
 /* Al marcar una consulta como atendida, pasa a Prospectos (una sola vez por celular) */

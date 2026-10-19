@@ -84,9 +84,9 @@ export function variables({ asesora, nombre, curso, grupo, cursos = [], descMax 
     const U = (n) => fmtMoneda(n, 'USD')
     const sueltosU = suelto.every((c) => c && vendeEnUsd(c)) ? suelto.reduce((a, c) => a + precioEn(c, 'USD'), 0) : 0
     const clubU = club && vendeEnUsd(club) ? precioEn(club, 'USD') : 0
-    out.precio = out.precioUsd
+    out.precio = out.precioUsd || (curso ? '[falta precio en US$: cárgalo en Web → Cursos]' : '')
     out.antes = out.antesUsd
-    out.precioMin = out.precioMinUsd
+    out.precioMin = out.precioMinUsd || (curso ? '[falta precio en US$]' : '')
     out.clubPrecio = clubU ? U(clubU) : ''
     out.sueltos = sueltosU ? U(sueltosU) : ''
     out.ahorro = sueltosU && clubU && sueltosU > clubU ? U(sueltosU - clubU) : ''
@@ -104,22 +104,10 @@ export function presentacion(v, curso) {
   if (!curso) return ''
   const p = pitchDe(curso)
   const titulo = `*${curso.titulo}*`
-  const intro = p
-    ? `Nuestro ${p.tipo ? '' : 'curso '}${titulo} ${p.intro}`
-    : `Nuestro curso ${titulo} está diseñado para que aprendas desde cero, paso a paso.`
-  const apr = p ? p.apr : (curso.temario || []).slice(0, 6)
-  const extra = p ? p.extra : 'clases en vivo con el instructor, práctica durante las sesiones y certificado CCN al terminar.'
+  const apr = (p ? p.apr : (curso.temario || [])).slice(0, 3).map((a) => String(a).replace(/\.$/, ''))
   const nombre = v.nombre ? `Hola ${v.nombre}! 😊` : 'Hola! 😊'
-  const L = [`${nombre} ¡Qué excelente elección!`, '', `Te saluda ${v.asesora}, asesora de CCN – Centro de Capacitaciones y Negocios. 💻✨`, '', intro, '', '🚀 ¿Qué aprenderás?', '', ...apr.map((a) => `✅ ${a}`), '', `🎓 Además, tendrás ${extra}`, '']
-  if (v.tieneGrupo) {
-    L.push(`📅 Inicio: ${v.fecha}.`)
-    if (v.dias || v.horario) L.push(`🕒 Horario: ${[v.dias, v.horario].filter(Boolean).join(' de ')}.`)
-  } else {
-    L.push('📅 Inicio: próximamente (fecha por confirmar). Si quieres, te aviso apenas abramos el grupo 😊')
-  }
-  L.push('💻 Modalidad: online en vivo.')
-  if (curso.horas) L.push(`⏳ Duración: ${curso.horas} horas${curso.sesiones ? `, distribuidas en ${curso.sesiones} sesiones` : ''}.`)
-  return L.join('\n')
+  const L = [`${nombre} Soy ${v.asesora}, asesora educativa de CCN 👋`, '', `🔥 Con ${titulo} vas a:`, ...apr.map((a) => `✅ ${a}`), '', '🎓 Clases en vivo + grabadas + certificado CCN']
+  return L.join('\n').replace(/\.\./g, '.')
 }
 
 /* Oferta (precio) y cierre con cupos reales */
@@ -130,7 +118,7 @@ export function oferta(v, curso) {
   if (v.dias || v.horario) L.push(`⏰ ${[v.dias, v.horario].filter(Boolean).join(' · ')}`)
   L.push(`💻 Online por Zoom${v.horas ? ` · ${v.horas} horas` : ''}`, '')
   if (v.antes) L.push(`💰 Inversión: ~${v.antes}~`)
-  L.push(`💰 *Inversión: ${v.precio}*`)
+  L.push(`💰 *Inversión: ${v.precio}*`, '', cierre(v))
   return L.join('\n')
 }
 export function cierre(v) {
@@ -144,7 +132,7 @@ export const PASOS = [
   ['Saluda y pregunta', 'Mensaje corto: tu nombre, “¿cuál es tu nombre?” y “¿en qué cursos estás interesado?”.'],
   ['Registra al prospecto', 'En Prospectos → Registro rápido: nombre, celular y curso. Si falta algo, no importa: se completa después.'],
   ['Presenta el curso', 'Envía el flyer y el mensaje de “Presentación” (pestaña Presentación). Luego el temario en PDF.'],
-  ['Da fecha y precio', 'Mensaje de “Oferta” con el precio final y, si existe, el tachado. Sin inventar descuentos. Si el cliente es del extranjero, cambia “Moneda del cliente” a Dólares: todos los mensajes salen en US$.'],
+  ['Da fecha, precio y cierre', 'Mensaje de “Fecha, precio y cierre” con el precio final y, si existe, el tachado. Sin inventar descuentos. Si el cliente es del extranjero, cambia “Moneda del cliente” a Dólares: todos los mensajes salen en US$.'],
   ['Cierra con cupos reales', '“Actualmente contamos con X cupos”. El número sale del grupo real. Pregunta: “¿Deseas inscribirte?”.'],
   ['Resuelve dudas', 'Usa Preguntas frecuentes. Responde corto, con una idea por mensaje, y vuelve a preguntar si se inscribe.'],
   ['Cobra e inscribe', 'Pide nombre completo, DNI o CE, correo y celular; envía los Términos y los datos de pago oficiales.'],
