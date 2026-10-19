@@ -590,7 +590,7 @@ export async function ponerCoordina(email, valor) {
 export const ROLES = {
   gerente: { nombre: 'Gerente', ayuda: 'Ve y maneja todo: gerencia, ventas y web.' },
   vendedora: { nombre: 'Vendedora', ayuda: 'Módulo de ventas: prospectos, inscritos, pagos y grupos.' },
-  asistente: { nombre: 'Asistente académico', ayuda: 'Módulo Académico: grupos, clases, profesor, accesos, T1/T2 y certificados. No ve pagos, precios ni tarifas.' },
+  asistente: { nombre: 'Asistente académico', ayuda: 'Módulo Académico: grupos, clases, profesor, accesos, trabajo final y certificados. No ve pagos, precios ni tarifas.' },
   profesor: { nombre: 'Profesor', ayuda: 'Solo ve sus grupos: alumnos, asistencia y documentos. No ve pagos ni precios.' },
 }
 export async function guardarMiembro({ email, rol }) {

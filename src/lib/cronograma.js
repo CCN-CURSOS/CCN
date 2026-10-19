@@ -70,7 +70,7 @@ export function textoCronograma({ curso, codigo, horario, instructor, filas }) {
   if (instructor) L.push(`Profesor(a): ${instructor}`)
   L.push('')
   for (const f of filas) {
-    const nom = `${f.etapa}${f.programa ? ` ${f.programa}` : ''}: ${f.e.titulo}`
+    const nom = `${f.etapa === 'T2' ? 'Trabajo final' : f.etapa}${f.programa ? ` ${f.programa}` : ''}: ${f.e.titulo}`
     L.push(`*${nom}*`)
     if (f.anuncio) L.push(`• Se anuncia: clase ${f.anuncio.numero} (${fechaHora(f.anuncio.inicio)})`)
     if (f.limite) L.push(`• Fecha límite de entrega: ${fechaHora(f.limite)}`)
@@ -121,7 +121,7 @@ export async function pdfCronograma({ curso, codigo, horario, instructor, clases
   y += 3
   seccion('Evaluaciones y entregas')
   filas.forEach((f) => {
-    fila(`${f.etapa}${f.programa ? ' ' + f.programa : ''}`, f.e.titulo, true)
+    fila(`${f.etapa === 'T2' ? 'Trabajo final' : f.etapa}${f.programa ? ' ' + f.programa : ''}`, f.e.titulo, true)
     if (f.anuncio) fila('  Se anuncia', `Clase ${f.anuncio.numero} (${fechaHora(f.anuncio.inicio)})`)
     if (f.limite) fila('  Fecha limite', fechaHora(f.limite))
     if (f.etapa === 'T2' && f.cierre) fila('  Ultima clase', `Repaso de trabajos y preguntas: ${fechaHora(f.cierre.inicio)}`)

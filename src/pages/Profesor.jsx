@@ -382,14 +382,14 @@ function EntregablesGrupo({ g, bundle, avisar }) {
 
   if (err) return <p className="banner">{err}</p>
   if (!d) return <p className="note">Cargando…</p>
-  if (!d.entregables.length) return <div className="vacio"><p>Aún no se definieron el T1 y el T2 de este curso.</p></div>
+  if (!d.entregables.length) return <div className="vacio"><p>Aún no se definió el trabajo final de este curso.</p></div>
   if (!bundle.alumnos.length) return <div className="vacio"><p>Aún no hay alumnos inscritos en este grupo.</p></div>
   const oblig = d.entregables.filter((e) => e.obligatorio)
   const ultima = bundle.clases.length ? bundle.clases[bundle.clases.length - 1] : null
   const elegidos = (e) => bundle.alumnos.filter((a) => dato(a, e).repaso)
   return (
     <>
-      <p className="note">Revisa los trabajos de tus alumnos: marca <b>Entregó</b> y <b>Aprobó</b>. Para el certificado hace falta tener aprobados el T1 y el T2. En el T2 marca con ⭐ los trabajos que quieres repasar en la última clase{ultima ? ` (${fechaHora(ultima.inicio)})` : ''}. 🎓 Los certificados salen dentro de las 72 h después de esa clase.</p>
+      <p className="note">Revisa los trabajos de tus alumnos: marca <b>Entregó</b> y <b>Aprobó</b>. Para el certificado hace falta tener aprobado el trabajo final. En el trabajo final marca con ⭐ los trabajos que quieres repasar en la última clase{ultima ? ` (${fechaHora(ultima.inicio)})` : ''}. 🎓 Los certificados salen dentro de las 72 h después de esa clase.</p>
       <div className="cons-wrap" style={{ marginBottom: 10 }}>
         <table className="cons-table" style={{ minWidth: 560 }}>
           <thead><tr><th>Evaluación</th><th>Se anuncia</th><th>Fecha límite</th><th>Entrega de los alumnos</th></tr></thead>
@@ -407,7 +407,7 @@ function EntregablesGrupo({ g, bundle, avisar }) {
       </div>
       <div className="cons-wrap">
         <table className="cons-table" style={{ minWidth: 560 }}>
-          <thead><tr><th>Alumno</th>{d.entregables.map((e) => <th key={e.id} style={{ minWidth: 150, textTransform: 'none', letterSpacing: 0 }}>{e.etapa || 'T2'}{e.programa ? ` · ${e.programa}` : ''}{!e.obligatorio && <small className="paq">Opcional</small>}</th>)}<th>Aprobados</th></tr></thead>
+          <thead><tr><th>Alumno</th>{d.entregables.map((e) => <th key={e.id} style={{ minWidth: 150, textTransform: 'none', letterSpacing: 0 }}>{(e.etapa || 'T2') === 'T2' ? 'Trabajo final' : e.etapa}{e.programa ? ` · ${e.programa}` : ''}{!e.obligatorio && <small className="paq">Opcional</small>}</th>)}<th>Aprobados</th></tr></thead>
           <tbody>
             {bundle.alumnos.map((a) => {
               const n = oblig.filter((e) => dato(a, e).aprobado).length
@@ -441,7 +441,7 @@ function EntregablesGrupo({ g, bundle, avisar }) {
 }
 
 /* ================= PROFESOR: un grupo (Información · Alumnos · Asistencia) ================= */
-/* ================= ACCESOS DEL GRUPO (Zoom, carpetas de T1 y T2, clases grabadas) ================= */
+/* ================= ACCESOS DEL GRUPO (Zoom, carpeta del trabajo final, clases grabadas) ================= */
 function AccesosGrupo({ g, bundle }) {
   const [d, setD] = useState(null)
   const [err, setErr] = useState('')
@@ -572,7 +572,7 @@ function GrupoProfesor({ g, curso, volver, avisar }) {
         <button className="btn btn-line" onClick={volver}>← Mis cursos</button>
       </Seccion>
       <div className="chips tabs" role="tablist">
-        {[['info', 'Información'], ['accesos', 'Accesos'], ['alumnos', `Alumnos${bundle ? ` (${bundle.alumnos.length})` : ''}`], ['asistencia', 'Asistencia'], ['entregables', 'T1 y T2'], ['material', 'Material']].map(([k, n]) => (
+        {[['info', 'Información'], ['accesos', 'Accesos'], ['alumnos', `Alumnos${bundle ? ` (${bundle.alumnos.length})` : ''}`], ['asistencia', 'Asistencia'], ['entregables', 'Trabajo final'], ['material', 'Material']].map(([k, n]) => (
           <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'sel' : ''} onClick={() => setTab(k)}>{n}</button>
         ))}
       </div>

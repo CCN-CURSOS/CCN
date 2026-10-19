@@ -4,7 +4,7 @@ import { guardarEvaluacionGrupo, guardarAccesosGrupo, asignarInstructor, quitarI
 import { reabierta } from '../lib/clases.js'
 import { cronogramaGrupo, textoCronograma, pdfCronograma, fechaHora, soloFecha, isoLima, HORAS_CERTIFICADO } from '../lib/cronograma.js'
 
-/* Módulo Académico (gerencia y coordinación): cronograma exacto de T1 y T2 por grupo, enlaces de entrega y aviso de las 72 h */
+/* Módulo Académico (gerencia y coordinación): cronograma exacto del trabajo final por grupo, enlaces de entrega y aviso de las 72 h */
 export function Cronograma({ data, hacer, avisar }) {
   const [ver, setVer] = useState('activos')
   const [mins, setMins] = useState(() => new Set())
@@ -41,16 +41,15 @@ export function Cronograma({ data, hacer, avisar }) {
   return (
     <>
       <div className="head-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
-        <div><h1>Cronograma y accesos</h1><p>Profesor, Zoom, grabaciones y T1/T2 de cada grupo con fechas exactas. En la última clase el profesor repasa los trabajos que eligió y los alumnos hacen preguntas. El certificado sale dentro de las {HORAS_CERTIFICADO} h después de esa clase.</p></div>
+        <div><h1>Cronograma y accesos</h1><p>Profesor, Zoom, grabaciones y trabajo final de cada grupo con fechas exactas. En la última clase el profesor repasa los trabajos que eligió y los alumnos hacen preguntas. El certificado sale dentro de las {HORAS_CERTIFICADO} h después de esa clase.</p></div>
         <label>Mostrar <select value={ver} onChange={(e) => setVer(e.target.value)} aria-label="Filtro de grupos"><option value="activos">Grupos en curso o por certificar</option><option value="todos">Todos</option></select></label>
       </div>
       <details className="firmas-box">
         <summary><b>Reglas del cronograma</b></summary>
         <ul className="note" style={{ margin: '8px 0 0 18px' }}>
-          <li><b>T1:</b> se anuncia al cerrar la clase donde termina la primera mitad. Plazo: 3 días después.</li>
-          <li><b>T2 (proyecto final):</b> se anuncia en la penúltima clase. Fecha límite: 48 h antes de la última clase.</li>
+          <li><b>Trabajo final:</b> se anuncia en la penúltima clase. Fecha límite: 48 h antes de la última clase.</li>
           <li><b>Última clase:</b> repaso de los trabajos elegidos por el profesor + preguntas.</li>
-          <li><b>Club Ofimática:</b> cada programa (Word, Excel, PowerPoint) es un ciclo de 6 clases con su T1, T2 y cierre.</li>
+          <li><b>Club Ofimática:</b> cada programa (Word, Excel, PowerPoint) es un ciclo de 6 clases con su trabajo final y cierre.</li>
           <li>Puedes cambiar la fecha límite de una evaluación en un grupo concreto. Si la dejas en «Auto», se calcula sola.</li>
         </ul>
       </details>
@@ -128,7 +127,7 @@ function GrupoCronograma({ g, cl, data, hacer, avisar, instructor, disponibles, 
           <input key={`r-${acc.grabaciones}`} defaultValue={acc.grabaciones} placeholder="https://drive.google.com/…" aria-label={`Grabaciones ${g.codigo || ''}`} onBlur={(e) => e.target.value.trim() !== acc.grabaciones && guardarAcc({ grabaciones: e.target.value })} />
         </label>
       </div>
-      {!filas.length && <p className="note">Este curso aún no tiene T1/T2 definidos (se editan en Certificados → «Evaluaciones por curso»).</p>}
+      {!filas.length && <p className="note">Este curso aún no tiene trabajo final definido (se editan en Certificados → «Evaluaciones por curso»).</p>}
       {filas.length > 0 && (
         <div className="cons-wrap"><table className="cons-table" style={{ minWidth: 720 }}>
           <thead><tr><th>Evaluación</th><th>Se anuncia</th><th>Fecha límite</th><th>Enlace de entrega (Drive o Forms)</th></tr></thead>

@@ -2160,7 +2160,7 @@ function Equipo({ data, hacer, email }) {
   const [quitando, setQuitando] = useState(null)
   return (
     <>
-      <Seccion titulo="Equipo" ayuda="Quién entra al panel y qué ve. Gerente: todo. Vendedora: solo Ventas (si hoy hace de asistente académico, actívale ese permiso en la última columna). Asistente académico: solo el módulo Académico (grupos, profesor, accesos, T1/T2 y certificados), sin pagos ni tarifas. Profesor: solo sus grupos (alumnos y asistencia). Al profesor también hay que ponerlo en Trabajadores (con el mismo correo) y asignarle su grupo." />
+      <Seccion titulo="Equipo" ayuda="Quién entra al panel y qué ve. Gerente: todo. Vendedora: solo Ventas (si hoy hace de asistente académico, actívale ese permiso en la última columna). Asistente académico: solo el módulo Académico (grupos, profesor, accesos, trabajo final y certificados), sin pagos ni tarifas. Profesor: solo sus grupos (alumnos y asistencia). Al profesor también hay que ponerlo en Trabajadores (con el mismo correo) y asignarle su grupo." />
       {!hasBackend && <p className="banner">En modo demostración esto es solo de práctica.</p>}
       <div className="cons-wrap" style={{ maxWidth: 760 }}>
         <table className="cons-table" style={{ minWidth: 0 }}>

@@ -93,8 +93,8 @@ function EntregablesEditor({ data, hacer }) {
   const cambiar = (e, cambios) => hacer(() => save('entregables', { ...e, ...cambios }), 'Entregable guardado')
   return (
     <details className="firmas-box">
-      <summary><b>Evaluaciones por curso (T1 y T2)</b> · el profesor revisa y marca quién aprobó</summary>
-      <p className="note">T1 es el trabajo de la primera mitad y T2 el proyecto final. Para el certificado hay que tener <b>aprobados</b> todos los obligatorios. Las fechas se calculan solas en el Cronograma. Si un curso no tiene evaluaciones, el certificado usa la casilla manual «Entregó todo a tiempo».</p>
+      <summary><b>Trabajo final por curso</b> · el profesor revisa y marca quién aprobó</summary>
+      <p className="note">Cada curso tiene un solo trabajo final (en el Club, uno por programa). Para el certificado hay que tenerlo <b>aprobado</b>. Las fechas se calculan solas en el Cronograma. Si un curso no tiene evaluaciones, el certificado usa la casilla manual «Entregó todo a tiempo».</p>
       {data.entregablesError && <p className="banner">Falta pegar <b>entregables.sql</b> en Supabase (SQL Editor): {data.entregablesError}</p>}
       <div className="cform" style={{ maxWidth: 460, marginBottom: 10 }}>
         <select style={{ width: '100%' }} value={cid} onChange={(e) => setCid(e.target.value)} aria-label="Curso">{cursos.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}</select>
@@ -186,7 +186,7 @@ export default function Certificados({ data, hacer, gerente = true }) {
     if (s.req === 'completo') {
       if (st.pctPart < MIN_PARTICIPACION) return `Participación ${st.pctPart} % (mínimo ${MIN_PARTICIPACION} %)`
       const en = entrega(m, s)
-      if (en.total) { if (en.hechos < en.total) return `T1/T2 aprobados ${en.hechos}/${en.total} (faltan por aprobar)` }
+      if (en.total) { if (en.hechos < en.total) return `Trabajo final aprobado ${en.hechos}/${en.total} (falta por aprobar)` }
       else if (!entrego[m.id]) return 'Marca «Entregó todo a tiempo»'
     }
     return ''
@@ -237,7 +237,7 @@ export default function Certificados({ data, hacer, gerente = true }) {
   return (
     <>
       <div className="sechead">
-        <div><h1>Certificados</h1><p>Emite constancias y certificados con QR. Constancia: asistencia desde {MIN_ASISTENCIA} %. Certificado: además participación desde {MIN_PARTICIPACION} % y T1 y T2 aprobados. Solo se emiten cuando termina el curso.</p></div>
+        <div><h1>Certificados</h1><p>Emite constancias y certificados con QR. Constancia: asistencia desde {MIN_ASISTENCIA} %. Certificado: además participación desde {MIN_PARTICIPACION} % y trabajo final aprobado. Solo se emiten cuando termina el curso.</p></div>
         <div className="secact cform">
           <select value={tipoEj} onChange={(e) => setTipoEj(e.target.value)} aria-label="Tipo de ejemplo">{Object.keys(EJEMPLO).map((k) => <option key={k} value={k}>{TIPOS_CERT[k]}</option>)}</select>
           <button className="btn btn-line sm" onClick={ejemplo} disabled={busy === 'ej'}>{busy === 'ej' ? 'Generando…' : 'Ver ejemplo (PDF)'}</button>
@@ -261,7 +261,7 @@ export default function Certificados({ data, hacer, gerente = true }) {
           {faltaFirma && <p className="banner">⚠️ {faltaFirma} Mientras tanto no se pueden emitir documentos de este grupo.</p>}
           {curso && esClub(curso.titulo) && <p className="note">Club Ofimática: constancia y certificado del Club, más un certificado por programa (Word, Excel y PowerPoint, en ese orden de {CLASES_POR_PROGRAMA} clases cada uno).</p>}
           <div className="cons-wrap"><table className="cons-table" style={{ minWidth: 820 }}>
-            <thead><tr><th>Alumno</th><th>Asistencia</th><th>Participación</th><th>T1 y T2</th><th>Documentos</th></tr></thead>
+            <thead><tr><th>Alumno</th><th>Asistencia</th><th>Participación</th><th>Trabajo final</th><th>Documentos</th></tr></thead>
             <tbody>
               {filas.map(({ m, a }) => {
                 const specs = documentosDe({ curso_titulo: m.curso_titulo || curso?.titulo, horas: cursoDe(m.curso_id)?.horas || curso?.horas })
