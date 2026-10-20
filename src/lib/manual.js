@@ -106,25 +106,25 @@ export function presentacion(v, curso) {
   const titulo = `*${curso.titulo}*`
   const apr = (p ? p.apr : (curso.temario || [])).slice(0, 3).map((a) => String(a).replace(/\.$/, ''))
   const nombre = v.nombre ? `Hola ${v.nombre}! 😊` : 'Hola! 😊'
-  const L = [`${nombre} Soy ${v.asesora}, asesora educativa de CCN 👋`, '', `🔥 Con ${titulo} vas a:`, ...apr.map((a) => `✅ ${a}`), '', '🎓 Clases en vivo + grabadas + certificado CCN', '', '*¿Te comparto las fechas y el precio?*']
+  const L = [`${nombre} Soy ${v.asesora}, asesora educativa de CCN 👋`, '', `Te voy a ser directa: ${titulo} es para gente que quiere resultados, no solo teoría 🔥`, '', 'En pocas clases vas a:', ...apr.map((a) => `✅ ${a}`), '', '🎓 En vivo + grabadas + certificado CCN', '', '*¿Quieres ver fechas y precio para empezar ya?*']
   return L.join('\n').replace(/\.\./g, '.')
 }
 
 /* Oferta (precio) y cierre con cupos reales */
 export function oferta(v, curso) {
   if (!curso) return ''
-  const L = [`${v.nombre ? `Gracias, ${v.nombre} 😊\n\n` : ''}📚 *${curso.titulo}*`]
+  const L = [`${v.nombre ? `Genial, ${v.nombre} 🙌 Esto es lo que necesitas saber:\n\n` : ''}📚 *${curso.titulo}*`]
   if (v.fecha) L.push(`🗓️ Inicio: ${v.fecha}`)
   if (v.dias || v.horario) L.push(`⏰ ${[v.dias, v.horario].filter(Boolean).join(' · ')}`)
   L.push(`💻 Online por Zoom${v.horas ? ` · ${v.horas} horas` : ''}`, '')
   if (v.antes) L.push(`💰 Inversión: ~${v.antes}~`)
-  L.push(`💰 *Inversión: ${v.precio}*`, '', cierre(v))
+  L.push(`💰 *Tu inversión: ${v.precio}* (precio final)`, '', cierre(v))
   return L.join('\n')
 }
 export function cierre(v) {
-  if (!v.tieneGrupo) return 'Aún no tenemos fecha confirmada del próximo grupo; te avisamos apenas abra 🙌\n\n*¿Quieres que te avisemos?*'
-  if (v.cupos === '0') return 'Este grupo ya está lleno 😅 pero podemos anotarte en lista de espera.\n\n*¿Te anoto?*'
-  return `Actualmente contamos con ${v.cupos} cupo${v.cupos === '1' ? '' : 's'} disponible${v.cupos === '1' ? '' : 's'} 🙌\n\n*¿Deseas inscribirte?*`
+  if (!v.tieneGrupo) return 'Aún no tenemos fecha confirmada del próximo grupo 🙌 Pero los primeros en anotarse son los primeros en enterarse.\n\n*¿Te anoto para avisarte apenas abra?*'
+  if (v.cupos === '0') return 'Este grupo ya se llenó 😅 Pero no te quedes fuera: te anoto en lista de espera y eres el primero en enterarte del siguiente.\n\n*¿Te anoto ahora?*'
+  return `Hoy quedan solo ${v.cupos} cupo${v.cupos === '1' ? '' : 's'} en este grupo 🔥 Se ocupan por orden de pago.\n\n*¿Aseguramos el tuyo ahora?*`
 }
 
 /* ---------------- 2. Guía rápida ---------------- */
@@ -165,12 +165,12 @@ export function faqs(v) {
   const club = v.clubPrecio && v.ahorro
     ? `Si lo que quieres es Word, Excel y PowerPoint, el *Club Ofimática* te conviene más: ${v.clubPrecio} por los tres (42 horas) en lugar de ${v.sueltos} por separado, así ahorras ${v.ahorro} 🙌`
     : 'Si quieres Word, Excel y PowerPoint, el *Club Ofimática* los reúne en un solo programa (42 horas) y te sale más conveniente que llevarlos por separado 🙌'
-  const quiero = v.tieneGrupo ? `¿Te reservo tu cupo en el grupo que inicia el ${v.fecha}?` : '¿Quieres que te avise apenas abramos el grupo?'
+  const quiero = v.tieneGrupo ? `¿Te aseguro tu cupo en el grupo que inicia el ${v.fecha}?` : '¿Te anoto para avisarte apenas abramos el grupo?'
   return [
     /* ---- Precio y pago ---- */
-    { g: 'Precio y pago', q: '¿Cuánto cuesta?', a: 'El curso *{curso}* tiene una inversión de {precio} 😊 Incluye clases en vivo por Zoom, clases grabadas y certificado CCN al aprobar el curso. ¿Te comparto las fechas y el temario?', tip: 'Da el precio junto con el valor (qué incluye) y termina con una pregunta que avance la conversación.' },
-    { g: 'Precio y pago', q: '“Está caro”', a: 'Te entiendo 😊 El precio que ves ya es el precio promocional de la web. Lo que recibes: clases en vivo con el instructor, clases grabadas para repasar, práctica guiada, proyecto final y certificado CCN. Cuéntame qué parte del curso te interesa más y cómo lo usarías.', tip: 'No te pongas a la defensiva ni bajes el precio. Pasa de “precio” a “valor” y pregunta qué necesita resolver.' },
-    { g: 'Precio y pago', q: '¿Tienen descuento / promoción?', a: 'El precio de {precio} ya incluye la promoción vigente de la web 😊 {club_}', cierre: '¿Te reservo tu cupo con el precio de la web?', tip: 'Ofrece SIEMPRE primero el precio de la página y una alternativa de valor (Club). El descuento libre es el último recurso para cerrar la venta: mira “Último recurso: descuento” en Casos especiales. Nunca lo anuncies ni lo ofrezcas de entrada.', conClub: true },
+    { g: 'Precio y pago', q: '¿Cuánto cuesta?', a: '*{curso}*: {precio} 🔥 Y por ese precio te llevas clases en vivo por Zoom, clases grabadas para repasar cuando quieras, práctica guiada y certificado CCN al aprobar. No es solo mirar videos: aplicas desde la primera clase.', tip: 'Da el precio junto con el valor (qué incluye) y termina con una pregunta que avance la conversación.' },
+    { g: 'Precio y pago', q: '“Está caro”', a: 'Te entiendo, y te respondo sin vueltas 😊 Piensa en lo que ganas, no solo en lo que pagas: aprendes una habilidad que usas en tu trabajo, tus estudios y tu día a día, con instructor en vivo, clases grabadas, proyecto final y certificado CCN. El precio de la web ya es el precio promocional. Dime: ¿en qué lo usarías tú?', tip: 'No te pongas a la defensiva ni bajes el precio. Pasa de “precio” a “valor” y pregunta qué necesita resolver.' },
+    { g: 'Precio y pago', q: '¿Tienen descuento / promoción?', a: 'El precio de {precio} ya es el promocional de la web, el mejor punto de entrada 🔥 {club_}', cierre: '¿Aseguras tu cupo con el precio de la web ahora?', tip: 'Ofrece SIEMPRE primero el precio de la página y una alternativa de valor (Club). El descuento libre es el último recurso para cerrar la venta: mira “Último recurso: descuento” en Casos especiales. Nunca lo anuncies ni lo ofrezcas de entrada.', conClub: true },
     { g: 'Precio y pago', q: '¿Puedo pagar en dólares / desde el extranjero?', a: '¡Sí! 😊 Puedes pagar en dólares (US$) por PayPal. El precio de *{curso}* en dólares es {precioUsd}. ', cierre: '¿Te envío tu enlace de pago para reservar tu cupo?', tip: 'El enlace de pago PayPal lo creas tú o se lo pides a gerencia (no hay un link fijo). Si arriba sale [precioUsd], ese curso aún no tiene precio en dólares (se pone en Web → Cursos). Toda la inscripción va en una sola moneda.' },
     { g: 'Clases y horarios', q: 'Vivo en otro país: ¿a qué hora son las clases?', a: 'Las clases son en vivo por Zoom y se dictan en *horario de Perú* (GMT-5): {dias} de {horario}. Todas quedan grabadas, así que si por la diferencia horaria no puedes conectarte a alguna, la puedes ver después 😊', tip: 'No hagas la conversión de hora por el cliente (te puedes equivocar): dile que el horario es de Perú y que puede verificar su hora local. Si el curso necesita instalación de programas, se coordina aparte con gerencia.' },
     { g: 'Precio y pago', q: 'Pagué en dólares: ¿me dan comprobante?', a: 'Por ahora, en los pagos en dólares te enviamos una *nota de pago* con el detalle de tu pago 😊', tip: 'En el panel: Ventas → Inscritos → botón “Nota de pago” (solo en inscripciones en dólares). No es boleta ni factura: por ahora no se emite comprobante electrónico en dólares.' },
@@ -182,16 +182,16 @@ export function faqs(v) {
     { g: 'Precio y pago', q: 'Ya pagué y no puedo asistir. ¿Qué hago?', a: 'Gracias por avisarme 🙌 Voy a revisar tu caso con la coordinación y te respondo hoy mismo.', cierre: '¿Me confirmas tu nombre completo y el curso en el que te inscribiste?', pendiente: true, tip: 'No prometas reembolso ni cambio. Registra el caso y avisa a gerencia.' },
     { g: 'Precio y pago', q: '¿El precio incluye IGV?', a: 'El precio de {precio} es el *precio final*, no se agrega ningún costo adicional 😊', tip: 'No entres en detalles de IGV. Es precio final.' },
     /* ---- Clases y horarios ---- */
-    { g: 'Clases y horarios', q: '¿Cuándo empieza?', a: 'El próximo grupo de *{curso}* inicia el *{fecha}*, {dias} de {horario} 😊 ¿Te reservo tu cupo?', tip: 'Si el curso no tiene grupo, ofrece avisarle apenas abra (usa el caso “Sin fecha” en Casos especiales).' },
+    { g: 'Clases y horarios', q: '¿Cuándo empieza?', a: 'El próximo grupo de *{curso}* arranca el *{fecha}*, {dias} de {horario} 🔥 Quedan {cupos} cupos reales.', tip: 'Si el curso no tiene grupo, ofrece avisarle apenas abra (usa el caso “Sin fecha” en Casos especiales).' },
     { g: 'Clases y horarios', q: '¿Cuántas horas dura? ¿Cuántas sesiones son?', a: 'El curso dura *{horas} horas*, distribuidas en *{sesiones} sesiones* en vivo por Zoom 😊', tip: '' },
     { g: 'Clases y horarios', q: '¿Las clases son en vivo o grabadas?', a: 'Son *en vivo por Zoom* con el instructor, y además *quedan grabadas* para que puedas repasarlas cuando quieras 😊', tip: 'Las dos cosas son beneficios: en vivo para preguntar y grabadas para repasar.' },
     { g: 'Clases y horarios', q: '¿Qué pasa si falto a una clase?', a: 'No te preocupes 😊 Las clases quedan grabadas y podrás verlas. Eso sí, la asistencia cuenta para tu certificado y la escuela no se responsabiliza por las clases a las que el alumno no asista.', tip: 'Menciona que se necesita asistencia mínima para el certificado (ver Certificado).' },
-    { g: 'Clases y horarios', q: '“No tengo tiempo”', a: 'Te entiendo 😊 Justo por eso las clases quedan grabadas: si algún día no puedes conectarte, la repasas después. Son {sesiones} sesiones en total; ¿el horario de {dias} de {horario} te vendría bien?', tip: 'Pregunta por el horario concreto antes de dar por perdido al cliente.' },
+    { g: 'Clases y horarios', q: '“No tengo tiempo”', a: 'Te entiendo, y por eso lo armamos así 😊 Son solo {sesiones} sesiones y todas quedan grabadas: si un día no puedes conectarte, la ves después. Lo que no tienes no es tiempo, es el primer paso. El horario es {dias} de {horario}.', tip: 'Pregunta por el horario concreto antes de dar por perdido al cliente.' },
     { g: 'Clases y horarios', q: '¿Puedo cambiar de horario o de grupo?', a: 'Déjame consultarlo con la coordinación y te confirmo 😊', pendiente: true, tip: 'No está definido. Consulta con gerencia.' },
     { g: 'Clases y horarios', q: '¿Cuántos alumnos hay por grupo?', a: 'Trabajamos con grupos reducidos para que el instructor pueda resolver las dudas de cada alumno 😊', tip: 'No digas el número máximo de alumnos salvo que lo pida y lo hayas consultado.' },
     { g: 'Clases y horarios', q: '¿Y si el curso no abre / no se completa el grupo?', a: 'Los cursos abren cuando se completa el cupo mínimo. Si hiciera falta, el inicio se posterga una o dos semanas, pero no se cancela 😊 Si ya estás inscrito, tu inscripción se mantiene según nuestros Términos y condiciones.', tip: 'Transmite tranquilidad: no se cancela, se reprograma.' },
     /* ---- Contenido y nivel ---- */
-    { g: 'Contenido y nivel', q: '“No sé nada, soy principiante”', a: '¡Perfecto, justo para eso es! 🙌 *{curso}* empieza desde cero y va paso a paso. No necesitas experiencia previa. Además, las clases quedan grabadas para que repases las veces que quieras.', tip: 'Refuerza que empieza desde cero. Recuerda que hay práctica y proyecto final.' },
+    { g: 'Contenido y nivel', q: '“No sé nada, soy principiante”', a: '¡Perfecto, este curso es justo para ti! 🙌 *{curso}* empieza desde cero y te lleva de la mano, paso a paso. Nadie nace sabiendo: las clases quedan grabadas para que repases las veces que quieras y practicas desde el día uno.', tip: 'Refuerza que empieza desde cero. Recuerda que hay práctica y proyecto final.' },
     { g: 'Contenido y nivel', q: '¿Qué voy a aprender exactamente?', a: 'Con gusto 😊 Te envío el temario en PDF y te cuento lo principal: (usa el mensaje de “Presentación” de este manual).', tip: 'Envía el mensaje de Presentación y el PDF del temario.' },
     { g: 'Contenido y nivel', q: '¿Hay tareas o evaluaciones?', a: 'Sí 😊 Practicas durante las clases y al final presentas un *trabajo final* (un proyecto aplicado). Con eso aplicas lo aprendido y, al aprobarlo, accedes a tu certificado.', tip: 'Evita sonar a “examen difícil”: son entregas prácticas.' },
     { g: 'Contenido y nivel', q: '¿Word, Excel y PowerPoint por separado o el Club?', a: '{club_}', cierre: '¿Te reservo tu cupo en el Club Ofimática?', tip: 'Pregunta qué necesita (trabajo, estudios) antes de recomendar.', soloClub: true },
@@ -208,7 +208,7 @@ export function faqs(v) {
     { g: 'Requisitos técnicos', q: '¿Tengo que comprar los programas? ¿Son con licencia?', a: 'No tienes que comprar nada 😊 Los programas de los cursos los gestiona CCN y los instalamos contigo de forma remota.', tip: 'Aplica a los programas que se instalan (Office, Adobe). Para herramientas gratuitas (Canva, Notion, Claude) solo hay que crear la cuenta.' },
     { g: 'Requisitos técnicos', q: '¿Cómo es la instalación?', a: 'Es *remota*: nuestro equipo se conecta a tu computadora por AnyDesk (un programa gratuito que descargas) y deja todo listo, en aproximadamente 1 hora, antes de que empiecen las clases. Yo te agendo el día y la hora 😊', tip: 'Las instalaciones se agendan en la ventana: lunes a viernes 7–10 p. m., sábado 3–10 p. m., domingo 8 a. m.–10 p. m. Listas 3 días antes del inicio.' },
     /* ---- Inscripción ---- */
-    { g: 'Inscripción', q: '¿Cómo me inscribo?', a: 'Es muy fácil 😊 Necesito: *nombre completo, DNI o CE, correo y celular*. Te envío también los Términos y condiciones y los datos de pago. Cuando pagues, quedas inscrito.', cierre: '¿Me compartes tus datos para inscribirte ahora?', tip: 'Correo y DNI/CE son obligatorios.' },
+    { g: 'Inscripción', q: '¿Cómo me inscribo?', a: 'Es rápido: solo 4 datos 🔥 *Nombre completo, DNI o CE, correo y celular*. Te envío los Términos y los datos de pago, y apenas pagues quedas inscrito.', cierre: '¿Me pasas tus datos y te inscribo ahora mismo?', tip: 'Correo y DNI/CE son obligatorios.' },
     { g: 'Inscripción', q: '¿Qué pasa después de pagar?', a: '¡Listo! 🙌 Te llega un *correo de bienvenida* con el link del grupo de WhatsApp, los datos de tu curso y el enlace de Zoom. Luego coordinamos la instalación de los programas, si tu curso la necesita.', cierre: '¿Te inscribo hoy mismo?', tip: 'Registra el pago en el panel y envía la bienvenida (Ventas → Inscritos).' },
     { g: 'Inscripción', q: '¿Puedo inscribir a otra persona / es para un regalo?', a: 'Claro, lo vemos 😊 Necesito los datos de la persona que llevará el curso: nombre completo, DNI o CE, correo y celular.', cierre: '¿Me compartes esos datos para inscribirla?', pendiente: true, tip: 'No está definido el tema de regalos. Confirma con gerencia si hay alguna condición.' },
     { g: 'Inscripción', q: '¿Hay precio para grupos o empresas?', a: 'Gracias por tu interés 😊 Para grupos o empresas lo coordinamos directamente con la gerencia. ¿Me indicas cuántas personas serían y qué curso les interesa?', pendiente: true, tip: 'Cotizaciones para empresas aún no están definidas. Toma los datos y deriva a gerencia.' },
@@ -221,24 +221,24 @@ export function faqs(v) {
 
 /* ---------------- 4. Seguimiento (máximo 3 intentos) ---------------- */
 export function seguimientos(v) {
-  const pregunta = v.tieneGrupo ? `El grupo inicia el ${v.fecha} y quedan ${v.cupos} cupos 🙌 *¿Te reservo tu cupo?*` : 'Apenas abramos el grupo te aviso 🙌 *¿Quieres que te anote para avisarte?*'
+  const pregunta = v.tieneGrupo ? `El grupo arranca el ${v.fecha} y quedan ${v.cupos} cupos 🔥 *¿Te aseguro el tuyo hoy?*` : 'Apenas abramos el grupo te aviso 🙌 *¿Te anoto para avisarte primero?*'
   return [
-    { id: 'seg1', t: 'Intento 1 · Al día siguiente', nota: 'Suave, para recordar y ofrecer ayuda.', a: `Hola ${v.nombre || '[nombre]'} 😊 ¿pudiste revisar el temario de *${v.curso || '[curso]'}*? Si tienes alguna duda, con gusto te ayudo. ${pregunta}` },
-    { id: 'seg2', t: 'Intento 2 · A los 2–3 días', nota: 'Aporta valor: en vivo, grabadas y certificado.', a: `Hola ${v.nombre || '[nombre]'} 👋 te escribo por si te quedó alguna duda sobre *${v.curso || '[curso]'}*. Las clases son en vivo por Zoom, quedan grabadas y al terminar recibes tu certificado CCN. ¿Te ayudo a reservar tu cupo?` },
-    { id: 'seg3', t: 'Intento 3 · Cierre amable (último)', nota: 'Después de este mensaje, marca el prospecto como PERDIDO en el panel. No hay un cuarto intento.', a: `Hola ${v.nombre || '[nombre]'} 😊 no quiero ser insistente; dejo tu información guardada por si más adelante te interesa 🙌 *¿Prefieres que te reserve tu cupo ahora o que te escriba más adelante?*` },
-    { id: 'seg-r', t: 'Si responde “lo voy a pensar”', nota: 'Averigua qué lo detiene.', a: '¡Claro! 😊 ' + (v.tieneGrupo ? `Te recuerdo que el grupo inicia el ${v.fecha} y quedan ${v.cupos} cupos. ` : '') + 'Solo para ayudarte a decidir: *¿qué te gustaría resolver antes de inscribirte (el horario, el precio, el contenido…)?*' },
+    { id: 'seg1', t: 'Intento 1 · Al día siguiente', nota: 'Suave, para recordar y ofrecer ayuda.', a: `Hola ${v.nombre || '[nombre]'} 😊 ¿Viste el temario de *${v.curso || '[curso]'}*? Dime qué te llamó más la atención y te cuento cómo lo aplicarías desde la primera clase. ${pregunta}` },
+    { id: 'seg2', t: 'Intento 2 · A los 2–3 días', nota: 'Aporta valor: en vivo, grabadas y certificado.', a: `Hola ${v.nombre || '[nombre]'} 👋 Los que deciden hoy son los que mañana ya están aplicando. *${v.curso || '[curso]'}* es en vivo, queda grabado y terminas con tu certificado CCN. *¿Qué te falta para dar el paso: horario, contenido o precio?*` },
+    { id: 'seg3', t: 'Intento 3 · Cierre amable (último)', nota: 'Después de este mensaje, marca el prospecto como PERDIDO en el panel. No hay un cuarto intento.', a: `Hola ${v.nombre || '[nombre]'} 😊 Este es mi último mensaje para no ser pesada: tu información queda guardada y las puertas siguen abiertas 🙌 Pero si lo que quieres es empezar, este es el momento. *¿Te aseguro tu cupo ahora o prefieres que te escriba más adelante?*` },
+    { id: 'seg-r', t: 'Si responde “lo voy a pensar”', nota: 'Averigua qué lo detiene.', a: '¡Claro! 😊 ' + (v.tieneGrupo ? `Te recuerdo que el grupo inicia el ${v.fecha} y quedan ${v.cupos} cupos. ` : '') + 'Pensarlo está bien, pero dime con confianza: *¿qué te frena hoy (horario, precio, contenido…)? Si lo resolvemos ahora, ¿te inscribes?*' },
   ]
 }
 
 /* ---------------- 5. Cierre y pago ---------------- */
 export function cierres(v) {
   return [
-    { id: 'c1', t: 'Pedir datos para inscribir', nota: 'Correo y DNI/CE son obligatorios. Envía también los Términos y condiciones (y los requisitos de PC si es ofimática).', a: 'Para inscribirte necesito estos datos 😊\n\n• Nombre completo\n• DNI o CE\n• Correo electrónico\n• Celular\n\nTe envío también los Términos y condiciones para que los revises.\n\n*¿Me compartes tus datos para inscribirte ahora?*' },
+    { id: 'c1', t: 'Pedir datos para inscribir', nota: 'Correo y DNI/CE son obligatorios. Envía también los Términos y condiciones (y los requisitos de PC si es ofimática).', a: 'Para inscribirte necesito estos datos 😊\n\n• Nombre completo\n• DNI o CE\n• Correo electrónico\n• Celular\n\nTe envío también los Términos y condiciones para que los revises.\n\n*¿Me los pasas y te dejo inscrito en este momento?*' },
     { id: 'c1b', t: 'Pedir datos · alumno del extranjero', nota: 'Solo si paga en dólares. Antes elige “Dólares” en Moneda del cliente. En el panel registra la inscripción en Dólares. Envía también los Términos y condiciones.', a: 'Para inscribirte necesito estos datos 😊\n\n• Nombre completo\n• Documento de identidad (pasaporte o documento de tu país) y su número\n• País donde vives\n• Correo electrónico\n• Celular con código de país (WhatsApp)\n\nTe envío también los Términos y condiciones para que los revises. Las clases son en horario de Perú (GMT-5) y quedan grabadas.\n\n*¿Me compartes tus datos para inscribirte ahora?*' },
-    { id: 'c2', t: 'Enviar datos de pago', nota: 'Reemplaza [datos de la cuenta oficial] con las cuentas de CCN (Yape, Plin o transferencia). Nunca cuentas personales.', a: `Perfecto, ${v.nombre || '[nombre]'} 🙌 El pago de *${v.curso || '[curso]'}* es de *${v.precio || '[precio]'}*.\n\nPuedes pagar por Yape, Plin o transferencia:\n[datos de la cuenta oficial]\n\nCuando pagues, envíame la captura y quedas inscrito 😊\n\n*¿Realizas el pago hoy para asegurar tu cupo?*` },
-    { id: 'c2b', t: 'Enviar datos de pago en dólares (PayPal)', nota: 'Crea tú el enlace de cobro de PayPal por el monto exacto, o pídeselo a gerencia. La inscripción completa va en dólares (no se mezcla con soles).', a: `Perfecto, ${v.nombre || '[nombre]'} 🙌 El pago de *${v.curso || '[curso]'}* en dólares es de *${v.precioUsd || '[precio en US$]'}*.\n\nAquí tienes tu enlace de pago de PayPal:\n[enlace de pago]\n\nCuando pagues, envíame la captura y quedas inscrito 😊\n\n*¿Realizas el pago hoy para asegurar tu cupo?*` },
+    { id: 'c2', t: 'Enviar datos de pago', nota: 'Reemplaza [datos de la cuenta oficial] con las cuentas de CCN (Yape, Plin o transferencia). Nunca cuentas personales.', a: `Perfecto, ${v.nombre || '[nombre]'} 🙌 El pago de *${v.curso || '[curso]'}* es de *${v.precio || '[precio]'}*.\n\nPuedes pagar por Yape, Plin o transferencia:\n[datos de la cuenta oficial]\n\nApenas pagues, envíame la captura y quedas inscrito 🔥\n\n*¿Haces el pago ahora para asegurar tu cupo?*` },
+    { id: 'c2b', t: 'Enviar datos de pago en dólares (PayPal)', nota: 'Crea tú el enlace de cobro de PayPal por el monto exacto, o pídeselo a gerencia. La inscripción completa va en dólares (no se mezcla con soles).', a: `Perfecto, ${v.nombre || '[nombre]'} 🙌 El pago de *${v.curso || '[curso]'}* en dólares es de *${v.precioUsd || '[precio en US$]'}*.\n\nAquí tienes tu enlace de pago de PayPal:\n[enlace de pago]\n\nApenas pagues, envíame la captura y quedas inscrito 🔥\n\n*¿Haces el pago ahora para asegurar tu cupo?*` },
     { id: 'c4b', t: 'Confirmar pago en dólares + nota de pago', nota: 'Registra el pago en dólares en el panel y envía la bienvenida (Ventas → Inscritos). La “Nota de pago” (botón en Inscritos) es solo para alumnos del extranjero que pagan en dólares: no es boleta ni factura.', a: `¡Pago recibido, gracias! ✅ Ya estás inscrito en *${v.curso || '[curso]'}*. En breve te llegará un correo de bienvenida con el link del grupo de WhatsApp y los datos de tu clase (horario de Perú, GMT-5). Si necesitas una *nota de pago* de tu inscripción, te la envío por aquí 😊\n\n*¿Quieres que te la envíe ahora?*` },
-    { id: 'c3', t: 'Recordar el pago antes del inicio', nota: 'Fecha límite: idealmente 1 día antes; excepcionalmente hasta 3 horas antes de la clase.', a: `Hola ${v.nombre || '[nombre]'} 😊 te recuerdo que para asegurar tu cupo en *${v.curso || '[curso]'}* debes completar tu pago antes del inicio (${v.fecha || '[fecha]'}). Si no se completa, no podrás ingresar a las clases. ¿Te ayudo con algo?` },
+    { id: 'c3', t: 'Recordar el pago antes del inicio', nota: 'Fecha límite: idealmente 1 día antes; excepcionalmente hasta 3 horas antes de la clase.', a: `Hola ${v.nombre || '[nombre]'} 😊 te recuerdo que para asegurar tu cupo en *${v.curso || '[curso]'}* debes completar tu pago antes del inicio (${v.fecha || '[fecha]'}). Si no se completa, no podrás ingresar a las clases y tu cupo queda libre para otra persona. *¿Lo dejamos listo hoy?*` },
     { id: 'c4', t: 'Confirmar el pago recibido', nota: 'Registra el pago en el panel y envía la bienvenida (Ventas → Inscritos).', a: `¡Pago recibido, gracias! ✅ Ya estás inscrito en *${v.curso || '[curso]'}*. En breve te llegará un correo de bienvenida con el link del grupo de WhatsApp y los datos de tu clase. Si tu curso lo necesita, te escribo para agendar la instalación de los programas 😊\n\n*¿Te agendo la instalación hoy mismo?*` },
   ]
 }
@@ -249,14 +249,59 @@ export function casos(v) {
     { id: 'k0', t: 'Último recurso: descuento libre', pendiente: !v.descMax, nota: v.descMax
       ? `Solo si el cliente está por irse y el precio es lo único que falta. Antes ofrece SIEMPRE el precio de la página y el valor del curso. Puedes bajar hasta ${v.descMax} % (mínimo ${v.precioMin || '[elige un curso]'}) sin pedir autorización; más abajo necesitas la autorización de gerencia. Al inscribir, pon el precio acordado: el panel lo reconoce como descuento libre. No uses frases como “solo por hoy”.`
       : 'Aún no hay un tope de descuento libre (se define en Web → Ajustes). Mientras tanto, cualquier descuento necesita autorización previa de gerencia.',
-      a: v.descMax ? `Te entiendo 😊 Déjame ver qué puedo hacer por ti… Puedo ofrecerte *${v.precioMin || '[precio mínimo]'}* por *${v.curso || '[curso]'}*. ¿Te inscribes con ese precio?` : 'Déjame consultarlo con la coordinación y te respondo en un momento 😊' },
+      a: v.descMax ? `Te entiendo 😊 Déjame ver qué puedo hacer por ti… Puedo ofrecerte *${v.precioMin || '[precio mínimo]'}* por *${v.curso || '[curso]'}*, pero te lo cierro ahora. *¿Dejamos tu inscripción lista con ese precio?*` : 'Déjame consultarlo con la coordinación y te respondo en un momento 😊' },
     { id: 'k0b', t: 'Alumno del extranjero · primer mensaje', nota: 'Elige Dólares en “Moneda del cliente” para que el precio salga en US$. Un solo tipo de moneda por inscripción: no mezcles soles y dólares. El enlace de PayPal lo creas tú por el monto exacto o lo pides a gerencia.', a: `¡Hola ${v.nombre || '[nombre]'}! 😊 Gracias por escribirnos desde el extranjero 🌎 Nuestro curso *${v.curso || '[curso]'}* es 100 % online: clases en vivo por Zoom (horario de Perú, GMT-5)${v.tieneGrupo ? `, inicia el *${v.fecha}* · ${v.dias || '[días]'} · ${v.horario || '[horario]'}` : ''}, con clases grabadas y certificado CCN al aprobar.\n\n💰 ${v.antesUsd ? `Precio regular ~${v.antesUsd}~ · ` : ''}*Inversión: ${v.precioUsd || '[precio en US$]'}* (pago por PayPal)\n\n¿Te comparto el temario y los pasos para inscribirte?` },
-    { id: 'k1', t: 'Curso sin fecha confirmada', nota: 'Segunda ola (p. ej. Claude, IA aplicada, Canva) mientras no haya grupo.', a: `Este curso aún no tiene fecha confirmada 😊 Si quieres, te anoto y te aviso apenas abramos el grupo. ¿Te parece?` },
-    { id: 'k2', t: 'Grupo lleno → lista de espera', nota: 'Registra al cliente como prospecto con el curso.', a: 'Este grupo ya está completo 🙌 Puedo anotarte en lista de espera y avisarte apenas haya un cupo o se abra un nuevo grupo. ¿Te anoto?' },
+    { id: 'k1', t: 'Curso sin fecha confirmada', nota: 'Segunda ola (p. ej. Claude, IA aplicada, Canva) mientras no haya grupo.', a: `Este curso aún no tiene fecha confirmada 😊 Pero los primeros en anotarse son los primeros en enterarse y en elegir horario 🔥 *¿Te anoto ahora?*` },
+    { id: 'k2', t: 'Grupo lleno → lista de espera', nota: 'Registra al cliente como prospecto con el curso.', a: 'Este grupo ya está completo 🙌 Te anoto en lista de espera y eres el primero en enterarte si se libera un cupo o abrimos otro grupo. *¿Te anoto ahora mismo?*' },
     { id: 'k3', t: 'El grupo se posterga (no llegó al mínimo)', nota: 'Avisa a quienes ya se inscribieron. La reprogramación se rige por los Términos y condiciones.', a: `Hola ${v.nombre || '[nombre]'} 😊 Te aviso que el grupo de *${v.curso || '[curso]'}* se posterga [1 o 2] semana(s) para completar el cupo mínimo. La nueva fecha de inicio será el [nueva fecha]. Tu inscripción se mantiene según nuestros Términos y condiciones. ¿Alguna duda?` },
     { id: 'k4', t: 'Venta cruzada: Club Ofimática', nota: 'Para quien pregunta por Word, Excel o PowerPoint.', a: v.clubPrecio && v.ahorro ? `Si quieres Word, Excel y PowerPoint, el *Club Ofimática* te sale mejor: ${v.clubPrecio} por los tres (42 horas) en vez de ${v.sueltos} por separado. Los ves en una sola línea de aprendizaje 🙌\n\n*¿Te reservo tu cupo en el Club?*` : 'Si quieres Word, Excel y PowerPoint, el *Club Ofimática* los reúne en un solo programa de 42 horas y te sale más conveniente 🙌\n\n*¿Te reservo tu cupo en el Club?*' },
     { id: 'k5', t: 'Cliente molesto o con un reclamo', nota: 'No discutas ni prometas. Registra el caso con el botón de Quejas y reclamos y avisa a gerencia.', a: 'Lamento mucho lo que me cuentas 🙏 Voy a registrar tu caso ahora mismo y lo reviso con la coordinación para darte una respuesta lo antes posible. ¿Me confirmas tu nombre completo y tu DNI?' },
     { id: 'k6', t: 'Cliente que no responde después del 3.er intento', nota: 'No insistas más: marca el prospecto como PERDIDO. Si él escribe de nuevo, retoma desde la presentación.', a: 'No se envía otro mensaje. Marca el prospecto como PERDIDO en Prospectos y pasa al siguiente 🙂' },
     { id: 'k7', t: 'Alumno que ya pagó y pregunta cuándo empieza', nota: 'Revisa el cronograma en Grupos para confirmar la fecha real.', a: `¡Hola ${v.nombre || '[nombre]'}! 😊 Tu curso *${v.curso || '[curso]'}* inicia el *${v.fecha || '[fecha]'}*, ${v.dias || '[días]'} de ${v.horario || '[horario]'}. El link de Zoom y del grupo de WhatsApp están en tu correo de bienvenida. ¿Lo recibiste?` },
   ]
+}
+
+/* ---------------- 7. Guía de conversación (interactiva) ----------------
+   Cada nodo = un mensaje para copiar + los botones de "¿qué respondió el cliente?".
+   Los textos salen de las mismas funciones de arriba, así que cualquier cambio de speech se refleja aquí. */
+export function conversacion(v, curso) {
+  const F = faqs(v), S = seguimientos(v), C = cierres(v), K = casos(v)
+  const faq = (re) => (F.find((f) => re.test(f.q)) || {}).a || ''
+  const por = (arr, id) => (arr.find((x) => x.id === id) || {}).a || ''
+  const N = (titulo, texto, nota, opciones, extra = {}) => ({ titulo, texto, nota, opciones, ...extra })
+  return {
+    inicio: N('1 · Presentación', presentacion(v, curso), 'Antes de este mensaje, envía el flyer del curso. Después de enviarlo, espera su respuesta.', [
+      ['✅ Dijo que sí / quiere ver fechas y precio', 'oferta'], ['💰 Preguntó directamente el precio', 'oferta'],
+      ['🤔 Tiene una duda del contenido', 'contenido'], ['🌎 Escribe desde el extranjero', 'ext'], ['🕐 No responde', 'seg1']]),
+    contenido: N('Duda del contenido', faq(/Qué voy a aprender/), 'Envía también el temario en PDF.', [
+      ['✅ Quedó convencido', 'oferta'], ['😰 Dice que no sabe nada', 'principiante'], ['🕐 No responde', 'seg1']]),
+    principiante: N('“Soy principiante”', faq(/principiante/), 'Refuerza que empieza desde cero.', [['✅ Se anima', 'oferta'], ['🤔 Sigue dudando', 'pensar'], ['🕐 No responde', 'seg1']]),
+    oferta: N('2 · Fecha, precio y cierre', oferta(v, curso), 'Después de este mensaje envía el temario en PDF.', [
+      ['✅ Quiere inscribirse', 'datos'], ['💸 “Está caro”', 'caro'], ['🤔 “Lo voy a pensar”', 'pensar'], ['⏳ “No tengo tiempo”', 'tiempo'],
+      ['💳 Pregunta cómo pagar', 'pago'], ['🌎 Es del extranjero', 'ext'], ['🕐 No responde', 'seg1']]),
+    caro: N('Objeción: “Está caro”', faq(/caro/), 'No bajes el precio todavía: pasa de precio a valor.', [
+      ['✅ Se convence', 'datos'], ['🎁 Pregunta por un descuento', 'club'], ['🤔 Sigue dudando', 'pensar'], ['🕐 No responde', 'seg1']]),
+    club: N('Pide descuento: primero el precio de la web', faq(/descuento/), 'Primero precio de la página y alternativa de valor. El descuento libre es solo el último recurso.', [
+      ['✅ Acepta el precio', 'datos'], ['🚪 Está por irse y solo falta el precio', 'desc'], ['🕐 No responde', 'seg1']]),
+    desc: N('Último recurso: descuento libre', por(K, 'k0'), v.descMax ? `Tope ${v.descMax} %. Úsalo una sola vez y solo para cerrar.` : 'No hay tope definido: consulta con gerencia.', [
+      ['✅ Acepta', 'datos'], ['🕐 No responde', 'seg1']], { aviso: !v.descMax }),
+    pensar: N('“Lo voy a pensar”', por(S, 'seg-r'), 'Averigua qué lo frena y resuélvelo en la conversación.', [
+      ['💸 Dice que es el precio', 'caro'], ['⏳ Dice que es el horario / tiempo', 'tiempo'], ['📚 Dice que es el contenido', 'contenido'], ['✅ Ya se decidió', 'datos'], ['🕐 No responde', 'seg1']]),
+    tiempo: N('“No tengo tiempo”', faq(/No tengo tiempo/), 'Pregunta por el horario concreto antes de darlo por perdido.', [
+      ['✅ Le sirve', 'datos'], ['🔄 Pide otro horario o grupo', 'horario'], ['🕐 No responde', 'seg1']]),
+    horario: N('Cambio de horario o grupo', faq(/cambiar de horario/), 'POR CONFIRMAR con gerencia. No prometas.', [['✅ Acepta esperar', 'datos'], ['🕐 No responde', 'seg1']], { aviso: true }),
+    pago: N('Cómo pagar', faq(/Cómo puedo pagar/), 'Envía los datos de pago solo si ya quiere inscribirse.', [['✅ Quiere inscribirse', 'datos'], ['🤔 Aún duda', 'pensar']]),
+    ext: N('Alumno del extranjero · primer mensaje', por(K, 'k0b'), 'Cambia “Moneda del cliente” a Dólares antes de copiarlo.', [
+      ['✅ Quiere inscribirse', 'datosExt'], ['💸 Pregunta por el pago', 'pagoUsd'], ['🕐 No responde', 'seg1']]),
+    datos: N('3 · Pedir datos para inscribir', por(C, 'c1'), 'Correo y DNI/CE son obligatorios. Envía los Términos.', [['✅ Envió sus datos', 'datosPago'], ['🕐 No responde', 'seg1']]),
+    datosExt: N('3 · Pedir datos · extranjero', por(C, 'c1b'), 'Registra la inscripción en Dólares.', [['✅ Envió sus datos', 'pagoUsd'], ['🕐 No responde', 'seg1']]),
+    datosPago: N('4 · Datos de pago (soles)', por(C, 'c2'), 'Reemplaza [datos de la cuenta oficial].', [['✅ Pagó', 'pagado'], ['⏳ Aún no paga', 'recordar'], ['🕐 No responde', 'seg1']]),
+    pagoUsd: N('4 · Pago en dólares (PayPal)', por(C, 'c2b'), 'Crea tú el enlace de cobro por el monto exacto o pídeselo a gerencia.', [['✅ Pagó', 'pagadoUsd'], ['⏳ Aún no paga', 'recordar'], ['🕐 No responde', 'seg1']]),
+    recordar: N('Recordar el pago', por(C, 'c3'), 'Fecha límite: idealmente 1 día antes del inicio.', [['✅ Pagó', 'pagado'], ['🕐 No responde', 'seg1']]),
+    pagado: N('5 · ¡Pago recibido!', por(C, 'c4'), 'Registra el pago, inscribe en el panel y envía la bienvenida (Ventas → Inscritos).', [], { fin: true }),
+    pagadoUsd: N('5 · ¡Pago recibido! (dólares)', por(C, 'c4b'), 'Registra el pago en dólares y envía la bienvenida. La nota de pago es solo para extranjeros.', [], { fin: true }),
+    seg1: N('Seguimiento 1 · Al día siguiente', por(S, 'seg1'), 'Si el cliente responde, vuelve al paso donde quedó.', [['💬 Responde', 'oferta'], ['🕐 Pasan 2–3 días sin respuesta', 'seg2']]),
+    seg2: N('Seguimiento 2 · A los 2–3 días', por(S, 'seg2'), 'Aporta valor: en vivo, grabadas y certificado.', [['💬 Responde', 'oferta'], ['🕐 Sigue sin responder', 'seg3']]),
+    seg3: N('Seguimiento 3 · Último', por(S, 'seg3'), 'Después de este mensaje marca el prospecto como PERDIDO. No hay un cuarto intento.', [['💬 Responde', 'oferta']], { fin: true }),
+  }
 }

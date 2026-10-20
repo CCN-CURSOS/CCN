@@ -3,7 +3,7 @@ import Icon from '../../components/Icons'
 import { proximoRecontacto, recontactoVencido } from '../../lib/ventas'
 import { waTel, nombreProspecto } from '../../lib/formato.js'
 import { descuentoMaxPct } from '../../lib/moneda.js'
-import { variables as variablesManual, presentacion as presentacionManual, oferta as ofertaManual, faqs as faqsManual, seguimientos as seguimientosManual, cierres as cierresManual, casos as casosManual, PASOS as PASOS_MANUAL, REGLAS as REGLAS_MANUAL, NO_DECIR as NO_DECIR_MANUAL } from '../../lib/manual.js'
+import { variables as variablesManual, presentacion as presentacionManual, oferta as ofertaManual, faqs as faqsManual, seguimientos as seguimientosManual, cierres as cierresManual, casos as casosManual, conversacion as conversacionManual, PASOS as PASOS_MANUAL, REGLAS as REGLAS_MANUAL, NO_DECIR as NO_DECIR_MANUAL } from '../../lib/manual.js'
 import { hasBackend, remove, fechaCorta, consultasCSV, interesadosCSV, marcarConsulta, seguimientoInteresado, reasignarInteresado, guardarProspecto, consultaAProspecto, asesoraNombre, grupoParaOferta, guionesVenta, borrarProspecto, ESTADOS_PROSPECTO, TIPOS_PROSPECTO, ORIGENES } from '../../lib/data.js'
 import { Confirmar, Drawer, Seccion, Switch } from '../../components/ui.jsx'
 
@@ -172,6 +172,7 @@ export function ManualVentas({ data, email }) {
   const [q, setQ] = useState('')
   const [grupoFaq, setGrupoFaq] = useState('Todas')
   const [copiado, setCopiado] = useState('')
+  const [ruta, setRuta] = useState(['inicio'])
   const curso = data.cursos.find((c) => c.id === cursoId) || null
   const grupo = curso ? grupoParaOferta(data.grupos, curso.id) : null
   const v = useMemo(() => variablesManual({ asesora, nombre: nombre.trim().split(/\s+/)[0], curso, grupo, cursos: data.cursos, descMax: descuentoMaxPct(data.ajustes), moneda: monedaMan }), [asesora, nombre, curso, grupo, data.cursos, data.ajustes, monedaMan])
@@ -189,7 +190,7 @@ export function ManualVentas({ data, email }) {
   const grupos = ['Todas', ...Array.from(new Set(lista.map((f) => f.g)))]
   const nq = q.trim().toLowerCase()
   const filtradas = lista.filter((f) => (grupoFaq === 'Todas' || f.g === grupoFaq) && (!nq || (f.q + ' ' + f.a).toLowerCase().includes(nq)))
-  const TABS = [['guia', 'Guía rápida'], ['pres', 'Presentación'], ['faq', 'Preguntas frecuentes'], ['seg', 'Seguimiento'], ['cierre', 'Cierre y pago'], ['casos', 'Casos especiales']]
+  const TABS = [['guia', 'Guía rápida'], ['conv', '💬 Conversación'], ['pres', 'Presentación'], ['faq', 'Preguntas frecuentes'], ['seg', 'Seguimiento'], ['cierre', 'Cierre y pago'], ['casos', 'Casos especiales']]
   return (
     <>
       <Seccion titulo="Manual de ventas" ayuda="Speeches listos para copiar. Se completan solos con el precio, la fecha, el horario y los cupos reales del curso que elijas." />
@@ -227,6 +228,27 @@ export function ManualVentas({ data, email }) {
           <div className="manual-nodecir">{NO_DECIR_MANUAL.map(([a, b]) => <p key={a}><b>✖ {a}</b><span>{b}</span></p>)}</div>
         </div>
       )}
+
+      {tab === 'conv' && (!curso
+        ? <p className="note">Elige un curso arriba para empezar la conversación guiada.</p>
+        : (() => {
+          const arbol = conversacionManual(v, curso)
+          const id = ruta[ruta.length - 1]
+          const nodo = arbol[id] || arbol.inicio
+          return (
+            <>
+              <p className="note">Copia el mensaje, envíalo, y toca abajo lo que respondió el cliente: el Manual te muestra el siguiente mensaje.</p>
+              <div className="chips">{ruta.map((r, i) => <button key={i} className={i === ruta.length - 1 ? 'sel' : ''} onClick={() => setRuta(ruta.slice(0, i + 1))}>{(arbol[r] || {}).titulo}</button>)}</div>
+              <Msg k={`cv-${id}-${ruta.length}`} titulo={nodo.titulo} texto={nodo.texto} nota={nodo.nota} aviso={nodo.aviso} />
+              {nodo.fin && nodo.opciones.length === 0 && <p className="note">🎉 Fin del recorrido. Registra todo en Prospectos / Inscritos.</p>}
+              {nodo.opciones.length > 0 && <div className="fs"><h4>¿Qué respondió el cliente?</h4><div className="chips">{nodo.opciones.map(([t, to]) => <button key={t} onClick={() => setRuta([...ruta, to])}>{t}</button>)}</div></div>}
+              <div className="btns">
+                {ruta.length > 1 && <button className="btn btn-line sm" onClick={() => setRuta(ruta.slice(0, -1))}>← Atrás</button>}
+                {ruta.length > 1 && <button className="btn btn-line sm" onClick={() => setRuta(['inicio'])}>↺ Empezar de nuevo</button>}
+              </div>
+            </>
+          )
+        })())}
 
       {tab === 'pres' && (!curso
         ? <p className="note">Elige un curso arriba para armar el mensaje de presentación y la oferta.</p>
