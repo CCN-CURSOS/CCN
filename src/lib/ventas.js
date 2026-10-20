@@ -10,7 +10,7 @@ export const PUESTOS = { instructor: 'Profesores', vendedor: 'Vendedores' }
 export const TARIFA_HORA_DEF = 20 // S/400 por curso de 20 h
 
 const mesDe = (iso) => String(iso || '').slice(0, 7)
-import { r2, suma } from './formato.js'
+import { r2, suma, nombreProspecto } from './formato.js'
 
 export function tramosDe(trab) {
   const t = Array.isArray(trab?.comision_tramos) && trab.comision_tramos.length ? trab.comision_tramos : TRAMOS_DEF
@@ -114,7 +114,7 @@ export function historialVendedor(data, email, limite = 40) {
     ev.push({ t: x.asignado_en || x.creado, ico: 'Derivado', txt: `Te derivaron a ${x.nombres} ${x.apellido_paterno} (${x.curso})` })
     if (x.estado !== 'nuevo' && x.contactado_en) ev.push({ t: x.contactado_en, ico: 'Contacto', txt: `Contactaste a ${x.nombres} ${x.apellido_paterno}${x.contesto === true ? ' · contestó' : x.contesto === false ? ' · no contestó' : ''}${x.observacion ? ` — ${x.observacion}` : ''}` })
   })
-  ;(data.prospectos || []).filter((p) => p.vendedor === email).forEach((p) => ev.push({ t: p.creado, ico: 'Prospecto', txt: `Nuevo prospecto: ${p.nombres}${p.curso ? ` (${p.curso})` : ''}` }))
+  ;(data.prospectos || []).filter((p) => p.vendedor === email).forEach((p) => ev.push({ t: p.creado, ico: 'Prospecto', txt: `Nuevo prospecto: ${nombreProspecto(p)}${p.curso ? ` (${p.curso})` : ''}` }))
   const mias = (data.matriculas || []).filter((m) => m.vendedor === email)
   const paq = new Map()
   mias.forEach((m) => { if (!paq.has(m.paquete_id)) paq.set(m.paquete_id, []); paq.get(m.paquete_id).push(m) })
@@ -260,7 +260,7 @@ export function actividadMes(data, email, mes) {
   const curso = new Map((data.cursos || []).map((c) => [String(c.id), c.titulo]))
   const nom = (a) => (a ? `${a.nombres || ''} ${a.apellido_paterno || ''}`.trim() : 'Alumno')
   const prospectos = (data.prospectos || []).filter((p) => p.vendedor === email && mesDe(p.creado) === mes)
-    .map((p) => ({ t: p.creado, nombre: p.nombres, celular: p.celular, curso: p.curso, origen: p.origen, estado: p.estado, obs: p.notas, seguimiento: p.seguimiento }))
+    .map((p) => ({ t: p.creado, nombre: nombreProspecto(p), celular: p.celular, curso: p.curso, origen: p.origen, estado: p.estado, obs: p.notas, seguimiento: p.seguimiento }))
   const interesados = (data.interesados || []).filter((x) => x.asignado_a === email && mesDe(x.asignado_en || x.creado) === mes)
     .map((x) => ({ t: x.asignado_en || x.creado, nombre: `${x.nombres} ${x.apellido_paterno}`, celular: x.celular, curso: x.curso, atendido: x.estado !== 'nuevo', contesto: x.contesto, contactado_en: x.contactado_en, obs: x.observacion }))
   const mats = (data.matriculas || []).filter((m) => m.vendedor === email && m.estado === 'activa' && mesDe(m.fecha_inscripcion) === mes)

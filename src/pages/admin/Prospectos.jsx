@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Icon from '../../components/Icons'
 import { proximoRecontacto, recontactoVencido } from '../../lib/ventas'
-import { waTel } from '../../lib/formato.js'
+import { waTel, nombreProspecto } from '../../lib/formato.js'
 import { descuentoMaxPct } from '../../lib/moneda.js'
 import { variables as variablesManual, presentacion as presentacionManual, oferta as ofertaManual, faqs as faqsManual, seguimientos as seguimientosManual, cierres as cierresManual, casos as casosManual, PASOS as PASOS_MANUAL, REGLAS as REGLAS_MANUAL, NO_DECIR as NO_DECIR_MANUAL } from '../../lib/manual.js'
 import { hasBackend, remove, fechaCorta, consultasCSV, interesadosCSV, marcarConsulta, seguimientoInteresado, reasignarInteresado, guardarProspecto, consultaAProspecto, asesoraNombre, grupoParaOferta, guionesVenta, borrarProspecto, ESTADOS_PROSPECTO, TIPOS_PROSPECTO, ORIGENES } from '../../lib/data.js'
@@ -279,7 +279,7 @@ export function GuionVenta({ p, data, email, onClose }) {
     </section>
   ) : null
   return (
-    <Drawer titulo={`Guion · ${p.nombres}`} onClose={onClose} pie={<button className="btn btn-line" onClick={onClose}>Cerrar</button>}>
+    <Drawer titulo={`Guion · ${nombreProspecto(p)}`} onClose={onClose} pie={<button className="btn btn-line" onClick={onClose}>Cerrar</button>}>
       <div className="fs">
         <p className="note">Orden: 1) saludo → 2) cuando responda, sube sus datos → 3) envía el flyer del curso y el mensaje de fecha, precio y cierre → 4) el temario en PDF.</p>
         {bloque('s', '1 · Saludo', g.saludo)}
@@ -302,7 +302,7 @@ export function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial, ema
   const dig9 = (t) => String(t || '').replace(/\D/g, '').slice(-9)
   const agregarRapido = () => hacer(async () => {
     const dup = dig9(rapido.celular) && (data.prospectos || []).find((x) => dig9(x.celular) === dig9(rapido.celular))
-    if (dup) throw new Error(`Ya existe un prospecto con ese celular: ${dup.nombres}.`)
+    if (dup) throw new Error(`Ya existe un prospecto con ese celular: ${nombreProspecto(dup)}.`)
     await guardarProspecto({ nombres: rapido.nombres, celular: rapido.celular, curso: rapido.curso, origen: 'WhatsApp', estado: 'nuevo', tipo: 'medio' })
     setRapido({ nombres: '', celular: '', curso: '' })
   }, 'Prospecto agregado ⚡')
@@ -337,12 +337,12 @@ export function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial, ema
       {data.prospectosError && hasBackend && <p className="banner">Falta pegar <b>crm.sql</b> en Supabase. Mensaje: {data.prospectosError}</p>}
       <form className="rapido" onSubmit={(e) => { e.preventDefault(); agregarRapido() }}>
         <b>⚡ Registro rápido</b>
-        <input aria-label="Nombre" placeholder="Nombre" value={rapido.nombres} onChange={(e) => setRapido({ ...rapido, nombres: e.target.value })} />
+        <input aria-label="Nombre" placeholder="Nombre (opcional)" value={rapido.nombres} onChange={(e) => setRapido({ ...rapido, nombres: e.target.value })} />
         <input aria-label="Celular" inputMode="tel" placeholder="Celular" value={rapido.celular} onChange={(e) => setRapido({ ...rapido, celular: e.target.value })} />
         <select aria-label="Curso" value={rapido.curso} onChange={(e) => setRapido({ ...rapido, curso: e.target.value })}>
           <option value="">Curso (opcional)</option>{data.cursos.map((c) => <option key={c.id} value={c.titulo}>{c.titulo}</option>)}
         </select>
-        <button className="btn btn-teal sm" type="submit" disabled={rapido.nombres.trim().length < 2}>Agregar</button>
+        <button className="btn btn-teal sm" type="submit" disabled={rapido.celular.replace(/\D/g, '').length < 7}>Agregar</button>
       </form>
       <div className="kpis">
         <div><b>{todos.length}</b><span>prospectos</span></div>
@@ -395,7 +395,7 @@ export function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial, ema
             <tbody>
               {lista.map((p) => (
                 <tr key={p.id} className={(() => { const r = proximoRecontacto(p); const f = r ? r.fecha : p.seguimiento; return f && f <= hoy && !['inscrito', 'perdido'].includes(p.estado) ? 'nueva' : '' })()}>
-                  <td><b>{p.nombres}</b>{p.celular && <small className="paq"><a href={waTel(p.celular)} target="_blank" rel="noopener noreferrer">{p.celular}</a></small>}</td>
+                  <td><b>{p.nombres || 'Sin nombre'}</b>{p.celular && <small className="paq"><a href={waTel(p.celular)} target="_blank" rel="noopener noreferrer">{p.celular}</a></small>}</td>
                   {gerente && <td>{(p.vendedor || '').split('@')[0]}</td>}
                   <td><select aria-label={`Tipo de ${p.nombres}`} className={`tipo-${p.tipo || 'medio'}`} value={p.tipo || 'medio'} onChange={(e) => cambiar(p, { tipo: e.target.value })}>{Object.entries(TIPOS_PROSPECTO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
                   <td>{p.curso || '—'}</td>
@@ -420,7 +420,7 @@ export function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial, ema
           pie={<><button className="btn btn-line" onClick={cerrar}>Cancelar</button>
             <button className="btn btn-teal" onClick={() => hacer(async () => { await guardarProspecto(form); cerrar() }, 'Prospecto guardado')}>Guardar</button></>}>
           <div className="fs">
-            <label>Nombre<input id="pr-nom" value={form.nombres} onChange={(e) => setForm({ ...form, nombres: e.target.value })} /></label>
+            <label>Nombre (opcional)<input id="pr-nom" value={form.nombres} onChange={(e) => setForm({ ...form, nombres: e.target.value })} /></label>
             <label>Celular<input id="pr-cel" inputMode="tel" value={form.celular} onChange={(e) => setForm({ ...form, celular: e.target.value })} /></label>
             <label>Curso de interés
               <select id="pr-cur" value={form.curso} onChange={(e) => setForm({ ...form, curso: e.target.value })}>
@@ -457,7 +457,7 @@ export function Prospectos({ data, hacer, gerente, inicial, onCerrarInicial, ema
         </Drawer>
       )}
       {borrando && (
-        <Confirmar texto={`¿Borrar a ${borrando.nombres}?`} onNo={() => setBorrando(null)}
+        <Confirmar texto={`¿Borrar a ${nombreProspecto(borrando)}?`} onNo={() => setBorrando(null)}
           onSi={() => { const p = borrando; setBorrando(null); hacer(() => borrarProspecto(p.id), 'Prospecto borrado') }} />
       )}
     </>

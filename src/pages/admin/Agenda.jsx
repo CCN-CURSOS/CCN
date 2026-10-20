@@ -1,3 +1,4 @@
+import { nombreProspecto } from '../../lib/formato.js'
 import { useState } from 'react'
 import Icon from '../../components/Icons'
 import { lunesDe, fmtHM, MINIMO_SEMANA_MIN, nombreGrupoWa, gruposSinWhatsapp, horaCorta, proximoRecontacto, recontactoVencido, reporteSemana } from '../../lib/ventas'
@@ -74,7 +75,7 @@ export function Calendario({ data, email }) {
   const add = (f, e) => { if (!f) return; const k = String(f).slice(0, 10); (eventos[k] = eventos[k] || []).push(e) }
   ;(data.prospectos || []).filter((p) => !p.vendedor || p.vendedor === email).forEach((p) => {
     if (['inscrito', 'perdido'].includes(p.estado)) return
-    const r = proximoRecontacto(p); if (r) add(r.fecha, { tipo: 'rc', txt: `Volver a contactar a ${p.nombres}`, sub: `Contacto ${r.etapa + 1}${p.celular ? ' · ' + p.celular : ''}`, venc: r.fecha < hoy })
+    const r = proximoRecontacto(p); if (r) add(r.fecha, { tipo: 'rc', txt: `Volver a contactar a ${nombreProspecto(p)}`, sub: `Contacto ${r.etapa + 1}${p.celular ? ' · ' + p.celular : ''}`, venc: r.fecha < hoy })
   })
   ;(data.pendientes || []).filter((x) => x.vendedor === email && x.estado === 'pendiente').forEach((x) => add(x.fecha_limite, { tipo: 'pd', txt: x.titulo, sub: 'Pendiente', venc: x.fecha_limite < hoy }))
   ;(data.instalaciones || []).filter((x) => x.estado === 'agendada').forEach((x) => add(x.fecha, { tipo: 'in', txt: `Instalación${x.programa ? ': ' + x.programa : ''}`, sub: horaCorta ? horaCorta(x.hora) : x.hora }))
@@ -126,7 +127,7 @@ export function Agenda({ data, email, hacer }) {
         {sub === 'notas' && <button className="btn btn-teal" onClick={() => setNota({ titulo: '', texto: '' })}>+ Nueva nota</button>}
       </Seccion>
       {data.pendientesError && hasBackend && <p className="banner">Falta pegar <b>crm.sql</b> en Supabase. Mensaje: {data.pendientesError}</p>}
-      {vencidos.length > 0 && <div className="alertas"><p className="alerta"><b>Se te pasó volver a contactar a:</b> {vencidos.map((p) => p.nombres).join(', ')}. Cada cliente sin respuesta es una venta que se puede perder.</p></div>}
+      {vencidos.length > 0 && <div className="alertas"><p className="alerta"><b>Se te pasó volver a contactar a:</b> {vencidos.map((p) => nombreProspecto(p)).join(', ')}. Cada cliente sin respuesta es una venta que se puede perder.</p></div>}
       <div className="tabs2" role="tablist">
         {[['pendientes', `Pendientes (${abiertos.length + wspFalta.length})`], ['realizados', `Realizados (${hechos.length})`], ['notas', 'Notas'], ['calendario', 'Calendario']].map(([k, n]) => (
           <button key={k} role="tab" aria-selected={sub === k} onClick={() => setSub(k)}>{n}</button>
@@ -208,7 +209,7 @@ export function ReporteSemanal({ data, email }) {
           {fila('Programados esta semana', r.programados)}
           {fila('Se le pasaron (a hoy)', r.vencidos.length, r.vencidos.length > 0)}
         </ul>
-          {r.vencidos.length > 0 && <small className="rep-det">{r.vencidos.map((p) => p.nombres).join(', ')}</small>}
+          {r.vencidos.length > 0 && <small className="rep-det">{r.vencidos.map((p) => nombreProspecto(p)).join(', ')}</small>}
         </div>
         <div><h4>Pendientes</h4><ul>
           {fila('Vencían esta semana', `${r.pendientes.cumplidosDeEsos} de ${r.pendientes.vencenSemana} cumplidos`, r.pendientes.cumplidosDeEsos < r.pendientes.vencenSemana)}

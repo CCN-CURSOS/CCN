@@ -746,7 +746,9 @@ export async function guardarProspecto(p) {
     const prox = fila.recontactar1 === 'si' && !fila.contacto2_fecha ? fila.recontactar1_fecha : (fila.recontactar2 === 'si' && !fila.recontacto2_hecho ? fila.recontactar2_fecha : null)
     fila.seguimiento = prox || ((fila.recontactar1 || fila.recontactar2) ? null : fila.seguimiento)
   }
-  if (fila.nombres.length < 2) throw new Error('Escribe el nombre del prospecto.')
+  // El nombre es opcional (no todos lo dan): basta el celular
+  if (fila.nombres.length < 2) fila.nombres = ''
+  if (!fila.nombres && fila.celular.replace(/\D/g, '').length < 7) throw new Error('Escribe al menos el celular del prospecto (el nombre es opcional).')
   if (!hasBackend) {
     const db = demoRead()
     if (p.id) { const x = db.prospectos.find((y) => y.id === p.id); if (x) Object.assign(x, fila) }
